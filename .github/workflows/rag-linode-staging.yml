@@ -1,4 +1,4 @@
-name: GAIA RAG Mini - Linode staging (manual)
+name: GAIA RAG Mini - Linode deployment disabled until approval
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ permissions:
   packages: read
 jobs:
   staging:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ false }} # Explicit no-publish/no-deploy freeze; requires future reviewed change.
     runs-on: ubuntu-latest
     timeout-minutes: 12
     environment: gaia-rag-staging
