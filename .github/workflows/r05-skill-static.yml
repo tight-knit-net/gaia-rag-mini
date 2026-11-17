@@ -40,17 +40,23 @@ jobs:
           bash -n .github/deploy/linode/ssh-gate.sh
           test -s .github/deploy/linode/known_hosts
           echo "Shell/known_hosts OK"
-      - name: Package skill R05
+      - name: Validate archive locally without uploading artifacts
         run: |
-          cd skills
-          zip -rq ../gaia-rag-processos-administrativos-r05.zip gaia-rag-processos-administrativos
-          cd ..
-          sha256sum gaia-rag-processos-administrativos-r05.zip > gaia-rag-processos-administrativos-r05.zip.sha256
-      - name: Upload versioned skill ZIP and checksum
-        uses: actions/upload-artifact@v4
-        with:
-          name: gaia-rag-skill-r05
-          path: |
-            gaia-rag-processos-administrativos-r05.zip
-            gaia-rag-processos-administrativos-r05.zip.sha256
-          retention-days: 30
+          set -Eeuo pipefail
+          zip -rq "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip" skills/gaia-rag-processos-administrativos
+          unzip -tq "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
+          sha256sum "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
+          echo "Archive validated in ephemeral runner only; not uploaded or published."
+      - name: Assert GHCR and Linode deployment freeze
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          image = Path(".github/workflows/rag-ghcr-image.yml").read_text()
+          deploy = Path(".github/workflows/rag-linode-staging.yml").read_text()
+          ci = Path(".github/workflows/r05-skill-static.yml").read_text()
+          assert 'if: ${{ false }}' in image, "GHCR workflow must remain disabled"
+          assert 'if: ${{ false }}' in deploy, "Linode workflow must remain disabled"
+          assert "on:\n  push:" not in image, "GHCR push trigger must stay absent"
+          assert "actions/upload-artifact" not in ci, "No uploaded ZIP artifacts permitted in this phase"
+          print("OK: publication and deploy gates remain blocked")
+          PY
