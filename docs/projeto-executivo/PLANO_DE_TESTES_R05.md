@@ -38,3 +38,13 @@ Usar identidades sintéticas A/B e processos `DEMO-*`; nenhum dado de cliente ou
 
 ## Critérios de interrupção
 Qualquer vazamento cruzado, proposta auto-persistida, credencial exposta, alteração involuntária do Qdrant, desvio da Cloudflare Access ou falha de rollback interrompe a homologação.
+
+## Testes adicionais exigidos pelo parecer documental
+| ID | Cenário | Aceite esperado | Estado |
+|---|---|---|---|
+| TR-18 | A tenta `memory_get` com UUID válido de B, sem contexto ou tenant A | O **backend** nega ANTES de retornar payload; nenhuma informação de B alcança host | PLANEJADO |
+| TR-19 | A tenta `memory_find_by_source` e `memory_similar_cases` contendo fonte exclusiva de B | Filtro/autorização server-side efetiva; nenhum resultado de B enviado | PLANEJADO |
+| TR-20 | Host sem suporte Skills beta; servidor anuncia extensão apenas quando suportada | Falha segura, protocolo correto em `server/discover`, `skills/list/get` e `resources/read` conforme negociação | PLANEJADO |
+| TR-21 | Plugin ChatGPT sem `agents/openai.yaml` de dependência verificada | Falha de empacotamento/instalação declarada, nunca simular vínculo com MCP | PLANEJADO |
+| TR-22 | Workflow GHCR/Linode acionado por evento sem liberação explícita | Jobs bloqueados e nenhum pacote/imagem/deploy publicado | PARCIAL: checagem estática apenas |
+
