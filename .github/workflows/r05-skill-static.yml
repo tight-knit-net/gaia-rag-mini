@@ -21,3 +21,17 @@ jobs:
         run: python skills/gaia-rag-processos-administrativos/scripts/validate_skill.py
       - name: Static regression (no host, no network)
         run: python skills/gaia-rag-processos-administrativos/tests/test_regressao_r05.py
+      - name: Package skill R05
+        run: |
+          cd skills
+          zip -rq ../gaia-rag-processos-administrativos-r05.zip gaia-rag-processos-administrativos
+          cd ..
+          sha256sum gaia-rag-processos-administrativos-r05.zip > gaia-rag-processos-administrativos-r05.zip.sha256
+      - name: Upload versioned skill ZIP and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaia-rag-skill-r05
+          path: |
+            gaia-rag-processos-administrativos-r05.zip
+            gaia-rag-processos-administrativos-r05.zip.sha256
+          retention-days: 30
