@@ -1,21 +1,12 @@
-name: GAIA RAG Mini - Build and publish container (no deploy)
+name: GAIA RAG Mini - GHCR publishing disabled until approval
+# INTENTIONALLY DISABLED: no automatic publishing on push to main.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Dockerfile"
-      - "src/**"
-      - "app/**"
-      - "requirements.txt"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/rag-ghcr-image.yml"
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ false }} # Explicit no-publish/no-deploy freeze; requires future reviewed change.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
