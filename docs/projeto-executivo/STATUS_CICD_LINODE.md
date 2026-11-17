@@ -8,7 +8,7 @@
 - RAM e disco são snapshots, não demonstração de capacidade garantida.
 
 ## PR documental — configurações versionadas para REVISÃO, não operação
-- `r05-skill-static.yml`: validação documental, empacotamento privado na Action; evidências de 23 testes estáticos, sem host.
+- `r05-skill-static.yml`: validação documental, regressão estática e prova local de ZIP temporário no runner; **sem upload ou publicação de artefatos na configuração atual**. Evidências históricas de 23 testes estáticos, sem host. ZIPs produzidos por execuções anteriores devem ser tratados como artefatos históricos, não como autorização de publicação.
 - `.coderabbit.yaml`: instruções de revisão de arquitetura, CI, dados e segurança. O vínculo do CodeRabbit foi informado pelo proprietário; reviews no PR ainda precisam ser observados.
 - `rag-ghcr-image.yml`: **sem push automático, com job `if: false`**. Não pode publicar no GHCR mesmo com merge acidental, sem futura alteração revisada.
 - `rag-linode-staging.yml`: **job `if: false`**. Não pode executar preflight/deploy, sem futura alteração revisada.
