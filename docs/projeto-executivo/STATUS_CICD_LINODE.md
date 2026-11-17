@@ -9,15 +9,15 @@
 
 ## PR documental — configurações versionadas para REVISÃO, não operação
 - `r05-skill-static.yml`: validação documental, regressão estática e prova local de ZIP temporário no runner; **sem upload ou publicação de artefatos na configuração atual**. Evidências históricas de 23 testes estáticos, sem host. ZIPs produzidos por execuções anteriores devem ser tratados como artefatos históricos, não como autorização de publicação.
-- `.coderabbit.yaml`: instruções de revisão de arquitetura, CI, dados e segurança. O vínculo do CodeRabbit foi informado pelo proprietário; reviews no PR ainda precisam ser observados.
+- CodeRabbit: arquivo `.coderabbit.yaml` removido da branch R05 por solicitação do proprietário. A revogação da GitHub App na conta exige verificação separada; não está confirmada.
 - `rag-ghcr-image.yml`: **sem push automático, com job `if: false`**. Não pode publicar no GHCR mesmo com merge acidental, sem futura alteração revisada.
 - `rag-linode-staging.yml`: **job `if: false`**. Não pode executar preflight/deploy, sem futura alteração revisada.
 - `LINODE_DEPLOY_KEY`: NÃO criar nem configurar agora; nenhum segredo é necessário à revisão documental.
 
 ## Antes de usar os pipelines futuramente
-Concluir e revisar o projeto executivo, obter autorização separada para iniciar código, validar origem DO, comprovar CodeRabbit, executar CI de código; somente então propor habilitar GHCR ou Linode por novo PR e autorização específica. Preservar Cloudflare Access, Tunnel, Qdrant e o portal humano.
+Concluir e revisar o projeto executivo, obter autorização separada para iniciar código, validar origem DO, obter parecer técnico independente, executar CI de código; somente então propor habilitar GHCR ou Linode por novo PR e autorização específica. Preservar Cloudflare Access, Tunnel, Qdrant e o portal humano.
 
 ## Gaps ainda reais
-Código completo de produção e testes não migrados ao GitHub; CodeRabbit ainda sem parecer registrado para este PR; ausência de execução de GHCR/private pull; ausência de SSH GitHub runner → Linode; ausência de sandbox equivalente e de teste do portal; nenhuma homologação operacional.
+Código completo de produção e testes não migrados ao GitHub; revisão técnica independente ainda pendente para este PR; ausência de execução de GHCR/private pull; ausência de SSH GitHub runner → Linode; ausência de sandbox equivalente e de teste do portal; nenhuma homologação operacional.
 
 **Não executar ou solicitar ações manuais ao usuário nesta fase.**
