@@ -21,3 +21,7 @@ venv/
 **/.pytest_cache/
 docs/
 skills/
+
+# GitHub Actions deploy key — never commit
+LINODE_DEPLOY_KEY*
+gaia_rag_linode_deploy_ed25519*
