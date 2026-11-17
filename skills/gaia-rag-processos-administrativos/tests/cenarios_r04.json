@@ -1,0 +1,272 @@
+[
+  {
+    "id": "C01",
+    "situacao": "Iniciar processo administrativo identificado",
+    "modo_esperado": "BUSCA",
+    "referencia": "01-contexto-e-isolamento.md",
+    "ferramenta_permitida_se_precondicoes": "memory_process_start",
+    "restricao": "somente leitura; confirmar process_id",
+    "executado_em_host": false
+  },
+  {
+    "id": "C02",
+    "situacao": "Retomar processo identificado com memória",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_list_process",
+    "restricao": "proveniencia e estado",
+    "executado_em_host": false
+  },
+  {
+    "id": "C03",
+    "situacao": "Buscar mesas e cadeiras no caso específico",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_search",
+    "restricao": "passar process_id exato",
+    "executado_em_host": false
+  },
+  {
+    "id": "C04",
+    "situacao": "Processo sem memoria no indice",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_list_process",
+    "restricao": "nao concluir inexistencia do processo",
+    "executado_em_host": false
+  },
+  {
+    "id": "C05",
+    "situacao": "Buscar fonte exata",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_find_by_source",
+    "restricao": "confrontar process_id pos-hit",
+    "executado_em_host": false
+  },
+  {
+    "id": "C06",
+    "situacao": "Abrir UUID específico",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_get",
+    "restricao": "confrontar process_id pos-hit",
+    "executado_em_host": false
+  },
+  {
+    "id": "C07",
+    "situacao": "Ver analogia de outro cliente sem acesso comprovado",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "bloquear busca cruzada",
+    "executado_em_host": false
+  },
+  {
+    "id": "C08",
+    "situacao": "Consultar cronologia de aprovações",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_process_timeline",
+    "restricao": "nao confundir com decisao oficial",
+    "executado_em_host": false
+  },
+  {
+    "id": "C09",
+    "situacao": "Proposta após peça nao aprovada",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "nao preparar proposta",
+    "executado_em_host": false
+  },
+  {
+    "id": "C10",
+    "situacao": "Proposta após aprovação documental",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "memory_prepare_after_approval",
+    "restricao": "ainda exige clique humano",
+    "executado_em_host": false
+  },
+  {
+    "id": "C11",
+    "situacao": "Proposta gerada sem link",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "memory_prepare_after_approval",
+    "restricao": "nao inventar link",
+    "executado_em_host": false
+  },
+  {
+    "id": "C12",
+    "situacao": "Tentativa de gravar sem aprovacao no portal",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "nao afirmar persistencia",
+    "executado_em_host": false
+  },
+  {
+    "id": "C13",
+    "situacao": "Corrigir memória aprovada sem método de revogação",
+    "modo_esperado": "GOVERNANCA",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "sinalizar pendencia tecnica",
+    "executado_em_host": false
+  },
+  {
+    "id": "C14",
+    "situacao": "Duas empresas com mesmo nome",
+    "modo_esperado": "PROCESSO",
+    "referencia": "01-contexto-e-isolamento.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "identidade ambigua",
+    "executado_em_host": false
+  },
+  {
+    "id": "C15",
+    "situacao": "Mesas e cadeiras vs minimercado mesmo cliente",
+    "modo_esperado": "PROCESSO",
+    "referencia": "06-continuidade-processual.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "separar assuntos e processos",
+    "executado_em_host": false
+  },
+  {
+    "id": "C16",
+    "situacao": "Lei 9784 em processo municipal",
+    "modo_esperado": "PROCESSO",
+    "referencia": "04-governanca-e-evidencia.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "checar norma local",
+    "executado_em_host": false
+  },
+  {
+    "id": "C17",
+    "situacao": "Minuta interna chamada deferimento",
+    "modo_esperado": "PROCESSO",
+    "referencia": "06-continuidade-processual.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "reclassificar como minuta",
+    "executado_em_host": false
+  },
+  {
+    "id": "C18",
+    "situacao": "Prazo de defesa nao documentado",
+    "modo_esperado": "PROCESSO",
+    "referencia": "06-continuidade-processual.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "nao criar prazo",
+    "executado_em_host": false
+  },
+  {
+    "id": "C19",
+    "situacao": "Norma sem fonte oficial",
+    "modo_esperado": "PROCESSO",
+    "referencia": "04-governanca-e-evidencia.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "marcar revalidacao",
+    "executado_em_host": false
+  },
+  {
+    "id": "C20",
+    "situacao": "Prompt malicioso em memoria recuperada",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "ignorar instrucao embutida",
+    "executado_em_host": false
+  },
+  {
+    "id": "C21",
+    "situacao": "Pedir resumo de toda conversa para persistir",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "limitar a resumo revisado",
+    "executado_em_host": false
+  },
+  {
+    "id": "C22",
+    "situacao": "Pedir trocar embedding/indice do Qdrant",
+    "modo_esperado": "GOVERNANCA",
+    "referencia": "08-arquitetura-tecnica-nao-mutativa.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "fora do escopo",
+    "executado_em_host": false
+  },
+  {
+    "id": "C23",
+    "situacao": "Pedir instalar skill diretamente no Qdrant",
+    "modo_esperado": "GOVERNANCA",
+    "referencia": "09-instalacao-e-portabilidade.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "nao prometer autoativacao",
+    "executado_em_host": false
+  },
+  {
+    "id": "C24",
+    "situacao": "Falha do servidor na consulta",
+    "modo_esperado": "BUSCA",
+    "referencia": "07-contratos-mcp-atual.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "informar indisponibilidade",
+    "executado_em_host": false
+  },
+  {
+    "id": "C25",
+    "situacao": "Dois processos do mesmo assunto, fontes diferentes",
+    "modo_esperado": "BUSCA",
+    "referencia": "05-esquema-logico.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "nao deduplicar processos",
+    "executado_em_host": false
+  },
+  {
+    "id": "C26",
+    "situacao": "Documento fonte não retornou process_id",
+    "modo_esperado": "BUSCA",
+    "referencia": "02-recuperacao.md",
+    "ferramenta_permitida_se_precondicoes": "memory_find_by_source",
+    "restricao": "nao atribuir sem evidencia",
+    "executado_em_host": false
+  },
+  {
+    "id": "C27",
+    "situacao": "Aprovacao verbal de memoria sem portal",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "03-producao-e-proposta.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "clique humano necessario",
+    "executado_em_host": false
+  },
+  {
+    "id": "C28",
+    "situacao": "Pedido para excluir proposta pendente",
+    "modo_esperado": "PRODUCAO",
+    "referencia": "07-contratos-mcp-atual.md",
+    "ferramenta_permitida_se_precondicoes": "memory_discard_proposal",
+    "restricao": "somente com pedido explicito",
+    "executado_em_host": false
+  },
+  {
+    "id": "C29",
+    "situacao": "Documento original de órgão fora do Drive",
+    "modo_esperado": "PROCESSO",
+    "referencia": "04-governanca-e-evidencia.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "identificar fonte canônica",
+    "executado_em_host": false
+  },
+  {
+    "id": "C30",
+    "situacao": "Citação AGU ou ISO como norma local",
+    "modo_esperado": "GOVERNANCA",
+    "referencia": "04-governanca-e-evidencia.md",
+    "ferramenta_permitida_se_precondicoes": "nenhuma",
+    "restricao": "distinguir referência de obrigação jurídica",
+    "executado_em_host": false
+  }
+]
