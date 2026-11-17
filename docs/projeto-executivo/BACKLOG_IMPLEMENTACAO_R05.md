@@ -32,10 +32,10 @@
 | BK-18 | BK-17 | decisão de corte de produção com autorização explícita; não executar automaticamente |
 
 ## Definição de pronto para cada item de código
-A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integração com fixtures não reais, resultado CI, revisão CodeRabbit ou independente, análise de segurança e atualização de documentação. Alterações de Qdrant, Cloudflare Access, DNS e coleção são fora de escopo sem ADR separada e autorização.
+A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integração com fixtures não reais, resultado CI, revisão técnica independente, análise de segurança e atualização de documentação. Alterações de Qdrant, Cloudflare Access, DNS e coleção são fora de escopo sem ADR separada e autorização.
 
 ## Dependências externas que NÃO podem ser presumidas
-- CodeRabbit GitHub App vinculada: informado pelo proprietário; sua execução no PR deve ser comprovada.
+- CodeRabbit retirado do projeto por decisão do proprietário; a revisão técnica independente continua obrigatória, sem dependência de bot.
 - Host aceita Skills over MCP: não demonstrado.
 - Embedding model e ACL multi-tenant: ainda não inspecionados.
 - Projeto GitHub e fonte operacional: repositório começou sem runtime completo; portar código requer comparação e aprovação.
