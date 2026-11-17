@@ -40,3 +40,12 @@ A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integ
 - Embedding model e ACL multi-tenant: ainda não inspecionados.
 - Projeto GitHub e fonte operacional: repositório começou sem runtime completo; portar código requer comparação e aprovação.
 - Capacidade da Linode: snapshot não é benchmark.
+
+## Itens adicionais identificados na revisão
+| ID | Dependência | Entrega objetiva, somente em fase autorizada |
+|---|---|---|
+| BK-19 | BK-03 e aprovação DG-06 | Ajustar orientação da skill que hoje prevê validação pós-consulta; nunca usar retorno de dados como substituto da autorização de backend |
+| BK-20 | BK-02, BK-08 e host aprovado | Negociação da extensão beta Skills com `server/discover`, `skills/list`, `skills/get`, `resources/read` e hashes de recursos |
+| BK-21 | BK-20 sem suporte de host | Empacotamento alternativo com `plugin.json` e dependência MCP real, sem endpoint inventado |
+| BK-22 | BK-03, BK-11 | Verificação independente de supply chain, actions de terceiros, fluxo de token de GHCR e capacidade de rollback, preservando freeze |
+
