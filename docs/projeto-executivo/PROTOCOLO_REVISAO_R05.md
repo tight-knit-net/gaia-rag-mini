@@ -1,40 +1,30 @@
-# Protocolo de revisão do projeto executivo R05
-**Estado:** revisão solicitável; não aprova automaticamente código nem publicação.
+# Protocolo de revisão técnica independente — GAIA RAG Mini R05
 
-## Escopo do parecer exigido
-1. **Arquitetura:** Cloudflare Access/Tunnel e MCP Python atuais separados de agentes Cloudflare Think não confirmados; estratégias de skill por extensão MCP e plugin, com suporte de host verificado.
-2. **Segurança:** autorização por identidade de origem, tenant e process_id em TODAS as ferramentas de leitura; proibição de side effects sem clique humano; logs mínimos e anti-prompt-injection.
-3. **Controle de mudança:** documentação só em branch/PR; `main` não sofre merge; os workflows de GHCR e Linode foram explicitamente desabilitados por `if: false`.
-4. **Dados:** coleção `chatgpt_memoria_aprovada` e schema preservados; nenhuma migração de vetor ou índice.
-5. **Qualidade:** rastreabilidade RF/RNF → backlog → matriz de testes; reconhecimento de evidências reais x simuladas.
-6. **Runbooks:** preflight, deploy/rollback apenas documentados, sem executar; avaliação de capacidade Linode concorrente.
-7. **Riscos de infraestrutura:** credenciais de deploy provisionadas anteriormente devem ter inventário, validação de origem/rotação futura e não serem exibidas em PR.
-8. **Prontidão para codificar:** DG-01..DG-06, com autorização formal independente da aprovação de revisão.
+**Status:** documentos consolidados; revisão técnica independente PENDENTE; desenvolvimento e publicação NÃO autorizados.
 
-## Critérios para parecer
-- **APROVADO DOCUMENTALMENTE:** sem bloqueadores críticos, decisões explícitas, requisitos rastreáveis e eventos observados sustentados por evidência.
-- **AJUSTES SOLICITADOS:** comentários acionáveis com arquivo, linha, risco, proposta de correção e teste/verificação.
-- **BLOQUEADO:** review não executado, CodeRabbit não respondeu, segredo exposto, autenticação enfraquecida, capacidade não demonstrada tratada como fato, publicação/deploy habilitados sem autorização.
-- **NÃO AVALIADO:** ausência de evidência. Nunca equiparar à aprovação.
+## Decisão de governança
+Por decisão expressa do proprietário em 17/11/2026, o CodeRabbit deixa de ser requisito ou ferramenta de revisão deste projeto. O arquivo de integração `.coderabbit.yaml` foi retirado da branch R05. A revisão independente continua obrigatória, mas **sem dependência de uma GitHub App de revisão automática**.
 
-## Submissão e conferência
-- PR: https://github.com/tight-knit-net/gaia-rag-mini/pull/1
-- Manual CodeRabbit: comentar `@coderabbitai full review` no PR; a emissão do comentário apenas **solicita** a revisão.
-- Checar PR reviews, conversação, comentários inline, status checks e eventual review bot. Registrar autor, data, link, conclusão e achados.
-- Não converter feedback do bot em merge automático; qualquer correção fica na branch de documentos e será reavaliada.
-- Se não houver revisão observável, registrar `REVISÃO NÃO COMPROVADA` e não declarar DG-03 aprovado.
-- Não aceitar revisão executada em outro repositório/PR como evidência deste pacote.
+## Escopo da revisão humana/independente
+1. Consistência entre o AS-IS observado na DigitalOcean, o TO-BE da Linode e a topologia Cloudflare Access/Tunnel/Qdrant Cloud.
+2. Autorização por identidade verificada e `process_id` em todas as leituras, incluindo UUID, fonte e similaridade. Não assumir isolamento por namespace.
+3. Separação dos estados de aprovação documental, proposta, clique humano no portal, persistência e readback.
+4. Contratos da MCP e capacidade real do host em receber Skills over MCP ou plugin ChatGPT; não supor ativação automática.
+5. Rastreabilidade RF/RNF → backlog → plano de testes → gates DG/G.
+6. Ausência de upload de artefatos e congelamento de publicação e deploy nos workflows (GHCR/Linode desabilitados por `if: false`).
+7. Proveniência e preservação integral de R04/R03.1; nenhuma mudança em Qdrant/Access/Cloudflare.
+8. Custos, limites e riscos de concorrência de cargas na Linode; rollback descrito sem falsa declaração de teste.
 
-## Formulário de decisão (preenchimento após recebimento dos pareceres)
-| Campo | Estado atual |
-|---|---|
-| Código e documentação revisados | Aguardando parecer |
-| CodeRabbit no PR #1 | Pedido manual enviado; nenhuma revisão/comentário do bot comprovado na verificação de 17/11/2026 |
-| Achados críticos pendentes | Não avaliados |
-| DG-03 (revisão) | BLOQUEADO até evidência real |
-| Autoridade de aceite do projeto | A definir |
-| Autorização para iniciar código | NÃO CONCEDIDA |
-| Autorização para build/publish/deploy | NÃO CONCEDIDA |
+## Parecer exigido
+O revisor deve identificar a versão/commit, os arquivos/linhas analisados, os achados materiais (com severidade, evidência e recomendação), itens inconclusivos e conclusão **APROVADO DOCUMENTALMENTE**, **AJUSTES SOLICITADOS** ou **BLOQUEADO**. Registrar o parecer no próprio PR, ou em documento versionado e assinado pelo responsável.
 
-## Regras de segurança do pedido de review
-Não usar comandos CodeRabbit de autofix, merge, aprovação automática, workflow_dispatch, publicação de pacote, instalação na Linode ou transferência de secrets. Solicitar **somente análise**.
+A ausência de observações não significa aprovação. Nenhum comentário externo é canônico: toda sugestão deve ser confrontada com a arquitetura verificada, contrato de segurança e fonte oficial antes de correção.
+
+## Gate DG-03 e decisões separadas
+- DG-03: **PENDENTE** até existir parecer independente verificável e tratamento dos pontos materiais.
+- DG-04: aceite da arquitetura pelo responsável, separado da conclusão de revisão.
+- DG-06: autorização expressa para começar a escrever código, nunca inferida do aceite do projeto.
+- Publicação, GHCR, container, Linode, Cloudflare, Qdrant, merge e mudanças de segurança permanecem proibidos sem autorização específica posterior.
+
+## Registro de retirada da ferramenta anterior
+O projeto já teve solicitações históricas de revisão automática no PR #1, sem parecer observado. Essa tentativa foi encerrada por decisão do proprietário. A revogação da **GitHub App** em nível de conta/repositório precisa ser confirmada nas instalações do GitHub; remoção do arquivo não revoga o acesso que o aplicativo eventualmente tenha. A configuração de GitHub App para outros repositórios não pode ser alterada como efeito colateral.
