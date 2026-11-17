@@ -29,7 +29,7 @@
 | Campo | Estado atual |
 |---|---|
 | Código e documentação revisados | Aguardando parecer |
-| CodeRabbit no PR #1 | A verificar após solicitação |
+| CodeRabbit no PR #1 | Pedido manual enviado; nenhuma revisão/comentário do bot comprovado na verificação de 17/11/2026 |
 | Achados críticos pendentes | Não avaliados |
 | DG-03 (revisão) | BLOQUEADO até evidência real |
 | Autoridade de aceite do projeto | A definir |
