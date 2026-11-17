@@ -21,6 +21,7 @@ O documento principal é **[PROJETO_EXECUTIVO_R05.md](PROJETO_EXECUTIVO_R05.md)*
 | Testes previstos e evidências | [PLANO_DE_TESTES_R05.md](PLANO_DE_TESTES_R05.md) |
 | Gates de desenho e operação | [MATRIZ_GATES.md](MATRIZ_GATES.md) |
 | Revisão CodeRabbit | [PROTOCOLO_REVISAO_R05.md](PROTOCOLO_REVISAO_R05.md) |
+| Verificação do parecer e auditoria independente | [VERIFICACAO_REVISAO_CODERABBIT_2026-11-17.md](VERIFICACAO_REVISAO_CODERABBIT_2026-11-17.md) |
 | Condição do CI e Linode | [STATUS_CICD_LINODE.md](STATUS_CICD_LINODE.md) |
 | Relatório histórico de execução R05 | [RELATORIO_DE_EXECUCAO_R05.md](RELATORIO_DE_EXECUCAO_R05.md) |
 | Proveniência e justificativas | [RELATORIO_DIAGNOSTICO_2026-11-17.md](RELATORIO_DIAGNOSTICO_2026-11-17.md) |
