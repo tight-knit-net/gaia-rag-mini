@@ -38,3 +38,9 @@ Este repositório contém proposta de infra e CI para revisão. **Não executar*
 **Fontes canônicas:** [R04 no Drive](https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-) e [R03.1 preservada](https://drive.google.com/drive/folders/15X-POHeZGrzQlY8ZeJYxgrW0eJYvZmMf).
 
 [Pull Request de revisão documental #1](https://github.com/tight-knit-net/gaia-rag-mini/pull/1)
+
+## Parecer de revisão documental
+A análise assistida identificou bloqueadores BR-01..BR-04 documentados em [PROJETO_EXECUTIVO_R05.md](PROJETO_EXECUTIVO_R05.md), [MATRIZ_GATES.md](MATRIZ_GATES.md) e no [parecer técnico](PARECER_REVISAO_TECNICA_R05_2026-11-17.md). Trata-se de revisão de consistência documental, **não** parecer de revisor externo independente, nem homologação operacional.
+
+O Fireflies foi consultado, mas não houve reunião/ata relacionada acessível. Nenhuma decisão foi inferida dessa ausência.
+
