@@ -6,7 +6,7 @@
 |---|---|---|
 | DG-01 | Escopo, AS-IS/TO-BE, requisitos, interfaces e decisões documentados | DOCUMENTAÇÃO CONCLUÍDA; aguardando revisão |
 | DG-02 | Backlog, testes, riscos, rollback e dependências rastreáveis | DOCUMENTAÇÃO CONCLUÍDA; aguardando revisão |
-| DG-03 | Parecer CodeRabbit efetivo ou revisão independente verificada, com achados resolvidos | PENDENTE (antes da solicitação não havia parecer registrado) |
+| DG-03 | Parecer de revisão técnica independente verificável, com achados materiais resolvidos | PENDENTE DE REVISÃO INDEPENDENTE |
 | DG-04 | Responsável pelo projeto aceita desenho, limites de segurança e decisões condicionadas | PENDENTE |
 | DG-05 | Publicação/implantação bloqueadas no PR e sem merge automático | PROPOSTA CONFIGURADA na branch, validação CI pendente da revisão |
 | DG-06 | Autorização EXPRESSA para começar código (distinta de autorização de publicar) | NÃO CONCEDIDA |
@@ -26,7 +26,7 @@
 | G09 | Portal humano Cloudflare Access, clique e readback em teste | NÃO EXECUTADO |
 | G10 | Rede, timeout, replay, ausência de identidade e negativas | NÃO EXECUTADO |
 | G11 | Benchmark Linode, implantação de teste e rollback ensaiado | NÃO EXECUTADO |
-| G12 | CodeRabbit/revisão independente e CI aprovados para código do runtime | NÃO EXECUTADO |
+| G12 | Revisão técnica independente e CI aprovados para código do runtime | NÃO EXECUTADO |
 
 ## Critérios de liberação
 - **Projeto executivo pode ser apresentado a review:** documentação DG-01/DG-02 preenchida.
