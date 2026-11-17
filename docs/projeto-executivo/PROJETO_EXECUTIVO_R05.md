@@ -107,3 +107,17 @@ O código novo **não pode começar** enquanto faltar qualquer item obrigatório
 
 ## 10. Declaração de encerramento documental
 O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Encerramento documental proposto; revisão e aceite ainda não concluídos**. Se a revisão independente identificar uma falha material, este documento deve ser revisado e reavaliado. Nenhuma ação de escrita do runtime ou publicação fica implícita.
+
+## 6.1 Achados da revisão técnica e bloqueadores ainda não resolvidos
+A revisão do material existente identificou que `SKILL.md` admite consulta por `memory_get`/`memory_find_by_source` com verificação do `process_id` **após** a recuperação. Em ambiente de múltiplos clientes, tal verificação tardia não evita que o serviço exponha dados de terceiros ao host. **BR-01 (CRÍTICO):** antes da implementação ou ativação do fluxo, comprovar ACL server-side por identidade, `tenant_id` e `process_id` para todas as ferramentas; corrigir a orientação correspondente na skill em etapa autorizada. Enquanto não comprovado, não permitir esses métodos no fluxo multi-tenant.
+
+**BR-02 (ALTO):** verificar negociação da extensão beta Skills over MCP (capabilities `server/discover`, `skills/list`, `skills/get`, `resources/read` e `resources/directory/read` apenas quando anunciado); confirmar revisão-base e manifestos de recursos. O host ainda não demonstrou consumir a extensão. Conferir ADR-0001 revisada.
+
+**BR-03 (ALTO):** `agents/openai.yaml` não traz dependência MCP real e não existe plugin validado. Qualquer pacote futuro deve declarar dependência efetiva e testar autorização/conexão; não inventar URL nem marcar como instalado.
+
+**BR-04 (ALTO):** os pipelines GHCR/Linode estão congelados na branch; os scripts de deployment, chave de acesso, pull do registro privado, isolamento e rollback ainda não passaram auditoria end-to-end. O sucesso da CI estática não elimina o risco.
+
+Esses achados são **revisão documental assistida**, não homologação do runtime nem parecer de revisor externo independente. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
+
+**Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
+
