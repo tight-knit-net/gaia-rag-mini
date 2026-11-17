@@ -1,14 +1,19 @@
-# GitHub Wiki x documentação versionada
+# Como está organizada a documentação do projeto no GitHub
+O repositório privado mantém arquivos de projeto em `docs/projeto-executivo/` e skill versionada em `skills/gaia-rag-processos-administrativos/`. Essa estrutura permite histórico de commits, revisão CodeRabbit, CI estático e rastreabilidade no mesmo PR. Não depende de habilitar a GitHub Wiki nativa, nem de duplicar documentos.
 
-O GitHub oferece uma Wiki própria, versionada em repositório separado `<repo>.wiki.git`, cujo acesso e automação diferem do repositório de código. Para esta R05, a documentação foi colocada em `docs/projeto-executivo/` no mesmo repositório, de forma auditável por pull request, reviews e CI. É equivalente funcional à pasta executiva solicitada, mas NÃO é a GitHub Wiki nativa.
+**Porta de entrada:** [Projeto Executivo R05](PROJETO_EXECUTIVO_R05.md). [Índice e estado](README.md).
 
-Opcional futuramente: habilitar a Wiki nativa nas configurações do GitHub e publicar apenas um índice com links para os documentos canônicos desta pasta, evitando duplicação de conteúdo.
+## Política
+- Esta branch não contém autorização de merge para `main`, nem de publicar imagem ou implantar container.
+- Novos módulos/código aguardam revisão formal e autorização explícita do usuário.
+- R04 e R03.1 são fontes históricas preservadas no Drive.
+- Arquivos de infraestrutura aqui são propostas para revisão e estão em modo bloqueado.
 
-Navegação:
-- README.md — projeto e escopo
-- ARQUITETURA.md — estado AS-IS e TO-BE
-- MIGRACAO_AKAMAI.md — execução, rollback e comparação de hosts
-- ADR-0001-DISTRIBUICAO-SKILL.md — canais MCP/plugin
-- SEGURANCA_E_ISOLAMENTO.md — contratos de autorização
-- MATRIZ_GATES.md — requisitos e homologação
-- RELATORIO_DIAGNOSTICO_2026-11-17.md — observações e lacunas
+## Estrutura por finalidade
+`ARQUITETURA.md` + `ADR-0001-DISTRIBUICAO-SKILL.md` + `ADR-0002-FREEZE-PUBLICACAO.md`: decisões.
+`BACKLOG_IMPLEMENTACAO_R05.md`: tarefas futuras, ainda proibidas.
+`PLANO_DE_TESTES_R05.md`: ensaios e evidências.
+`MATRIZ_GATES.md`: critérios objetivos de passagem.
+`PROTOCOLO_REVISAO_R05.md`: CodeRabbit e parecer técnico.
+`STATUS_CICD_LINODE.md`: o que de fato está preparado no GitHub e no host.
+`RELATORIO_DE_EXECUCAO_R05.md`: registro histórico da etapa inicial.
