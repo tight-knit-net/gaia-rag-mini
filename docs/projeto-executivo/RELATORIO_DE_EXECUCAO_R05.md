@@ -1,4 +1,7 @@
 # GAIA RAG Mini — Relatório técnico de execução e gates R05
+
+
+> **Atualização de governança (17/11/2026):** a referência histórica ao CodeRabbit abaixo descreve tentativas anteriores, já canceladas. A ferramenta foi retirada da configuração R05 a pedido do proprietário; a revisão atual será independente, conforme `PROTOCOLO_REVISAO_R05.md`. Nenhum registro histórico constitui requisito ativo.
 **Data:** 17/11/2026. **Execução:** preparação técnica versionada; implantação NÃO realizada.
 
 ## Resultado efetivamente entregue
