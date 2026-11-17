@@ -23,7 +23,7 @@ A disponibilidade da skill na MCP **não** garante carregamento automático em C
 | Cloudflare | Manter hostname, Access, Tunnel e política atual; nenhuma alteração nesta fase | INVARIANTE |
 | Qdrant | Manter coleção `chatgpt_memoria_aprovada`, vetores/índices/dados reais, sem reindexação | INVARIANTE |
 | Gravação | Preparação é proposta; portal protegido + clique humano é o único ponto de autorização final | INVARIANTE |
-| GitHub | Revisão por PR + CodeRabbit verificado; CI estático; sem merge automático | DECISÃO |
+| GitHub | Revisão técnica independente por PR, com parecer verificável; CI estático; sem merge automático | DECISÃO |
 | Publicação | Workflows GHCR/Linode condicionados a `if: false` nesta branch; exigem nova mudança revisada e autorização explícita | BLOQUEIO |
 
 ## 3. Arquitetura observada e arquitetura-alvo
@@ -61,7 +61,7 @@ Plano da skill: `arquivos R05 versionados -> [Skills over MCP ou plugin, conform
 - **RNF-06 Capacidade:** a `nestground-ai` possui cargas NestGround em execução; container futuro terá quota inicial documentada de 1 vCPU/1GiB em ambiente isolado, sujeita a benchmark; não extrapolar capacidade do snapshot.
 - **RNF-07 Reversibilidade:** manter origem DO operacional; rollback exige prova independente, não declaração em runbook.
 - **RNF-08 Supply chain:** versões fixadas, proveniência de imagem, checksum/SBOM e scanner antes de qualquer build autorizada.
-- **RNF-09 Controle de mudanças:** PR obrigatório, CodeRabbit ou revisão independente documentada, aprovação humana de execução e bloqueio de publicação.
+- **RNF-09 Controle de mudanças:** PR obrigatório, revisão técnica independente documentada, aprovação humana de execução e bloqueio de publicação.
 - **RNF-10 Segregação:** todo tipo de busca, inclusive similaridade/UUID/fonte, deve negar exposição cruzada por cliente, não somente por instrução no prompt.
 
 ## 6. Segurança lógica e dados
@@ -79,7 +79,7 @@ Os arquivos de CI/CD estão na branch documental para revisão de segurança. O 
 **Ordem de trabalho:**
 1. **D0 — Projeto executivo:** este documento + backlog + matriz de riscos + plano de testes e rollback; revisar e obter aceite técnico.
 2. **D1 — Autorização para codificar:** após D0 aprovado, mapear fonte operacional da DO e planejar commits limitados à aplicação e testes.
-3. **D2 — Validação do código:** pytest/CI, análise de dependências, revisão CodeRabbit, checagens de segurança, pacote reproduzível; sem deploy.
+3. **D2 — Validação do código:** pytest/CI, análise de dependências, revisão técnica independente, checagens de segurança, pacote reproduzível; sem deploy.
 4. **D3 — Homologação isolada:** somente mediante autorização específica, testar host, Access, ACL, portal humano, rollback e capacidade sintética.
 5. **D4 — Publicação de produção:** autorização separada e plano de mudança; nenhuma decisão automática de cutover.
 
@@ -87,7 +87,7 @@ Os arquivos de CI/CD estão na branch documental para revisão de segurança. O 
 O código novo **não pode começar** enquanto faltar qualquer item obrigatório:
 - **DG-01** Documentação executiva completa, sem contradição entre AS-IS e TO-BE.
 - **DG-02** Inventário de requisitos, backlog, critérios de aceite, riscos e rollback aprovado.
-- **DG-03** Revisão CodeRabbit efetivamente recebida e analisada; ou parecer independente formal se houver indisponibilidade comprovada.
+- **DG-03** Parecer de revisão técnica independente efetivamente recebido, analisado e com achados materiais resolvidos.
 - **DG-04** Definições de escopo, pontos canônicos, interfaces e plano de testes aprovados por responsável autorizado.
 - **DG-05** Confirmação do freeze de publicação e implantação, com segregação do PR e `main`.
 - **DG-06** Autorização explícita para iniciar desenvolvimento (não inclui autorização de deploy).
@@ -106,4 +106,4 @@ O código novo **não pode começar** enquanto faltar qualquer item obrigatório
 - Fontes normativas técnicas: https://developers.cloudflare.com/agents/skills/ ; https://skills.extensions.modelcontextprotocol.io/specification/beta/skills ; https://developers.openai.com/plugins/build/skills .
 
 ## 10. Declaração de encerramento documental
-O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Encerramento documental proposto; revisão e aceite ainda não concluídos**. Se o CodeRabbit encontrar uma falha material, este documento deve ser revisado e reavaliado. Nenhuma ação de escrita do runtime ou publicação fica implícita.
+O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Encerramento documental proposto; revisão e aceite ainda não concluídos**. Se a revisão independente identificar uma falha material, este documento deve ser revisado e reavaliado. Nenhuma ação de escrita do runtime ou publicação fica implícita.
