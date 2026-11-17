@@ -54,8 +54,9 @@ jobs:
           image = Path(".github/workflows/rag-ghcr-image.yml").read_text()
           deploy = Path(".github/workflows/rag-linode-staging.yml").read_text()
           ci = Path(".github/workflows/r05-skill-static.yml").read_text()
-          assert 'if: ${{ false }}' in image, "GHCR workflow must remain disabled"
-          assert 'if: ${{ false }}' in deploy, "Linode workflow must remain disabled"
+          disabled = "if: $" + "{{ false }}"
+          assert disabled in image, "GHCR workflow must remain disabled"
+          assert disabled in deploy, "Linode workflow must remain disabled"
           assert "on:\n  push:" not in image, "GHCR push trigger must stay absent"
           review_ci = __import__("yaml").safe_load(ci)
           upload_steps = [
