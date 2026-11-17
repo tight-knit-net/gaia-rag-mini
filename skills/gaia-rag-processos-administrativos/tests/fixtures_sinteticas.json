@@ -1,0 +1,26 @@
+{
+  "notice": "Todos os dados são fictícios, para teste sem escrita no Qdrant",
+  "cases": [
+    {
+      "process_id": "DEMO-MESAS-001",
+      "assunto": "mesas_cadeiras",
+      "municipio": "Cidade Alfa/XX",
+      "status": "minuta_interna",
+      "decision": "nenhuma"
+    },
+    {
+      "process_id": "DEMO-MESAS-002",
+      "assunto": "mesas_cadeiras",
+      "municipio": "Cidade Beta/YY",
+      "status": "protocolado",
+      "decision": "nenhuma"
+    },
+    {
+      "process_id": "DEMO-MERCADO-003",
+      "assunto": "minimercado_conveniencia",
+      "municipio": "Cidade Alfa/XX",
+      "status": "exigencia_documental",
+      "decision": "nenhuma"
+    }
+  ]
+}
