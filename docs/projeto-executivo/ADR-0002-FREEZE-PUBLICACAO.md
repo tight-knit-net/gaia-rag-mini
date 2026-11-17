@@ -7,10 +7,11 @@ O proprietário determinou que esta fase sirva exclusivamente para concluir, org
 ## Decisão
 1. `.github/workflows/rag-ghcr-image.yml` não possui trigger `push` e mantém seu job `if: false`.
 2. `.github/workflows/rag-linode-staging.yml` mantém `if: false`, independentemente do `workflow_dispatch`.
-3. Todo o conteúdo R05 permanece em PR para revisão, sem integrar automaticamente a `main`.
-4. Scripts e Compose são artefatos de design sob revisão, não sistemas autorizados a executar.
-5. Não usar secrets, chaves, tokens, ferramentas de CodeRabbit autofix, operações Cloudflare ou Docker nesta fase.
-6. Nenhuma autorização para iniciar código é inferida do aceite documental; cada gate tem decisão própria.
+3. `.github/workflows/r05-skill-static.yml` valida temporariamente o conteúdo ZIP **somente no runner**, sem `actions/upload-artifact` e sem release; o CI verifica expressamente que os dois jobs de publicação/implantação permanecem desabilitados.
+4. Todo o conteúdo R05 permanece em PR para revisão, sem integrar automaticamente a `main`.
+5. Scripts e Compose são artefatos de design sob revisão, não sistemas autorizados a executar.
+6. Não usar secrets, chaves, tokens, ferramentas de CodeRabbit autofix, operações Cloudflare ou Docker nesta fase.
+7. Nenhuma autorização para iniciar código é inferida do aceite documental; cada gate tem decisão própria.
 
 ## Justificativa
 O pipeline de imagem anterior permitia publicação GHCR em push para `main` quando existisse Dockerfile. Isso era incompatível com a restrição expressa de não publicar. A mudança proposta impede qualquer publicação ou deploy por esses workflows, mesmo que sejam incluídos na `main` por engano, até nova revisão com autorização.
