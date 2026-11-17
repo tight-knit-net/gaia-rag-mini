@@ -1,4 +1,7 @@
 # Relatório de inspeção R05 — 17/11/2026
+
+
+> **Atualização de governança (17/11/2026):** a referência histórica ao CodeRabbit abaixo descreve tentativas anteriores, já canceladas. A ferramenta foi retirada da configuração R05 a pedido do proprietário; a revisão atual será independente, conforme `PROTOCOLO_REVISAO_R05.md`. Nenhum registro histórico constitui requisito ativo.
 **Tipo:** inspeção de conectores e hosts; nenhuma migração ou escrita de memória.
 
 ## Observações técnicas
