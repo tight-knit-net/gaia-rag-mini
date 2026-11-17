@@ -34,3 +34,14 @@
 - **Testar em host/Linode:** nova autorização específica e ambiente isolado.
 - **Publicar / implantar / migrar:** autorização expressa adicional, G02..G12 demonstrados e plano de rollback aprovado.
 - **Nenhum gate de segurança ou controle humano é dispensado** por sucesso de linter ou saúde de container.
+
+## C. Bloqueadores de desenho identificados na revisão (ainda não homologados)
+| ID | Condição de aceite | Estado |
+|---|---|---|
+| BR-01 — CRÍTICO | Provar ACL do backend **antes** de retornar qualquer memória via UUID, fonte ou similaridade e harmonizar SKILL.md | BLOQUEADO — runtime não inspecionado para esse teste |
+| BR-02 — ALTO | Contrato de Skills over MCP beta e suporte efetivo do host comprovados, sem confundir `resources/read` com novo método | PENDENTE — execução futura |
+| BR-03 — ALTO | Dependência da MCP no pacote de plugin identificada e testada, sem URL presumida | PENDENTE — execução futura |
+| BR-04 — ALTO | Pipeline GHCR/Linode, credenciais e rollback revisados antes de qualquer habilitação | BLOQUEADO — publicação proibida |
+
+A revisão de consistência realizada pelo assistente que também participou da elaboração **não equivale a revisor externo independente**. DG-03 permanece PENDENTE até parecer independente; DG-04 e DG-06 dependem do proprietário. Nenhum BR é tratado como incidente real ou teste de host executado.
+
