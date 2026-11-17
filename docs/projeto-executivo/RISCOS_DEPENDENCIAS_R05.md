@@ -30,3 +30,11 @@
 - **D-08:** aprovação específica e futura para reabilitar workflows GHCR/deploy.
 
 **Não preencher lacunas com suposições.** Uma decisão pendente pode estar documentada e ainda impedir código ou deploy.
+
+## Complemento da revisão técnica — riscos confirmados no desenho
+- **RK-16 (CRÍTICO):** pós-filtragem de resultado em `SKILL.md` para `memory_get`/`memory_find_by_source` não evita exposição ao host. Controle exigido: autorização no backend **antes** do retorno de qualquer dado. Evidência de fechamento: testes A/B negativos em todas as rotas. **NÃO CORRIGIDO NO RUNTIME**.
+- **RK-17 (ALTO):** a extensão MCP Skills beta pode não ser negociada pelo host. Controle: prova de `server/discover` e leitura de recursos por `resources/read`, opção de plugin validado; não anunciar carregamento implícito. **PENDENTE**.
+- **RK-18 (ALTO):** `agents/openai.yaml` não traz dependência MCP verificada e os scripts Linode/GHCR não foram revisados em ambiente homologado. Controles: bloquear instalação/publicação, mapear contratos reais, revisar permissões e CI. **PENDENTE**.
+
+**Nota de integridade:** o Fireflies foi consultado por reuniões GAIA RAG e pelo índice geral; nenhuma ata acessível foi encontrada, de modo que nenhuma nova decisão de reunião foi presumida.
+
