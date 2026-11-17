@@ -16,6 +16,7 @@ O documento principal é **[PROJETO_EXECUTIVO_R05.md](PROJETO_EXECUTIVO_R05.md)*
 | Distribuição da skill | [ADR-0001-DISTRIBUICAO-SKILL.md](ADR-0001-DISTRIBUICAO-SKILL.md) |
 | Congelamento de publicação | [ADR-0002-FREEZE-PUBLICACAO.md](ADR-0002-FREEZE-PUBLICACAO.md) |
 | Segurança e ACL | [SEGURANCA_E_ISOLAMENTO.md](SEGURANCA_E_ISOLAMENTO.md) |
+| Riscos e dependências | [RISCOS_DEPENDENCIAS_R05.md](RISCOS_DEPENDENCIAS_R05.md) |
 | Tarefas de implementação, ainda não autorizadas | [BACKLOG_IMPLEMENTACAO_R05.md](BACKLOG_IMPLEMENTACAO_R05.md) |
 | Testes previstos e evidências | [PLANO_DE_TESTES_R05.md](PLANO_DE_TESTES_R05.md) |
 | Gates de desenho e operação | [MATRIZ_GATES.md](MATRIZ_GATES.md) |
