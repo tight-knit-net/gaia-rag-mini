@@ -1,24 +1,39 @@
 # GAIA RAG Mini — Projeto Executivo R05
-**Data:** 17/11/2026. **Estado:** pré-homologação; não há deploy R05.
+**Data de referência:** 17/11/2026
+**Documentação:** COMPLETA PARA REVISÃO TÉCNICA
+**Revisão externa:** PENDENTE DE PARECER COMPROVADO
+**Código de aplicação, build, publicação e implantação:** NÃO AUTORIZADOS
 
-## Objetivo
-Evoluir a skill R04 para R05, distribuí-la pelo MCP existente/Cloudflare ou por plugin ChatGPT compatível e preparar a migração do container GAIA RAG da DigitalOcean para Akamai Linode. Preservar integralmente Qdrant Cloud, dimensão/coleção/índices, autenticação, Cloudflare Access e clique humano para persistir memória.
+## Leia primeiro
+O documento principal é **[PROJETO_EXECUTIVO_R05.md](PROJETO_EXECUTIVO_R05.md)**. Ele consolida objetivo, estado observado, arquitetura-alvo, requisitos RF/RNF, segurança, interfaces, fases, gates e termos de aceite.
 
-## AS-IS comprovado em leituras
-- Container DigitalOcean gaia-qdrant-memory-gaia-qdrant-memory-candidate-1, imagem gaia-qdrant-memory:candidate-v2, Uvicorn 8000, saudável, volume local /state.
-- Cloudflare: tunnel gaia-qdrant-memory-independent-20261117 saudável, hostname memory.tight-knit.net -> gaia-qdrant-memory-candidate:8000. Access: app GAIA Memory Qdrant (independente), política GAIA Memory Owner Only.
-- GAIA RAG informa Qdrant Cloud configurado, coleção chatgpt_memoria_aprovada; aprovação humana obrigatória pelo portal Access. Namespace chatgpt não significa ACL por cliente.
-- Linodes candidatos 8GB/4vCPU: nestground-ai (Miami, 138GB disco livre, 5,6GB RAM disponível), gogetterhub-nyc-vm (Nova York, 42GB disco livre, 6,2GB RAM disponível). Valores transitórios.
-- GitHub privado tight-knit-net/gaia-rag-mini: originalmente README inicial, sem fonte completa do runtime demonstrada.
+## Índice executivo
+| Tema | Documento |
+|---|---|
+| Escopo, requisitos e projeto completo | [PROJETO_EXECUTIVO_R05.md](PROJETO_EXECUTIVO_R05.md) |
+| Arquitetura atual e futura | [ARQUITETURA.md](ARQUITETURA.md) |
+| Migração e rollback | [MIGRACAO_AKAMAI.md](MIGRACAO_AKAMAI.md) |
+| Distribuição da skill | [ADR-0001-DISTRIBUICAO-SKILL.md](ADR-0001-DISTRIBUICAO-SKILL.md) |
+| Congelamento de publicação | [ADR-0002-FREEZE-PUBLICACAO.md](ADR-0002-FREEZE-PUBLICACAO.md) |
+| Segurança e ACL | [SEGURANCA_E_ISOLAMENTO.md](SEGURANCA_E_ISOLAMENTO.md) |
+| Tarefas de implementação, ainda não autorizadas | [BACKLOG_IMPLEMENTACAO_R05.md](BACKLOG_IMPLEMENTACAO_R05.md) |
+| Testes previstos e evidências | [PLANO_DE_TESTES_R05.md](PLANO_DE_TESTES_R05.md) |
+| Gates de desenho e operação | [MATRIZ_GATES.md](MATRIZ_GATES.md) |
+| Revisão CodeRabbit | [PROTOCOLO_REVISAO_R05.md](PROTOCOLO_REVISAO_R05.md) |
+| Condição do CI e Linode | [STATUS_CICD_LINODE.md](STATUS_CICD_LINODE.md) |
+| Relatório histórico de execução R05 | [RELATORIO_DE_EXECUCAO_R05.md](RELATORIO_DE_EXECUCAO_R05.md) |
+| Proveniência e justificativas | [RELATORIO_DIAGNOSTICO_2026-11-17.md](RELATORIO_DIAGNOSTICO_2026-11-17.md) |
 
-## Entregas R05
-1. Skill única versionada em skills/gaia-rag-processos-administrativos/ com módulos e templates derivados da R04.
-2. Arquitetura de referência, ADR de distribuição, plano de migração, rollback e matriz de homologação.
-3. CI de parsing e regressão estática, sem acesso a segredos ou serviço real.
-4. Testes reais de host, ACL, portal e rollback apenas após gates de segurança.
+## Regra de execução
+Este repositório contém proposta de infra e CI para revisão. **Não executar** GHCR, deploy Linode, troca de Cloudflare Tunnel, alteração de Access, Qdrant ou merge. O `main` fica intocado por esta revisão. O PR é um mecanismo de controle documental, não uma autorização de implantação.
 
-## Regra de proteção
-Nenhum commit desta branch autoriza deploy, mutação do Qdrant, mudança de túnel/DNS, alteração Access ou persistência sem clique humano. Outros trabalhos poderão continuar na main; R05 será entregue em PR de rascunho e sem merge automático.
+### Estado real versus simulação
+- Histórico R04: 23 regressões estáticas e testes de pacote, não homologação no ChatGPT.
+- Instância DigitalOcean: ativa anteriormente, sem alteração nesta fase.
+- Linode: preparação anterior sem container GAIA RAG iniciado; capacidade em staging exige benchmark.
+- CodeRabbit: proprietário informou vínculo com GitHub; **revisão efetiva no PR #1 deve aparecer como parecer/comment verificável**.
+- Skill no host: pendente; artefato de CI não prova instalação ou carregamento.
 
-Fonte R04: https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-
-R03.1 preservada: https://drive.google.com/drive/folders/15X-POHeZGrzQlY8ZeJYxgrW0eJYvZmMf
+**Fontes canônicas:** [R04 no Drive](https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-) e [R03.1 preservada](https://drive.google.com/drive/folders/15X-POHeZGrzQlY8ZeJYxgrW0eJYvZmMf).
+
+[Pull Request de revisão documental #1](https://github.com/tight-knit-net/gaia-rag-mini/pull/1)
