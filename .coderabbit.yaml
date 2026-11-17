@@ -1,0 +1,24 @@
+# CodeRabbit V2 — projeto GAIA RAG Mini
+version: 2
+language: pt-BR
+reviews:
+  profile: assertive
+  high_level_summary: true
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: true
+    auto_incremental_review: true
+  path_instructions:
+    - path: ".github/**"
+      instructions: |
+        Auditar permissões mínimas GITHUB_TOKEN, ações de terceiros, secrets, injeção via inputs do workflow, proteção da branch main e proibição de deploy automático em produção.
+    - path: "skills/**"
+      instructions: |
+        Validar que nenhuma ferramenta inventada concede permissão de gravação, que process_id e tenant são validados no backend, e que prepare_after_approval NÃO persiste memória.
+    - path: "src/**"
+      instructions: |
+        Inspecionar autenticação Cloudflare Access, segregação de tenants em toda consulta Qdrant, autorização por processo, deduplicação e aprovação humana no portal protegido.
+    - path: "docs/**"
+      instructions: |
+        Distinguir o estado observado do proposto e não tratar simulação, linter ou healthcheck como homologação operacional.
