@@ -7,7 +7,7 @@
 | TD-01 | Analisar YAML da skill, scripts, recursos e contratos JSON | CI e manifesto do commit |
 | TD-02 | Regressões de instrução: não persistência, separação de processo, fontes | 23 asserções R05 e fixtures |
 | TD-03 | Conferir que GHCR/Linode não podem publicar ou fazer deploy | Workflow `if: false`, ausência de triggers automáticos |
-| TD-04 | Executar revisão CodeRabbit do PR documental | comentário/review/check registrado pelo bot |
+| TD-04 | Executar revisão técnica independente do PR documental | parecer identificado, comentários rastreáveis, resposta aos achados e decisão registrada no PR |
 
 ## Fase de código e runtime FUTUROS — não executados
 | ID | Entrada | Esperado | Gate |
