@@ -45,7 +45,12 @@ printf 'RAG_IMAGE=%s\n' "$IMAGE" > "$TMP"
 chmod 600 "$TMP"
 mv -f -- "$TMP" "$BASE/staging/.env"
 if ! docker compose --project-directory "$BASE/staging" -f "$COMPOSE" config -q; then
-  echo 'COMPOSE_CONFIG_INVALID' >&2
+  echo 'COMPOSE_CONFIG_INVALID_ROLLBACK' >&2
+  if [[ -n "$OLD" ]]; then
+    printf 'RAG_IMAGE=%s\n' "$OLD" > "$BASE/staging/.env"
+  else
+    rm -f "$BASE/staging/.env"
+  fi
   exit 70
 fi
 if ! docker compose --project-directory "$BASE/staging" -f "$COMPOSE" up -d --pull never --no-build --wait --wait-timeout 90; then
