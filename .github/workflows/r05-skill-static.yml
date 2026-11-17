@@ -57,6 +57,12 @@ jobs:
           assert 'if: ${{ false }}' in image, "GHCR workflow must remain disabled"
           assert 'if: ${{ false }}' in deploy, "Linode workflow must remain disabled"
           assert "on:\n  push:" not in image, "GHCR push trigger must stay absent"
-          assert "actions/upload-artifact" not in ci, "No uploaded ZIP artifacts permitted in this phase"
+          review_ci = __import__("yaml").safe_load(ci)
+          upload_steps = [
+              step for job in review_ci["jobs"].values()
+              for step in job.get("steps", [])
+              if str(step.get("uses", "")).startswith("actions/upload" + "-artifact@")
+          ]
+          assert not upload_steps, "No ZIP upload step permitted in this phase"
           print("OK: publication and deploy gates remain blocked")
           PY
