@@ -177,6 +177,37 @@ def main():
                 check("R06-21_APPROVAL_STATUS_AUDIT",not err and preview["status"]=="approved")
                 newproposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-22_PREPARE_AFTER_APPROVED_RETURNS_SAME",not err and newproposal["status"]=="approved" and count()==1)
+                # R07 candidate-only contract checks on disposable Qdrant and DEMO ledger.
+                new_tools={"memory_process_timeline","memory_export_process",
+                           "memory_approval_audit","memory_stats",
+                           "memory_index_preview","gaia_skill_read_chunk"}
+                check("R07-01_NEW_TOOLS",new_tools<=tools)
+                chunk,err,_=tool("gaia_skill_read_chunk",{"path":"SKILL.md","max_chars":300})
+                check("R07-02_SKILL_CHUNK",not err and chunk["content"].startswith("---")
+                      and len(chunk["content"])<=300 and chunk["sha256"])
+                index,err,_=tool("memory_index_preview",{
+                    **scope,"title":"DEMO memorando","summary":"Triagem de documento e contrato DEMO",
+                    "source_ref":SOURCE})
+                check("R07-03_INDEX_PREVIEW",not err and index["automatic_save"] is False
+                      and index["external_llm_used"] is False)
+                timeline,err,_=tool("memory_process_timeline",scope)
+                check("R07-04_TIMELINE",not err and len(timeline["items"])==1
+                      and timeline["truncated"] is False)
+                exported,err,_=tool("memory_export_process",{**scope,"max_items":1})
+                check("R07-05_EXPORT_HASH",not err and exported["count"]==1
+                      and len(exported["sha256"])==64)
+                stats,err,_=tool("memory_stats",scope)
+                check("R07-06_STATS",not err and stats["qdrant_approved_points"]==1
+                      and stats["proposal_counts"]["approved"]==1)
+                audits,err,_=tool("memory_approval_audit",scope)
+                check("R07-07_AUDIT",not err and audits["storage_available"]
+                      and any(e["event"]=="readback_confirmed" for e in audits["events"]))
+                pending_after,err,_=tool("memory_pending_reviews",scope)
+                check("R07-08_APPROVED_NOT_PENDING",not err
+                      and pending_after["proposals"]==[]
+                      and pending_after["storage_available"])
+                check("R07-09_INDEX_PERSISTED_POST_CLICK",
+                      obtained["items"][0].get("index_method")=="r07_deterministic_v1")
                 # Same GAIA owner must see approved memory from a different client.
                 id_b="22222222-2222-4222-8222-222222222222"
                 payload_b={"namespace":NS,"tenant_id":TB,"process_id":PB,
