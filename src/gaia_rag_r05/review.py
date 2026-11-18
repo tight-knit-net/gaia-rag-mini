@@ -36,8 +36,12 @@ def _required_ref(value: str) -> str:
     return value
 
 def _registry_approved(capability: AuthorizedScope, source_ref: str,
-                       document_approval_ref: str, document_sha256: str) -> None:
-    """Approval is recorded by an operator-owned registry, not by tool arguments."""
+                       document_approval_ref: str, document_sha256: str) -> str:
+    """Verify documentary approval; return client tag as metadata, not permission.
+
+    Approved-document registry must uniquely identify this document version;
+    an owner can propose memory for any client's process.
+    """
     scope = require_issued_scope(capability)
     path = os.getenv("GAIA_RAG_APPROVED_DOCS_FILE", "")
     if not path:
@@ -45,18 +49,25 @@ def _registry_approved(capability: AuthorizedScope, source_ref: str,
     registry = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(registry, dict) or not isinstance(registry.get("approved_documents"), list):
         raise AccessDenied("DOCUMENT_APPROVAL_REGISTRY_INVALID")
+    matched = []
     for item in registry["approved_documents"]:
         if not isinstance(item, dict):
             raise AccessDenied("DOCUMENT_APPROVAL_REGISTRY_INVALID")
         if (item.get("namespace") == scope.namespace
-                and item.get("tenant_id") == scope.tenant_id
                 and item.get("process_id") == scope.process_id
                 and item.get("source_ref") == source_ref
                 and item.get("approval_ref") == document_approval_ref
                 and item.get("document_sha256") == document_sha256
                 and item.get("status") == "approved"):
-            return
-    raise AccessDenied("DOCUMENT_APPROVAL_NOT_VERIFIED")
+            matched.append(item)
+    if len(matched) != 1:
+        raise AccessDenied("DOCUMENT_APPROVAL_NOT_VERIFIED")
+    # A tenant/client tag is optional provenance, NEVER an access restriction.
+    tenant = matched[0].get("tenant_id", "unassigned")
+    if not isinstance(tenant, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,150}", tenant):
+        raise AccessDenied("DOCUMENT_APPROVAL_REGISTRY_INVALID")
+    return tenant
+
 
 def _connect():
     path = Path(os.getenv("GAIA_RAG_REVIEW_DB", "/state/reviews.sqlite3"))
@@ -107,9 +118,9 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
     url = _review_base()
     if os.getenv("GAIA_RAG_ENABLE_REVIEW") != "1":
         raise AccessDenied("REVIEW_DISABLED")
-    _registry_approved(capability, source_ref, document_approval_ref, document_sha256)
-    # Same approved document version and same exact candidate cannot be double-submitted.
-    identity_key = _digest(s.namespace, s.tenant_id, s.process_id, source_ref,
+    tenant_id = _registry_approved(capability, source_ref, document_approval_ref, document_sha256)
+    # Tenant remains optional provenance, not a grant.
+    identity_key = _digest(s.namespace, tenant_id, s.process_id, source_ref,
                            document_sha256, title.strip(), summary.strip())
     point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "gaia-r06:" + identity_key))
     with _connect() as conn:
@@ -122,7 +133,7 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
                 (id,identity_key,namespace,tenant_id,process_id,created_by,title,summary,
                  source_ref,document_approval_ref,document_sha256,point_id,status,created_at,expires_at)
                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                 (ident,identity_key,s.namespace,s.tenant_id,s.process_id,created_by,
+                 (ident,identity_key,s.namespace,tenant_id,s.process_id,created_by,
                   title.strip(),summary.strip(),source_ref,document_approval_ref,
                   document_sha256,point_id,"pending",now,now+_TTL))
             conn.execute("INSERT INTO audit(at,proposal_id,event,actor) VALUES (?,?,?,?)",
@@ -137,7 +148,9 @@ def get_proposal(identifier: str, capability: AuthorizedScope) -> dict:
     s = require_issued_scope(capability)
     with _connect() as conn:
         row = conn.execute("SELECT * FROM proposals WHERE id=?", (str(uuid.UUID(identifier)),)).fetchone()
-        if row is None or (row["namespace"],row["tenant_id"],row["process_id"]) != (s.namespace,s.tenant_id,s.process_id):
+        if row is None or row["namespace"] != s.namespace or row["process_id"] != s.process_id:
+            raise AccessDenied("PROPOSAL_NOT_FOUND")
+        if capability.access_mode != "owner" and row["tenant_id"] != s.tenant_id:
             raise AccessDenied("PROPOSAL_NOT_FOUND")
         return {"proposal_id":row["id"],"title":row["title"],"summary":row["summary"],
                 "source_ref":row["source_ref"],"status":row["status"],
@@ -199,7 +212,9 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
             raise AccessDenied("REVIEW_NOT_PENDING")
         # Validate the documentary approval registry again: it is revocable.
         cap=authorize(row["namespace"],row["tenant_id"],row["process_id"])
-        _registry_approved(cap,row["source_ref"],row["document_approval_ref"],row["document_sha256"])
+        tenant_tag = _registry_approved(cap,row["source_ref"],row["document_approval_ref"],row["document_sha256"])
+        if tenant_tag != row["tenant_id"]:
+            raise AccessDenied("DOCUMENT_APPROVAL_CHANGED")
         conn.execute("UPDATE proposals SET status='approving' WHERE id=?", (row["id"],))
         conn.execute("INSERT INTO audit(at,proposal_id,event,actor) VALUES (?,?,?,?)",
                      (_now(),row["id"],"human_click_authorized",actor))
@@ -233,7 +248,7 @@ def pending(capability: AuthorizedScope, limit: int = 20) -> dict:
         raise ValueError("INVALID_LIMIT")
     with _connect() as conn:
         rows=conn.execute("""SELECT id,title,status,expires_at FROM proposals
-           WHERE namespace=? AND tenant_id=? AND process_id=?
+           WHERE namespace=? AND process_id=?
            ORDER BY created_at DESC LIMIT ?""",
-           (s.namespace,s.tenant_id,s.process_id,limit)).fetchall()
+           (s.namespace,s.process_id,limit)).fetchall()
         return {"proposals":[dict(row) for row in rows]}
