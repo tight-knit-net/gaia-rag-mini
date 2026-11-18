@@ -14,7 +14,7 @@
 
 ## Bloqueio antes do corte
 
-A R06 no servidor Linode `127.0.0.1:18082` está saudável, mas `jwt_configured=false`, `owners_configured=false`, `qdrant_configured=false` e `writes_enabled=false`. A integração com Qdrant Cloud e o conector cloudflared da Linode exigem provisionamento seguro de credenciais. **Uma tentativa de transferência automatizada de segredos foi bloqueada pelo ambiente; não contornar.** Arquivos temporários de certificação dessa tentativa foram eliminados. O endereço principal permanece no serviço funcional anterior até o provisionamento feito por canal autorizado.
+A R06 no servidor Linode `127.0.0.1:18082` está saudável. **Após a preparação adicional de identidade**, `jwt_configured=true`, `owners_configured=true`, `qdrant_configured=false` e `writes_enabled=false`. O arquivo de proprietários é mantido em volume somente leitura no container, e `CF_ACCESS_AUD`/issuer foram configurados sem expor tokens. O código revisado da R06 suporta `QDRANT_API_KEY_FILE` para uso posterior de segredo montado; o CI dessa alteração foi aprovado. A integração com Qdrant Cloud e o conector cloudflared da Linode ainda exigem provisionamento seguro de credenciais. **Uma tentativa de transferência automatizada de segredos foi bloqueada pelo ambiente; não contornar.** Arquivos temporários de certificação dessa tentativa foram eliminados. O endereço principal permanece no serviço funcional anterior até o provisionamento feito por canal autorizado.
 
 A coleção Qdrant Cloud `chatgpt_memoria_aprovada` contém **1 ponto registrado** na consulta de 18/11/2026 (não apagar ou declarar vazia). O contrato de consulta Qdrant R06 por texto e o `scroll` de memória aprovada responderam 200 à consulta sem escrita feita a partir do serviço anterior.
 
