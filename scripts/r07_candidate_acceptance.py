@@ -46,6 +46,7 @@ REQUIRED_TESTS = (
     "tests/r07_isolated_runtime_smoke.sh",
     "tests/test_r07_skill_router.py",
     "tests/test_r07_host_contract.py",
+    "tests/test_r07_s6_security.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -71,6 +72,31 @@ def tools_declared(source: str) -> set[str]:
             declared.add(node.name)
     return declared
 
+
+def owner_check_on_skill_handlers(source: str) -> bool:
+    """Require explicit owner check inside every exposed skill reader/resource."""
+    tree = ast.parse(source, filename="app/server.py")
+    required = {
+        "gaia_skill_catalog", "gaia_skill_read", "gaia_skill_read_chunk",
+        "gaia_skill_resource_root", "gaia_skill_resource_retrieval",
+        "gaia_skill_resource_proposal",
+    }
+    checks = {}
+    for node in tree.body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if node.name not in required:
+            continue
+        checks[node.name] = any(
+            isinstance(item, ast.Call)
+            and isinstance(item.func, ast.Name)
+            and item.func.id == "_require"
+            and len(item.args) >= 2
+            and all(isinstance(arg, ast.Constant) for arg in item.args[:2])
+            and [arg.value for arg in item.args[:2]] == ["chatgpt", "all-processes"]
+            for item in ast.walk(node)
+        )
+    return set(checks) == required and all(checks.values())
 
 def evaluate(root: Path) -> dict:
     checks: dict[str, bool] = {}
@@ -118,12 +144,25 @@ def evaluate(root: Path) -> dict:
             "  r07_candidate_acceptance:",
             "  r07_skill_router_synthetic:",
             "  r07_host_contract_synthetic:",
+            "  r07_s6_security:",
         )
     )
     checks["no_image_publication"] = (
         "if: " + "${{ false }}" in ghcr
         and "if: " + "${{ false }}" in linode
         and "actions/upload-artifact@" not in workflow
+    )
+    checks["skill_owner_only_on_all_read_endpoints"] = owner_check_on_skill_handlers(app)
+    checks["skill_paths_are_checked_without_symlink_following"] = (
+        "def _safe_installed_skill_bytes(" in app
+        and "target.is_symlink()" in app
+        and "_safe_installed_skill_bytes(path)" in app
+        and "_safe_installed_skill_bytes(rel)" in app
+    )
+    checks["sqlite_connections_closed_and_legacy_discards_blocked"] = (
+        "with closing(_connect()) as conn, conn:" in review
+        and "DISCARD_SCHEMA_MIGRATION_REQUIRED" in review
+        and "with closing(con):" in (root / "src/gaia_rag_r05/lifecycle_read.py").read_text(encoding="utf-8")
     )
     checks["skill_router_explicit_and_read_only"] = (
         "def gaia_skill_route(" in app
