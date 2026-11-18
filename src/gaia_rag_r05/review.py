@@ -19,6 +19,7 @@ import uuid
 from pathlib import Path
 
 from .authz import AccessDenied, AuthorizedScope, require_issued_scope
+from . import lifecycle_read
 
 _REF = re.compile(r"^[a-zA-Z0-9_.:/-]{1,200}$")
 _MAX_SUMMARY = 4000
@@ -222,16 +223,27 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
 
     # Fail closed on ambiguous write/readback: do not automatically retry; operator
     # must reconcile using deterministic point ID.
+    # Index metadata is generated only AFTER the human approval step.
+    # It is advisory, not a legal conclusion or a new Qdrant payload index.
+    indexing = lifecycle_read.index_candidate_preview(
+        process_id=row["process_id"], title=row["title"],
+        summary=row["summary"], source_ref=row["source_ref"])
     payload={
         "namespace":row["namespace"],"tenant_id":row["tenant_id"],"process_id":row["process_id"],
         "approved":True,"title":row["title"],"text":row["summary"],
         "source_ref":row["source_ref"],"document_sha256":row["document_sha256"],
-        "document_approval_ref":row["document_approval_ref"],"approved_by":actor,"approved_at":_now()
+        "document_approval_ref":row["document_approval_ref"],"approved_by":actor,"approved_at":_now(),
+        "index_kind_suggested":indexing["suggested_kind"],
+        "index_keywords_suggested":indexing["suggested_tags"],
+        "index_method":"r07_deterministic_v1",
     }
     write_point(row["point_id"],payload)
     confirmed=read_point(cap,row["point_id"])
     item=confirmed.get("item",{}) if isinstance(confirmed,dict) else {}
-    if confirmed.get("found") is not True or item.get("document_sha256")!=row["document_sha256"] or item.get("text")!=row["summary"]:
+    if (confirmed.get("found") is not True or item.get("document_sha256")!=row["document_sha256"]
+            or item.get("text")!=row["summary"]
+            or item.get("index_method")!="r07_deterministic_v1"
+            or item.get("index_keywords_suggested")!=indexing["suggested_tags"]):
         raise RuntimeError("READBACK_UNCONFIRMED")
     with _connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
