@@ -8,7 +8,7 @@
 | DG-03 | Autoauditoria técnica rastreável e correções documentais | CONCLUÍDO como revisão assistida; não é revisão externa |
 | DG-04 | Proprietário define e autoriza escopo de implementação | PENDENTE para novo código |
 | DG-05 | GHCR/Linode desabilitados e branch sem merge | CONFIRMADO na branch; CI do HEAD a verificar |
-| DG-06 | Autorização expressa para novo código operacional | NÃO CONCEDIDA nesta revisão |
+| DG-06 | Autorização expressa para código novo | AUTORIZADO nesta etapa apenas módulo offline de ACL e testes sintéticos; integrar runtime/deploy depende de decisão separada |
 
 ## Provas antes de colocar em uso real
 | ID | Teste | Situação |
@@ -22,4 +22,4 @@
 
 Achados BR-01 (ACL) permanecem prioritários e bloqueiam uso multi-cliente sem prova de backend. BR-02 (Skills over MCP) e BR-03 (plugin) são alternativas condicionadas à plataforma, não exigem implementar as duas. BR-04 (GHCR/Linode) é requisito apenas quando houver autorização para publicar/implantar.
 
-Autoauditoria documental pronta; nenhum código operacional, merge, build ou deploy está automaticamente autorizado.
+Autoauditoria documental concluída. O proprietário autorizou iniciar a próxima etapa em 17/11/2026: permitido módulo offline de autorização e testes sem ligação a serviços reais. **O runtime da MCP, o merge, o build de imagem e o deploy continuam não autorizados por essa decisão.**
