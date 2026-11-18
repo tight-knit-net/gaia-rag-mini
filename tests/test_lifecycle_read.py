@@ -69,6 +69,11 @@ class LifecycleReadTests(unittest.TestCase):
         a = mod.process_export(r, object(), max_items=2)
         self.assertTrue(a["truncated"])
         self.assertEqual(a["next_offset"], "2")
+        b = mod.process_export(Reader([point(i) for i in range(3)]),
+                               object(), max_items=2, offset=a["next_offset"])
+        self.assertEqual(b["count"], 1)
+        self.assertFalse(b["truncated"])
+        self.assertEqual([x["id"] for x in b["entries"]], ["id-2"])
         self.assertEqual(a["sha256"], mod.process_export(Reader([point(i) for i in range(3)]),
                                                         object(), max_items=2)["sha256"])
         self.assertEqual(a["format"], "gaia-approved-memory-json-v1")
