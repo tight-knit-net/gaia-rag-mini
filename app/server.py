@@ -361,6 +361,19 @@ def memory_proposal_preview(proposal_id: str, process_id: str,
 
 
 @mcp.tool()
+def memory_discard_proposal(proposal_id: str, process_id: str,
+                            namespace: str = "chatgpt") -> dict:
+    """Return the human-review link; NEVER discard via an LLM-triggered MCP call."""
+    cap = _require(namespace, process_id)
+    proposal = review.get_proposal(proposal_id, cap)
+    return {"proposal_id": proposal_id, "status": proposal["status"],
+            "human_confirmation_required": True,
+            "review_url": review._review_base() + "/review/" + proposal_id,
+            "discarded": proposal["status"] == "discarded",
+            "tool_side_effects": "none"}
+
+
+@mcp.tool()
 def memory_pending_reviews(process_id: str, namespace: str = "chatgpt",
                            limit: int = 20, offset: int = 0) -> dict:
     """Read only PENDING proposals from the current R07 ledger, not the legacy queue."""
@@ -419,7 +432,10 @@ async def review_get(req: Request):
             body += ('<form method="POST" action="/review/' + html_escape(page["id"]) + '/approve">'
                      '<input type="hidden" name="csrf" value="' + html_escape(page["csrf"]) + '">'
                      '<p>Confira a fonte documental e o conteúdo. A aprovação grava UMA memória.</p>'
-                     '<button type="submit" name="confirm" value="APROVAR">Salvar memória — Aprovar e gravar</button></form>')
+                     '<button type="submit" name="confirm" value="APROVAR">Salvar memória — Aprovar e gravar</button></form>'
+                     '<form method="POST" action="/review/' + html_escape(page["id"]) + '/discard">'
+                     '<input type="hidden" name="csrf" value="' + html_escape(page["csrf"]) + '">'
+                     '<button type="submit" name="confirm" value="DESCARTAR">Descartar proposta</button></form>')
         return _safe_review_response("<!doctype html><html lang='pt-BR'><meta charset='utf-8'><title>Revisão GAIA</title><body>"+body+"</body></html>")
     except Exception:
         return JSONResponse({"error": "REVIEW_UNAVAILABLE"}, status_code=403)
@@ -443,6 +459,28 @@ async def review_post(req: Request):
                                      + html_escape(result["point_id"]) + "</p>")
     except Exception:
         return JSONResponse({"error": "REVIEW_NOT_COMPLETED"}, status_code=403)
+
+
+async def review_discard_post(req: Request):
+    """Human CSRF-protected discard; no Qdrant deletion or content mutation."""
+    try:
+        origin = req.headers.get("origin", "")
+        if origin != review._review_base():
+            raise AccessDenied("ORIGIN_DENIED")
+        if req.headers.get("content-type", "").split(";")[0].strip().lower() != "application/x-www-form-urlencoded":
+            raise AccessDenied("CONTENT_TYPE_DENIED")
+        if int(req.headers.get("content-length", "0")) > 4096:
+            raise AccessDenied("BODY_TOO_LARGE")
+        form = await req.form()
+        if form.get("confirm") != "DESCARTAR" or not isinstance(form.get("csrf"), str):
+            raise AccessDenied("HUMAN_CLICK_REQUIRED")
+        result = review.discard(req.path_params["proposal_id"], ACTOR.get().subject,
+                                _review_authorize, form["csrf"])
+        return _safe_review_response(
+            "<h1>Proposta descartada após revisão humana</h1><p>ID: "
+            + html_escape(result["proposal_id"]) + "</p>")
+    except Exception:
+        return JSONResponse({"error": "DISCARD_NOT_COMPLETED"}, status_code=403)
 
 
 def _skill_root() -> Path:
@@ -564,4 +602,5 @@ app = mcp.streamable_http_app()
 app.routes.insert(0, Route("/healthz", endpoint=healthz, methods=["GET"]))
 app.routes.insert(1, Route("/review/{proposal_id}", endpoint=review_get, methods=["GET"]))
 app.routes.insert(2, Route("/review/{proposal_id}/approve", endpoint=review_post, methods=["POST"]))
+app.routes.insert(3, Route("/review/{proposal_id}/discard", endpoint=review_discard_post, methods=["POST"]))
 app.add_middleware(BaseHTTPMiddleware, dispatch=auth_guard)
