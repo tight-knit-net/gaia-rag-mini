@@ -71,3 +71,49 @@ A coleção Qdrant Cloud `chatgpt_memoria_aprovada` contém **1 ponto registrado
 6. Registro documental de aprovação, portal humano autenticado, banco persistente de revisão e segurança de gravação **ainda não homologados**. `writes_enabled=false` deve permanecer.
 
 **Evidência de código:** branch `feat/r06-lifecycle-skill-staging`, PR #4 **draft**; HEAD auditado antes deste adendo `6571f260df8a806215baa3240da7b3203fec2d86`. Documento de arquitetura `R06_MEMORIA_UNIFICADA_SEM_TRAVA_CLIENTE_2026-11-18.md` e teste sintético `tests/r06_live_review_e2e.py`. Este adendo documenta auditoria de produção, sem alegar homologação completa.
+
+---
+
+## R06 — Auditoria do reparo do túnel na Linode (18/11/2026, 09:39–09:41 UTC)
+
+**Resultado observado: TÚNEL R06 AINDA BLOQUEADO.** Não foi instalado conector sem o token, pois não existe canal aprovado disponível para entregar o segredo diretamente Cloudflare → host. Os valores *inactive / 0 conexões* referem-se à auditoria Cloudflare anterior e NÃO foram revalidados pela API autenticada nesta execução.
+
+### Auditoria na Linode pelo Gaia MCP v.100
+
+- Acesso SSH: alias **tigh_knit**, hostname **nestground-ai**, usuário **gaia-admin**, sudo não interativo habilitado; Docker Server **29.9.2**.
+- R06: **gaia-rag-mini-r06-preview**, imagem **gaia-rag-mini:r06-owner-auth-ready**, Docker status **running / healthy**, restart **unless-stopped**; rede **gaia-rag-r06-preview-net**. Porta da R06 publicada exclusivamente em **127.0.0.1:18082 → 8000/tcp**.
+- Testes diretos: **HTTP 200** em http://127.0.0.1:18082/healthz; **HTTP 200** em http://gaia-rag-mini-r06-preview:8000/healthz de dentro da rede Docker, com service **gaia-rag-mini-r06**. Resposta confirma jwt_configured=true, owners_configured=true, qdrant_configured=false, writes_enabled=false, approval_registry_configured=false.
+- **HTTP 401** em GET /mcp local sem token: autorização obrigatória preservada.
+- **Nenhum contêiner cloudflared** R06, ativo ou parado; nome pretendido **gaia-rag-r06-cloudflared** inexistente. Imagem **cloudflare/cloudflared:2026.8.3** já está presente; versão e suporte CLI a **tunnel run --token-file** confirmados. Imagem executa com UID:GID **65532:65532**.
+- **Arquivo de token NÃO EXISTE** em /opt/gaia-rag-mini/secrets/r06-service/cloudflare_tunnel_token. Diretórios de segredo têm acesso restritivo; ajustar leitura apenas para UID/GID do cloudflared quando o segredo for provisionado por operador.
+- Teste de conectividade HTTPS para api.cloudflare.com chegou ao servidor (HTTP 400 sem credenciais, TLS validado), mas **não** valida autenticação Cloudflare nem estado do túnel.
+- R05 **gaia-rag-mini-staging** permaneceu **running / healthy**. Outros contêineres R06 de rollback não foram modificados.
+- A única alteração incidental no host foi o download da imagem auxiliar **curlimages/curl:latest** para validar a rede com contêiner efêmero --rm. Nenhum serviço persistente foi alterado.
+
+### Preservação externa, verificada sem escrita
+
+- DigitalOcean (SSH alias **mcp-100-do**): serviço **gaia-qdrant-memory-gaia-qdrant-memory-candidate-1 running / healthy** e contêiner antigo **gaia-qdrant-memory-tunnel running**. A porta 127.0.0.1:8000 no host DO não estava disponível; o estado saudável foi verificado no Docker.
+- https://memory.tight-knit.net/mcp → **HTTP 401** sem autenticação.
+- https://legacy-rag.tight-knit.net/mcp → **HTTP 401** sem autenticação.
+- **Nenhuma solicitação de alteração de DNS, ingress, Access, ZITADEL, Qdrant, R05, R06 ou serviço antigo foi realizada.** CNAME exato dos dois hostnames, status do novo túnel e conexões históricas não puderam ser revalidados nesta execução por ausência de integração autenticada com API Cloudflare; consulta DNS pública em hostname proxied não fornece diretamente o CNAME do túnel.
+
+### Causa e bloqueio seguro
+
+**Causa técnica identificada:** ausência do processo cloudflared R06 e do respectivo token no destino previsto. O origin R06 já funciona na rede Docker. **Bloqueio:** não foi disponibilizada ferramenta de entrega de segredo direta Cloudflare → host sem revelação do token à IA/chat, e o arquivo não existe. Não consultar endpoint de token que o exponha ao modelo; não copiar segredo DO; não passar por argumentos CLI, metadata Docker, GitHub ou logs.
+
+**Ação exigida do operador autenticado:** provisionar por canal aprovado, diretamente na Linode, a credencial do túnel existente **e1cad7db-b06e-4adf-8c46-f972bd18db50** no arquivo protegido **/opt/gaia-rag-mini/secrets/r06-service/cloudflare_tunnel_token**, evitando qualquer ferramenta que devolva segredo no resultado visível à IA. Validar dono/permissões e leitura restrita ao processo **UID 65532**. Não publicar token nem seu hash.
+
+**Próxima execução após provisionamento:** confirmar somente metadados do arquivo (não conteúdo); implantar conector **gaia-rag-r06-cloudflared** na rede **gaia-rag-r06-preview-net**, com bind mount read-only, --token-file, restart unless-stopped e sem porta pública; revalidar origin 200 e MCP 401; Cloudflare API autenticada precisa comprovar *healthy* e conexões ativas, ingress e Access preservados; confirmar CNAME principal e legado, túnel DO healthy, teste de restart/recovery; registrar novas evidências. DNS NÃO deve ser cortado nesta fase; PR #4 NÃO deve ser mesclado.
+
+### Critérios de aceite nesta execução
+
+- [x] Origin R06 e DNS interno Docker: HTTP 200.
+- [x] R05/DO em execução e URLs protegidas com HTTP 401.
+- [x] Imagem cloudflared e suporte a token-file verificados.
+- [ ] Token provisionado em canal seguro, fora da IA.
+- [ ] Conector R06 instalado e persistente.
+- [ ] Cloudflare API autenticada retorna status healthy + conexões ativas.
+- [ ] DNS/ingress/Access conferidos via API Cloudflare nesta execução.
+- [ ] Teste restrito de reinicialização do conector.
+
+**Declaração: TÚNEL R06 AINDA BLOQUEADO**; nenhum corte DNS nem alteração do ambiente legado.
