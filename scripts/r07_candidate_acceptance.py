@@ -35,6 +35,8 @@ REQUIRED_TOOLS = {
     "gaia_skill_catalog",
     "gaia_skill_read",
     "gaia_skill_read_chunk",
+    "gaia_skill_route",
+    "gaia_skill_route_read",
 }
 REQUIRED_TESTS = (
     "tests/test_institutional_memory.py",
@@ -42,6 +44,7 @@ REQUIRED_TESTS = (
     "tests/test_migration_manifest.py",
     "tests/r06_live_review_e2e.py",
     "tests/r07_isolated_runtime_smoke.sh",
+    "tests/test_r07_skill_router.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -72,6 +75,7 @@ def evaluate(root: Path) -> dict:
     checks: dict[str, bool] = {}
     app = (root / "app/server.py").read_text(encoding="utf-8")
     review = (root / "src/gaia_rag_r05/review.py").read_text(encoding="utf-8")
+    router = (root / "src/gaia_rag_r05/skill_router.py").read_text(encoding="utf-8")
     workflow = (root / ".github/workflows/r05-skill-static.yml").read_text(encoding="utf-8")
     ghcr = (root / ".github/workflows/rag-ghcr-image.yml").read_text(encoding="utf-8")
     linode = (root / ".github/workflows/rag-linode-staging.yml").read_text(encoding="utf-8")
@@ -111,12 +115,23 @@ def evaluate(root: Path) -> dict:
             "  validate:", "  staging_image_smoke:",
             "  r06_lifecycle_synthetic:", "  r07_operational_isolated:",
             "  r07_candidate_acceptance:",
+            "  r07_skill_router_synthetic:",
         )
     )
     checks["no_image_publication"] = (
         "if: " + "${{ false }}" in ghcr
         and "if: " + "${{ false }}" in linode
         and "actions/upload-artifact@" not in workflow
+    )
+    checks["skill_router_explicit_and_read_only"] = (
+        "def gaia_skill_route(" in app
+        and "def gaia_skill_route_read(" in app
+        and "skill_router.route(" in app
+        and "skill_router.read_selected(" in app
+        and "host_must_explicitly_load" in router
+        and "SKILL_VERSION_MISMATCH" in router
+        and "memory_write_permitted" in router
+        and "_require(namespace, process_id)" in app
     )
     checks["test_files_present"] = all((root / path).is_file() for path in REQUIRED_TESTS)
     checks["governance_docs_present"] = all((root / path).is_file() for path in REQUIRED_DOCS)
