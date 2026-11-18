@@ -19,10 +19,8 @@ on:
       - "tests/test_document_mcp.py"
       - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   synthetic-contracts:
     runs-on: ubuntu-latest
@@ -40,9 +38,10 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          marker = "if: " + chr(36) + "{{ false }}"
           for path in ('.github/workflows/rag-ghcr-image.yml', '.github/workflows/rag-linode-staging.yml'):
-              txt=Path(path).read_text()
-              assert 'if: false' in txt or 'if: ${{ false }}' in txt, f"DEPLOY_FREEZE_MISSING {path}"
+              txt = Path(path).read_text()
+              assert 'if: false' in txt or marker in txt, f"DEPLOY_FREEZE_MISSING {path}"
           print('Verified: existing publish/deploy jobs remain frozen')
           PY
 
