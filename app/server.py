@@ -22,7 +22,7 @@ from starlette.routing import Route
 
 from gaia_rag_r05.authz import AccessDenied, OwnerAuthorizer, Principal, Scope
 from gaia_rag_r05.scoped_reads import ScopedReads
-from gaia_rag_r05 import review, institutional_memory, lifecycle_read
+from gaia_rag_r05 import review, institutional_memory, lifecycle_read, skill_router
 
 ACTOR: ContextVar[Principal | None] = ContextVar("gaia_r05_actor", default=None)
 MODEL = "intfloat/multilingual-e5-small"
@@ -503,6 +503,30 @@ _SKILL_FILES = (
     "governanca/POLITICA_MEMORIA.md",
     "assets/templates/memoria.md",
 )
+
+
+@mcp.tool()
+def gaia_skill_route(mission: str, process_id: str,
+                     namespace: str = "chatgpt") -> dict:
+    """Select installed R07 skill modules by explicit mission. NO host activation."""
+    _require(namespace, process_id)
+    return skill_router.route(
+        _skill_root(), mission=mission, namespace=namespace,
+        process_id=process_id)
+
+
+@mcp.tool()
+def gaia_skill_route_read(mission: str, process_id: str, path: str,
+                          route_sha256: str, expected_sha256: str,
+                          namespace: str = "chatgpt",
+                          offset: int = 0, max_chars: int = 2400) -> dict:
+    """Read only a selected, hash-matched route module; never write memory."""
+    _require(namespace, process_id)
+    return skill_router.read_selected(
+        _skill_root(), mission=mission, namespace=namespace,
+        process_id=process_id, path=path,
+        route_sha256=route_sha256, expected_sha256=expected_sha256,
+        offset=offset, max_chars=max_chars)
 
 
 @mcp.tool()
