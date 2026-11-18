@@ -81,6 +81,12 @@ def _owners() -> OwnerAuthorizer:
 def _qrequest(method: str, path: str, data: dict | None) -> dict:
     endpoint = os.getenv("QDRANT_URL", "").rstrip("/")
     key = os.getenv("QDRANT_API_KEY", "")
+    key_file = os.getenv("QDRANT_API_KEY_FILE", "")
+    if not key and key_file:
+        key_path = Path(key_file)
+        if not key_path.is_absolute() or not key_path.is_file():
+            raise AccessDenied("BACKEND_NOT_CONFIGURED")
+        key = key_path.read_text(encoding="utf-8").strip()
     url = parse.urlsplit(endpoint)
     if (not key or url.scheme != "https" or not url.hostname
             or url.username or url.password or url.path or url.query or url.fragment):
@@ -116,7 +122,8 @@ def memory_status() -> dict:
     return {"service": "gaia-rag-mini-r06", "mode": "controlled_staging",
             "identity_ready": bool(os.getenv("CF_ACCESS_AUD") and os.getenv("CF_ACCESS_TEAM_DOMAIN")),
             "owners_ready": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
-            "qdrant_ready": bool(os.getenv("QDRANT_URL") and os.getenv("QDRANT_API_KEY")),
+            "qdrant_ready": bool(os.getenv("QDRANT_URL") and
+                                 (os.getenv("QDRANT_API_KEY") or os.getenv("QDRANT_API_KEY_FILE"))),
             "human_approval_writes": "browser_only" if os.getenv("GAIA_RAG_ENABLE_REVIEW") == "1" else "disabled",
             "ready_for_real_data": False}
 
@@ -347,7 +354,8 @@ async def healthz(req: Request) -> JSONResponse:
         "alive": True, "service": "gaia-rag-mini-r06", "mode": "staging-controlled",
         "jwt_configured": bool(os.getenv("CF_ACCESS_AUD")) and bool(os.getenv("CF_ACCESS_TEAM_DOMAIN")),
         "owners_configured": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
-        "qdrant_configured": bool(os.getenv("QDRANT_URL")) and bool(os.getenv("QDRANT_API_KEY")),
+        "qdrant_configured": bool(os.getenv("QDRANT_URL")) and
+                             bool(os.getenv("QDRANT_API_KEY") or os.getenv("QDRANT_API_KEY_FILE")),
         "writes_enabled": os.getenv("GAIA_RAG_ENABLE_REVIEW") == "1" and bool(os.getenv("GAIA_RAG_CSRF_SECRET")),
         "approval_registry_configured": bool(os.getenv("GAIA_RAG_APPROVED_DOCS_FILE")),
     })
