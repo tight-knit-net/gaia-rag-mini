@@ -1,10 +1,10 @@
 # 02 — Recuperação de memória (somente leitura)
 
-## Contrato efetivo da prévia R06
+## Contrato da R06: memória GAIA unificada
 
-Toda leitura de processo na prévia R06 requer `namespace`, `tenant_id` e `process_id` exatos. A verificação do vínculo após o resultado é revisão editorial, **não autorização**. Na R06 o servidor nega antes do acesso Qdrant quando a identidade/grant não cobre o escopo; por UUID, fonte e similaridade, o filtro tenant/processo também é obrigatório no backend. Sem uma fonte autoritativa de permissões, não executar a consulta.
+O proprietário autenticado tem acesso a memórias aprovadas de todos os clientes, em todos os projetos do ChatGPT. `tenant_id` é metadado de origem e não é trava de permissão. Para um caso, usar o `process_id` exato em `memory_process_start`, `memory_list_process` e `memory_search`. Para localizar processo desconhecido ou aprendizado de outro cliente, usar `memory_search_all` ou `memory_similar_cases`, dentro da base aprovada. Não misturar documentos de processos com identificadores diferentes, nem tratar semelhança temática como igualdade de processo.
 
-A seção histórica abaixo documenta parâmetros da MCP legada e deve ser interpretada somente quando essa versão legada for de fato selecionada. Nunca preencher `tenant_id` por inferência. Para contrato R06, consultar [07](07-contratos-mcp-atual.md).
+A identidade do GAIA ainda é verificada no servidor por JWT Access e pela lista explícita de proprietários. Sem isso, consulta negada. Ver o contrato efetivo em [07](07-contratos-mcp-atual.md). A seção histórica abaixo descreve versões anteriores da MCP, não a R06.
 
 ## Fluxo por finalidade
 
