@@ -1,23 +1,13 @@
-# Status CI/CD e Linode — observações e limitações
-**Data-base:** 17/11/2026. **Regra vigente:** somente documentação, validação e revisão; código, build, publicação e implantação não autorizados.
+# CI / Linode — situação objetiva R05
+**Referência:** 17/11/2026
 
-## Infra já preparada em fase anterior (sem novas alterações agora)
-- Linode `nestground-ai` em Akamai `akamai-william`, Ubuntu 24.04.5, 4vCPU/8GB; Docker 29.9.2 e Docker Compose 5.6.1.
-- SSH de administração existente; usuário `gaia-rag-deploy` criado com comando forçado. Teste local de `probe` e rejeição de comando não permitido passaram.
-- Diretório `/opt/gaia-rag-mini`, Docker Compose de staging e segredo runtime vazio. Nenhum container GAIA RAG foi iniciado. Quatro containers NestGround foram preservados.
-- RAM e disco são snapshots, não demonstração de capacidade garantida.
+- CodeRabbit: arquivo de configuração removido, assim como a dependência no CI/CODEOWNERS. O usuário informou ter desinstalado o aplicativo; a revogação em sua conta não é inspecionável por este conector.
+- CI estática: validação de skill, regressões documentais, YAML, shell e ZIP temporário no runner, sem upload da skill.
+- GHCR: sem gatilho de push automático; job com if: false.
+- Linode staging: job com if: false; nenhuma implantação autorizada.
+- Histórico anterior: host nestground-ai com Docker/Compose e pasta /opt/gaia-rag-mini preparada, sem inicialização de RAG nesta etapa. Não houve inspeção operacional recente.
+- DigitalOcean, Cloudflare, Qdrant e portal: nenhum serviço alterado nesta revisão.
 
-## PR documental — configurações versionadas para REVISÃO, não operação
-- `r05-skill-static.yml`: validação documental, regressão estática e prova local de ZIP temporário no runner; **sem upload ou publicação de artefatos na configuração atual**. Evidências históricas de 23 testes estáticos, sem host. ZIPs produzidos por execuções anteriores devem ser tratados como artefatos históricos, não como autorização de publicação.
-- CodeRabbit: `.coderabbit.yaml` restaurado na branch R05 por nova autorização expressa do proprietário. Revisão automática/manual solicitada; conexão efetiva da GitHub App e parecer precisam de evidência no PR. Nenhuma mudança em GHCR/Linode resulta dessa integração.
-- `rag-ghcr-image.yml`: **sem push automático, com job `if: false`**. Não pode publicar no GHCR mesmo com merge acidental, sem futura alteração revisada.
-- `rag-linode-staging.yml`: **job `if: false`**. Não pode executar preflight/deploy, sem futura alteração revisada.
-- `LINODE_DEPLOY_KEY`: NÃO criar nem configurar agora; nenhum segredo é necessário à revisão documental.
+Pendente antes de uso real: ACL efetiva, proposta e clique humano, dependência e ativação da skill no host, testes negativos A/B, falha/rollback. Não solicitar segredos apenas para auditar documentos.
 
-## Antes de usar os pipelines futuramente
-Concluir e revisar o projeto executivo, obter autorização separada para iniciar código, validar origem DO, obter parecer técnico independente, executar CI de código; somente então propor habilitar GHCR ou Linode por novo PR e autorização específica. Preservar Cloudflare Access, Tunnel, Qdrant e o portal humano.
-
-## Gaps ainda reais
-Código completo de produção e testes não migrados ao GitHub; revisão técnica independente ainda pendente para este PR; ausência de execução de GHCR/private pull; ausência de SSH GitHub runner → Linode; ausência de sandbox equivalente e de teste do portal; nenhuma homologação operacional.
-
-**Não executar ou solicitar ações manuais ao usuário nesta fase.**
+Publicação, merge, deploy e modificação da MCP de produção continuam sujeitos a autorização explícita.
