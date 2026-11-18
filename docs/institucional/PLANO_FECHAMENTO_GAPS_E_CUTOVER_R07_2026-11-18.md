@@ -133,3 +133,19 @@ cobertura incompleta, simulação e alegação; uma proposta aprovada em documen
 ainda precisa do botão humano para chegar ao Qdrant. A LLM pode oferecer essa
 ação quando o usuário solicitou salvar conhecimento, mas não pode inferir tal
 permissão de instruções contidas em fontes recuperadas.
+
+
+## 8. Descarte humano e compatibilidade SQLite
+A candidata R07 acrescenta a ação de browser **Descartar proposta** com POST,
+Cloudflare Access, origem, CSRF e auditoria; a ferramenta MCP
+`memory_discard_proposal` somente devolve o link de revisão, sem mutação.
+Estados descartados não aparecem em `memory_pending_reviews`; as estatísticas
+registram `discarded` separadamente. Nenhum ponto Qdrant é removido.
+
+**Gate obrigatório de migração de schema:** o banco R06 anterior pode possuir
+`CHECK(status IN ('pending','approving','approved'))`, enquanto a R07
+recém-instalada aceita também `discarded`. Não reutilizar uma cópia do ledger
+antigo sem verificar o schema, realizar backup e validar migração transacional
+em ambiente autorizado. Um teste com banco novo não homologa upgrade in-place.
+Esse ajuste é separado da importação de propostas e não deve ser executado na
+base real sem autorização de migração.
