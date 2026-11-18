@@ -154,3 +154,10 @@ antigo sem verificar o schema, realizar backup e validar migração transacional
 em ambiente autorizado. Um teste com banco novo não homologa upgrade in-place.
 Esse ajuste é separado da importação de propostas e não deve ser executado na
 base real sem autorização de migração.
+
+## 9. Substituição do TestLab como gate (decisão do proprietário em 18/11/2026)
+O TestLab gaia-m7i será descontinuado e não é mais destino obrigatório. Não tentar restabelecer o executor `RECEIPT_CAPACITY` nesta frente nem criar outro host por iniciativa própria.
+
+Usar **somente GitHub Actions** para a fase de validação isolada da candidata: testes unitários, regressões, Qdrant efêmero, identidade sintética, revisão HTML simulada e isolamento de contêiner. O job `r07_candidate_acceptance` depende do sucesso dos quatro jobs anteriores e faz checagens de contrato/política em repositório; não publica imagem nem altera ambiente externo.
+
+Não renomear esse resultado como produção homologada. O aceite operacional, etapa distinta, permanece pendente até a escolha/autorização de destino real de execução, onde se possa testar Cloudflare Access e o botão humano verdadeiro. A estratégia de **migração só depois de candidata operacional**, reconciliando Qdrant e ledger sem conversão de pendências em aprovadas, continua inalterada.
