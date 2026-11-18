@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import unittest
 
-from gaia_rag_r05.authz import AccessDenied, Authorizer, Principal, Scope
+from gaia_rag_r05.authz import AccessDenied, AuthorizedScope, Authorizer, Principal, Scope
 from gaia_rag_r05.scoped_reads import ScopedReads
 
 ID = "11111111-1111-4111-8111-111111111111"
@@ -95,13 +95,15 @@ class ScopedReadTests(unittest.TestCase):
         self.assertEqual(len(conditions), 5)
 
     def test_uuid_rejects_other_tenant_without_content(self):
-        self.q.response = {"status": "ok", "result": {"id": ID, "payload": payload(S_B)}}
-        self.assertEqual(self.reader.by_uuid(self.cap, ID), {"found": False})
+        self.q.response = {"status": "ok", "result": {"points": [{"id": ID, "payload": payload(S_B)}]}}
+        with self.assertRaises(AccessDenied):
+            self.reader.by_uuid(self.cap, ID)
 
     def test_uuid_rejects_missing_tenant(self):
         p = payload(); p.pop("tenant_id")
-        self.q.response = {"status": "ok", "result": {"id": ID, "payload": p}}
-        self.assertEqual(self.reader.by_uuid(self.cap, ID), {"found": False})
+        self.q.response = {"status": "ok", "result": {"points": [{"id": ID, "payload": p}]}}
+        with self.assertRaises(AccessDenied):
+            self.reader.by_uuid(self.cap, ID)
 
     def test_uuid_rejects_invalid_id_before_request(self):
         with self.assertRaises(ValueError):
@@ -155,6 +157,72 @@ class ScopedReadTests(unittest.TestCase):
         with self.assertRaises(AccessDenied):
             Authorizer({}, expected_issuer="https://team.cloudflareaccess.com",
                        expected_audience="DEMO-AUDIENCE").allowed_for_tenant(ACTOR_A, "chatgpt", "DEMO-TENANT-A")
+
+    def test_forged_capability_denied_without_backend_call(self):
+        forged = AuthorizedScope(ACTOR_A, S_A1)
+        with self.assertRaises(AccessDenied):
+            self.reader.search(forged, "DEMO")
+        self.assertEqual(self.q.requests, [])
+
+    def test_forged_capability_denied_in_similar(self):
+        forged = AuthorizedScope(ACTOR_A, S_A2)
+        with self.assertRaises(AccessDenied):
+            self.reader.similar((self.cap, forged), "DEMO", "DEMO-A1")
+        self.assertEqual(self.q.requests, [])
+
+    def test_uuid_requires_backend_filter_for_tenant_process_and_id(self):
+        self.assertEqual(self.reader.by_uuid(self.cap, ID), {"found": False})
+        method, path, body = self.q.requests[0]
+        self.assertEqual((method, path.endswith("/scroll")), ("POST", True))
+        conditions = body["filter"]["must"]
+        self.assertIn({"has_id": [ID]}, conditions)
+        self.assertEqual(
+            {c["key"]: c["match"]["value"] for c in conditions if "key" in c},
+            {"namespace": "chatgpt", "approved": True,
+             "tenant_id": "DEMO-TENANT-A", "process_id": "DEMO-A1"},
+        )
+        self.assertFalse(body["with_vector"])
+
+    def test_uuid_authorized_result(self):
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": ID, "payload": payload()}]}}
+        value = self.reader.by_uuid(self.cap, ID)
+        self.assertTrue(value["found"])
+        self.assertEqual(value["item"]["id"], ID)
+
+    def test_uuid_mismatched_response_id_denied(self):
+        other = "22222222-2222-4222-8222-222222222222"
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": other, "payload": payload()}]}}
+        with self.assertRaises(AccessDenied):
+            self.reader.by_uuid(self.cap, ID)
+
+    def test_similar_requires_grant_for_current_process(self):
+        caps = self.grants.allowed_for_tenant(ACTOR_A, "chatgpt", "DEMO-TENANT-A")
+        with self.assertRaises(AccessDenied):
+            self.reader.similar(caps, "DEMO", "DEMO-UNAUTHORIZED")
+        self.assertEqual(self.q.requests, [])
+
+    def test_backend_404_is_failure_not_empty_search(self):
+        self.q.response = {"_http_status": 404, "status": "error"}
+        with self.assertRaises(RuntimeError):
+            self.reader.search(self.cap, "DEMO")
+
+    def test_payload_does_not_override_point_identity(self):
+        p = payload()
+        p["id"] = "DEMO-SPOOFED-ID"
+        p["score"] = -1
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": ID, "score": 0.75, "payload": p}]}}
+        item = self.reader.search(self.cap, "DEMO")["hits"][0]
+        self.assertEqual(item["id"], ID)
+        self.assertEqual(item["score"], 0.75)
+
+    def test_source_cross_tenant_payload_denied(self):
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": ID, "payload": payload(S_B)}]}}
+        with self.assertRaises(AccessDenied):
+            self.reader.by_source(self.cap, "DEMO-DOC")
 
 
 if __name__ == "__main__":
