@@ -178,7 +178,7 @@ def main():
                 newproposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-22_PREPARE_AFTER_APPROVED_RETURNS_SAME",not err and newproposal["status"]=="approved" and count()==1)
                 # R07 candidate-only contract checks on disposable Qdrant and DEMO ledger.
-                new_tools={"memory_auto_prepare","memory_process_timeline","memory_export_process",
+                new_tools={"memory_discard_proposal","memory_auto_prepare","memory_process_timeline","memory_export_process",
                            "memory_approval_audit","memory_stats",
                            "memory_index_preview","gaia_skill_read_chunk"}
                 check("R07-01_NEW_TOOLS",new_tools<=tools)
@@ -232,6 +232,28 @@ def main():
                       not err and assisted["proposal_prepared"]
                       and assisted["status"]=="pending"
                       and assisted["human_save_required"] and count()==1)
+                discard_link,err,_=tool("memory_discard_proposal",{
+                    **scope,"proposal_id":assisted["proposal_id"]})
+                check("R07-12_DISCARD_TOOL_READ_ONLY",
+                      not err and discard_link["human_confirmation_required"]
+                      and discard_link["tool_side_effects"]=="none" and count()==1)
+                discard_page=client.get("/review/"+assisted["proposal_id"],headers=authhdr)
+                dcsrf=re.search(r'name="csrf" value="([^"]+)"',discard_page.text).group(1)
+                bad_discard=client.post("/review/"+assisted["proposal_id"]+"/discard",
+                                        data={"confirm":"DESCARTAR","csrf":"forged"},
+                                        headers={**authhdr,"origin":"https://gaia-demo.example.invalid"})
+                check("R07-13_DISCARD_BAD_CSRF",bad_discard.status_code==403 and count()==1)
+                done_discard=client.post("/review/"+assisted["proposal_id"]+"/discard",
+                                         data={"confirm":"DESCARTAR","csrf":dcsrf},
+                                         headers={**authhdr,"origin":"https://gaia-demo.example.invalid"})
+                check("R07-14_HUMAN_DISCARD_NO_QDRANT_CHANGE",
+                      done_discard.status_code==200 and count()==1)
+                after_discard,err,_=tool("memory_pending_reviews",scope)
+                check("R07-15_DISCARDED_NOT_PENDING",
+                      not err and after_discard["proposals"]==[])
+                after_stats,err,_=tool("memory_stats",scope)
+                check("R07-16_DISCARDED_IN_STATS",
+                      not err and after_stats["proposal_counts"]["discarded"]==1)
                 # Same GAIA owner must see approved memory from a different client.
                 id_b="22222222-2222-4222-8222-222222222222"
                 payload_b={"namespace":NS,"tenant_id":TB,"process_id":PB,
