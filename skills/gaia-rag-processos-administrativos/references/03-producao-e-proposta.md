@@ -4,13 +4,13 @@
 
 A pessoa aprova previamente o DOCUMENTO ou PROCESSO. Só então a skill pode usar `memory_prepare_after_approval` para uma proposta, que **não grava**. A decisão de salvar a memória é nova e independente, feita no portal protegido com Cloudflare Access e clique humano. A aprovação de conversa genérica, sem peça ou processo aprovado, não basta para afirmar que o gatilho do serviço foi cumprido.
 
-## R06: autorização documental verificável e aprovação técnica humana
+## R06: aprovação e escrita sem restrições por cliente
 
-A prévia R06 requer um registro servidor-controlado de documento aprovado (`source_ref`, `document_approval_ref`, `document_sha256`) vinculado a `namespace + tenant_id + process_id`. Uma alegação no prompt de que a peça foi aprovada não cria esse registro.
+A autorização da R06 identifica o proprietário do GAIA, não o cliente do processo. Documento aprovado previamente no registro do servidor possui `source_ref`, `document_approval_ref`, `document_sha256`, `namespace` e `process_id`. O `tenant_id` no documento é metadado de origem e não limita o acesso ao proprietário.
 
-`memory_prepare_after_approval(namespace, tenant_id, process_id, title, summary, source_ref, document_approval_ref, document_sha256)` valida o documento e gera uma proposta idempotente, **sem escrita Qdrant**. `memory_proposal_preview` e `memory_pending_reviews` permitem visualizar somente propostas no escopo autorizado. A `review_url` vem do serviço, nunca deve ser fabricada. A aprovação técnica exige formulário humano e autenticação Access; falha, expiração ou ausência de clique não gravam. Apenas retorno de readback associado à mesma fonte e processo confirma `MEMORIA_CONFIRMADA`. O servidor pode desativar todo esse módulo com `GAIA_RAG_ENABLE_REVIEW=0`.
+`memory_prepare_after_approval(process_id, title, summary, source_ref, document_approval_ref, document_sha256, namespace?)` verifica a aprovação e gera proposta idempotente, sem escrita Qdrant. O proprietário acessa a `review_url` verdadeira e faz clique humano em sessão autenticada. A memória só é declarada persistida após confirmação de gravação e readback. Sem registro documental e sem revisão humana, não há gravação.
 
-**Atenção:** o detalhamento abaixo sobre assinaturas opcionais `kind`/`source_type` é histórico da DigitalOcean; esses argumentos **não** estão presentes no contrato R06. O R06 não expõe uma ferramenta MCP para clicar/autorizar escrita.
+**Atenção:** a seção abaixo sobre `kind`, `source_type` e argumentos legados refere-se à MCP antiga da DigitalOcean; não utilizar na R06.
 
 ## Seleção: o que merece memória
 
