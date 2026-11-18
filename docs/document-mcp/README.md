@@ -16,6 +16,7 @@
 11. [11 — Matriz de reaproveitamento BC01/D1 → MCP v2](11_MATRIZ_REAPROVEITAMENTO_GDL_BC01_MCP_V2.md)
 12. [12 — Mapa de campos, schemas, testes e segurança](12_MAPA_CONTRATOS_SCHEMAS_TESTES_GDL_BC01.md)
 13. [13 — Gate P0/P1: correlação documental e testes sintéticos](13_GATE_P0_P1_CORRELACAO_SINTETICA.md)
+14. [14 — Plano do próximo gate: autenticação, concorrência e persistência](14_PLANO_GATE_AUTENTICACAO_CONCORRENCIA_PERSISTENCIA.md)
 
 **Precedência:** decisões documentais R06/R07, política de memória e fontes canônicas do Google Drive > interfaces propostas aqui. Documentação oficial de fornecedores para capabilities; documentação do GitHub para estado do código; observações operacionais devem citar ambiente e instante. Não considerar documentação futura como funcionalidade publicada.
 
