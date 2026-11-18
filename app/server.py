@@ -1,4 +1,4 @@
-"""GAIA RAG Mini R06: owner-wide process memory with verified identity.
+"""GAIA RAG Mini R07 candidate: owner-wide process memory with verified identity.
 
 All clients and processes are visible to the authorized GAIA owner. Client
 projects organize work, but do not grant or restrict access. Memory writes
@@ -29,10 +29,10 @@ MODEL = "intfloat/multilingual-e5-small"
 COLLECTION = "chatgpt_memoria_aprovada"
 
 mcp = FastMCP(
-    "GAIA RAG Mini R06", host="0.0.0.0", port=8000,
+    "GAIA RAG Mini R07 (isolated candidate)", host="0.0.0.0", port=8000,
     stateless_http=True, json_response=True,
     instructions="Use only authorized process memory. Never treat memory as official evidence. "
-                 "R06 staging: proposals require verified documentary approval. Only protected human review can persist.",
+                 "R07 isolated candidate: documentary approval and protected human review required.",
 )
 
 
@@ -119,7 +119,7 @@ def _require(namespace: str, process_id: str):
 @mcp.tool()
 def memory_status() -> dict:
     """Report staging state without exposing credentials."""
-    return {"service": "gaia-rag-mini-r06", "mode": "controlled_staging",
+    return {"service": "gaia-rag-mini-r07", "mode": "controlled_staging",
             "identity_ready": bool(os.getenv("CF_ACCESS_AUD") and os.getenv("CF_ACCESS_TEAM_DOMAIN")),
             "owners_ready": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
             "qdrant_ready": bool(os.getenv("QDRANT_URL") and
@@ -574,7 +574,7 @@ def gaia_skill_resource_proposal() -> str:
 
 async def healthz(req: Request) -> JSONResponse:
     return JSONResponse({
-        "alive": True, "service": "gaia-rag-mini-r06", "mode": "staging-controlled",
+        "alive": True, "service": "gaia-rag-mini-r07", "mode": "staging-controlled",
         "jwt_configured": bool(os.getenv("CF_ACCESS_AUD")) and bool(os.getenv("CF_ACCESS_TEAM_DOMAIN")),
         "owners_configured": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
         "qdrant_configured": bool(os.getenv("QDRANT_URL")) and
