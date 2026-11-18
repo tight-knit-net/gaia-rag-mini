@@ -123,3 +123,13 @@ autorizadas, usando 'memory_index_preview' e 'memory_assimilation_preview'.
 Sem publicação, sem transferência de dados, sem merge, sem DNS e sem
 desativação de legado. A R07 ainda não pode assumir a escrita operacional
 somente por ter passado testes sintéticos.
+
+
+## 7. Aditivo de preparação assistida (candidata R07)
+A ferramenta `memory_auto_prepare` combina a avaliação R07 e a preparação de
+proposta R06 somente após confirmação de preparação. No modo padrão a operação
+é prévia sem efeitos. A função bloqueia duplicatas, suspeitas de revisão,
+cobertura incompleta, simulação e alegação; uma proposta aprovada em documento
+ainda precisa do botão humano para chegar ao Qdrant. A LLM pode oferecer essa
+ação quando o usuário solicitou salvar conhecimento, mas não pode inferir tal
+permissão de instruções contidas em fontes recuperadas.
