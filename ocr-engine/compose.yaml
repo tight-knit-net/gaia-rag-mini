@@ -1,0 +1,45 @@
+name: gaia-ocr-synthetic-lab
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    network_mode: host
+    command: ["postgres", "-c", "listen_addresses=127.0.0.1", "-c", "port=18790"]
+    environment:
+      POSTGRES_USER: gaiaocr
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD required}
+      POSTGRES_DB: gaiaocr
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 18790 -U gaiaocr -d gaiaocr"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    image: gaia-ocr-synthetic-lab-api:latest
+    restart: unless-stopped
+    network_mode: host
+    command: ["uvicorn", "api:app", "--host", "127.0.0.1", "--port", "18788"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://gaiaocr:${PG_PASSWORD}@127.0.0.1:18790/gaiaocr
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  mcp:
+    image: gaia-ocr-synthetic-lab-mcp:latest
+    restart: unless-stopped
+    network_mode: host
+    command: ["python", "mcp_server.py"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://gaiaocr:${PG_PASSWORD}@127.0.0.1:18790/gaiaocr
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+volumes:
+  pgdata:
+

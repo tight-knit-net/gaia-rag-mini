@@ -1,0 +1,12 @@
+{
+  "type": "MCP E2E",
+  "test_location": "Linode",
+  "checks": {
+    "protocol_2025_06_18": true,
+    "ocr_document_found": true,
+    "ocr_text_present": true,
+    "ocr_search_found": true,
+    "tools_available": true
+  },
+  "result": "PASS"
+}

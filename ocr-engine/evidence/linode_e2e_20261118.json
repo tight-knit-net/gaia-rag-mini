@@ -1,0 +1,31 @@
+{
+  "provider": "tesseract",
+  "location": "Linode Test Lab",
+  "document_id": "8893a84a-e66a-42bb-a318-f0e0609d9878",
+  "tenant": "ocr_e2e_synthetic",
+  "original_pages": 1,
+  "source_text_characters": 0,
+  "ocr_text": "DOCUMENTO SINTETICO - TESTE OCR REAL \nCLIENTE: MARIA TESTE EXEMPLO \nPROCESSO: GAIA-009-2026 \nDATA: 18/11/2026 \nPROTOCOLO: LAB-4829 \nVALOR: R$ 1.275,40 \nDOCUMENTO DE TESTE - SEM CLIENTE REAL",
+  "field_checks": {
+    "MARIA TESTE EXEMPLO": true,
+    "GAIA-009-2026": true,
+    "18/11/2026": true,
+    "LAB-4829": true,
+    "1.275,40": true,
+    "SEM CLIENTE REAL": true
+  },
+  "system_checks": {
+    "all_fields_recognized": true,
+    "pdf_searchable": true,
+    "stored_record": true,
+    "original_sha256_valid": true,
+    "fts_search_finds_document": true,
+    "other_tenant_isolated": true,
+    "export_manifest_contains_document": true,
+    "bearer_required": true
+  },
+  "result": "PASS",
+  "seconds": 3.17,
+  "export_files": 3,
+  "sha256": "6dce18bf3f936edef71441be2a621b2460df46ad6e7a95d9a73cdb7ded3f66a6"
+}
