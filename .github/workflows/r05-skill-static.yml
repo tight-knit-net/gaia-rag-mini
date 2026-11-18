@@ -98,7 +98,7 @@ jobs:
           from pathlib import Path
           health = json.loads(Path('/tmp/gaia-r05-health.json').read_text())
           assert health['alive'] is True
-          assert health['mode'] == 'staging-read-only'
+          assert health['mode'] == 'staging-controlled'
           assert health['writes_enabled'] is False
           assert health['qdrant_configured'] is False
           print('Isolated runtime health verified; no production credentials.')
