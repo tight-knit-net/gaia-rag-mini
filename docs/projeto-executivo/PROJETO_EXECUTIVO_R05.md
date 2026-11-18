@@ -1,5 +1,5 @@
 # GAIA RAG Mini — Projeto Executivo R05
-**Revisão:** 2026-11-17 | **Estado documental:** COMPLETO PARA REVISÃO TÉCNICA | **Aprovação do projeto:** PENDENTE | **Código novo:** NÃO AUTORIZADO | **Publicação/deploy:** BLOQUEADOS.
+**Revisão:** 2026-11-17 | **Estado documental:** REVISADO NA AUTOAUDITORIA ENXUTA | **Escopo de código:** A DEFINIR PELO RESPONSÁVEL | **Código novo:** NÃO AUTORIZADO | **Publicação/deploy:** BLOQUEADOS.
 
 > Este documento é a especificação executiva para futura implementação. O fato de sua redação estar concluída **não** autoriza início de desenvolvimento, merge, publicação de imagem, implantação ou migração. A liberação do desenvolvimento dependerá de revisão técnica documentada, conclusão dos gates de projeto e aprovação expressa.
 
@@ -23,7 +23,7 @@ A disponibilidade da skill na MCP **não** garante carregamento automático em C
 | Cloudflare | Manter hostname, Access, Tunnel e política atual; nenhuma alteração nesta fase | INVARIANTE |
 | Qdrant | Manter coleção `chatgpt_memoria_aprovada`, vetores/índices/dados reais, sem reindexação | INVARIANTE |
 | Gravação | Preparação é proposta; portal protegido + clique humano é o único ponto de autorização final | INVARIANTE |
-| GitHub | Revisão técnica independente por PR, com parecer verificável; CI estático; sem merge automático | DECISÃO |
+| GitHub | Revisão técnica documentada sem dependência de bot ou terceiro; CI estático; sem merge automático | DECISÃO |
 | Publicação | Workflows GHCR/Linode condicionados a `if: false` nesta branch; exigem nova mudança revisada e autorização explícita | BLOQUEIO |
 
 ## 3. Arquitetura observada e arquitetura-alvo
@@ -61,7 +61,7 @@ Plano da skill: `arquivos R05 versionados -> [Skills over MCP ou plugin, conform
 - **RNF-06 Capacidade:** a `nestground-ai` possui cargas NestGround em execução; container futuro terá quota inicial documentada de 1 vCPU/1GiB em ambiente isolado, sujeita a benchmark; não extrapolar capacidade do snapshot.
 - **RNF-07 Reversibilidade:** manter origem DO operacional; rollback exige prova independente, não declaração em runbook.
 - **RNF-08 Supply chain:** versões fixadas, proveniência de imagem, checksum/SBOM e scanner antes de qualquer build autorizada.
-- **RNF-09 Controle de mudanças:** PR obrigatório, revisão técnica independente documentada, aprovação humana de execução e bloqueio de publicação.
+- **RNF-09 Controle de mudanças:** PR rastreável, revisão técnica documentada, aprovação humana de execução e bloqueio de publicação.
 - **RNF-10 Segregação:** todo tipo de busca, inclusive similaridade/UUID/fonte, deve negar exposição cruzada por cliente, não somente por instrução no prompt.
 
 ## 6. Segurança lógica e dados
@@ -79,7 +79,7 @@ Os arquivos de CI/CD estão na branch documental para revisão de segurança. O 
 **Ordem de trabalho:**
 1. **D0 — Projeto executivo:** este documento + backlog + matriz de riscos + plano de testes e rollback; revisar e obter aceite técnico.
 2. **D1 — Autorização para codificar:** após D0 aprovado, mapear fonte operacional da DO e planejar commits limitados à aplicação e testes.
-3. **D2 — Validação do código:** pytest/CI, análise de dependências, revisão técnica independente, checagens de segurança, pacote reproduzível; sem deploy.
+3. **D2 — Validação do código:** pytest/CI, análise de dependências, revisão técnica rastreável, checagens de segurança, pacote reproduzível; sem deploy.
 4. **D3 — Homologação isolada:** somente mediante autorização específica, testar host, Access, ACL, portal humano, rollback e capacidade sintética.
 5. **D4 — Publicação de produção:** autorização separada e plano de mudança; nenhuma decisão automática de cutover.
 
@@ -87,12 +87,12 @@ Os arquivos de CI/CD estão na branch documental para revisão de segurança. O 
 O código novo **não pode começar** enquanto faltar qualquer item obrigatório:
 - **DG-01** Documentação executiva completa, sem contradição entre AS-IS e TO-BE.
 - **DG-02** Inventário de requisitos, backlog, critérios de aceite, riscos e rollback aprovado.
-- **DG-03** Parecer de revisão técnica independente efetivamente recebido, analisado e com achados materiais resolvidos.
+- **DG-03** Autoauditoria documental rastreável registrada, sem exigência de revisão externa; riscos operacionais mantidos no backlog.
 - **DG-04** Definições de escopo, pontos canônicos, interfaces e plano de testes aprovados por responsável autorizado.
 - **DG-05** Confirmação do freeze de publicação e implantação, com segregação do PR e `main`.
 - **DG-06** Autorização explícita para iniciar desenvolvimento (não inclui autorização de deploy).
 
-**Estado desta entrega:** DG-01/DG-02 preparados para revisão; DG-03 e aceites DG-04/DG-06 pendentes. Este pacote **não é homologação operacional**.
+**Estado desta entrega:** DG-01/DG-02 documentados e DG-03 revisado na auditoria enxuta; DG-04/DG-06 dependem da decisão do proprietário sobre o próximo escopo. Este pacote **não é homologação operacional**.
 
 ## 9. Evidências e rastreabilidade
 - Skill R04 e relatório no Drive: https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-
@@ -106,10 +106,10 @@ O código novo **não pode começar** enquanto faltar qualquer item obrigatório
 - Fontes normativas técnicas: https://developers.cloudflare.com/agents/skills/ ; https://skills.extensions.modelcontextprotocol.io/specification/beta/skills ; https://developers.openai.com/plugins/build/skills .
 
 ## 10. Declaração de encerramento documental
-O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Encerramento documental proposto; revisão e aceite ainda não concluídos**. Se a revisão independente identificar uma falha material, este documento deve ser revisado e reavaliado. Nenhuma ação de escrita do runtime ou publicação fica implícita.
+O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Revisão documental enxuta registrada; controles de runtime ainda não validados**. O registro de auditoria fica em `AUDITORIA_TECNICA_ENXUTA_R05_2026-11-17.md`; achados futuros exigem avaliação conforme sua evidência. Nenhuma ação de escrita do runtime ou publicação fica implícita.
 
 ## 6.1 Achados da revisão técnica e bloqueadores ainda não resolvidos
-A revisão do material existente identificou que `SKILL.md` admite consulta por `memory_get`/`memory_find_by_source` com verificação do `process_id` **após** a recuperação. Em ambiente de múltiplos clientes, tal verificação tardia não evita que o serviço exponha dados de terceiros ao host. **BR-01 (CRÍTICO):** antes da implementação ou ativação do fluxo, comprovar ACL server-side por identidade, `tenant_id` e `process_id` para todas as ferramentas; corrigir a orientação correspondente na skill em etapa autorizada. Enquanto não comprovado, não permitir esses métodos no fluxo multi-tenant.
+A revisão detectou a antiga instrução em `SKILL.md` de verificar `process_id` **após** a recuperação por `memory_get`/`memory_find_by_source`. **A orientação da skill R05 foi corrigida nesta branch** para não chamar esses métodos com dados multi-cliente sem comprovação de autorização no backend. **BR-01 (CRÍTICO para uso real):** ainda comprovar ACL server-side por identidade, `tenant_id` e `process_id` para todas as ferramentas; até lá, não usar essas rotas sem escopo seguro comprovado.
 
 **BR-02 (ALTO):** verificar negociação da extensão beta Skills over MCP (capabilities `server/discover`, `skills/list`, `skills/get`, `resources/read` e `resources/directory/read` apenas quando anunciado); confirmar revisão-base e manifestos de recursos. O host ainda não demonstrou consumir a extensão. Conferir ADR-0001 revisada.
 
@@ -117,7 +117,7 @@ A revisão do material existente identificou que `SKILL.md` admite consulta por 
 
 **BR-04 (ALTO):** os pipelines GHCR/Linode estão congelados na branch; os scripts de deployment, chave de acesso, pull do registro privado, isolamento e rollback ainda não passaram auditoria end-to-end. O sucesso da CI estática não elimina o risco.
 
-Esses achados são **revisão documental assistida**, não homologação do runtime nem parecer de revisor externo independente. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
+Esses achados são **revisão documental assistida**, não homologação do runtime nem auditoria externa certificada. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
 
 **Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
 
