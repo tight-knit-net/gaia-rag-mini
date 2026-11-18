@@ -23,3 +23,18 @@ G5 — merge controlado R07 -> R06, somente após aprovação.
 G6 — integração main e deploy em processo próprio, com evidências e rollback. Não executar neste escopo.
 
 O Gate de revisão humana existente na R06 permanece obrigatório.
+
+## Atualização de governança — 18/11/2026: GitHub Actions como único laboratório de candidata
+
+Por determinação do proprietário, o antigo TestLab `gaia-m7i` deixou de ser requisito de avanço da R07. Registros anteriores do TestLab permanecem no repositório como **evidência histórica**, não gates ativos. Não realizar SSH, configuração, instalação, manutenção ou deploy nele por esta frente.
+
+A homologação técnica candidata passa a exigir, no **HEAD exato** da PR #5, cinco jobs:
+1. `validate` — skill, estrutura, testes unitários e congelamento de deploy.
+2. `staging_image_smoke` — contêiner descartável e Qdrant sintético.
+3. `r06_lifecycle_synthetic` — contrato MCP, identidade simulada, botão, revisão, Qdrant de demonstração e readback.
+4. `r07_operational_isolated` — runtime R07 sem rede, portas públicas ou credenciais, com negativas HTTP.
+5. `r07_candidate_acceptance` — executado **somente após sucesso dos quatro anteriores**; confere contratos e ausência de habilitação de produção e publica recibo em GitHub Actions Job Summary.
+
+Status `CI_CANDIDATE_PASS` significa **aptidão para revisão técnica e preparação de implantação futura**, não homologação operacional real. A integração com Cloudflare Access, acesso ao Qdrant real, backup/restauração, migração de propostas, ativação do botão para o proprietário, migração/cutover e desligamento do legado dependem de ambiente operacional futuro identificado, autorização específica e readback.
+
+**A PR #5 permanece draft, sem merge ou deploy automático.** A próxima etapa não deve solicitar o antigo TestLab como pré-condição.
