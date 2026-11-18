@@ -5,7 +5,7 @@ O repositório privado mantém arquivos de projeto em `docs/projeto-executivo/` 
 
 ## Política
 - Esta branch não contém autorização de merge para `main`, nem de publicar imagem ou implantar container.
-- Novos módulos/código aguardam revisão formal e autorização explícita do usuário.
+- Novos módulos/código aguardam revisão formal e autorização explícita do usuário. CodeRabbit pode fazer análise consultiva no PR após reintegração; não é autorização de merge ou deploy.
 - R04 e R03.1 são fontes históricas preservadas no Drive.
 - Arquivos de infraestrutura aqui são propostas para revisão e estão em modo bloqueado.
 
