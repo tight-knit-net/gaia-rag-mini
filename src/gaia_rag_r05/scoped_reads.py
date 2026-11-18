@@ -86,6 +86,50 @@ class ScopedReads:
             hits.append({**payload, "id": point.get("id"), "score": point.get("score")})
         return {"hits": hits}
 
+    def list_process(self, capability: AuthorizedScope, limit: int = 30,
+                     offset: str | int | None = None) -> dict:
+        """List only approved points in the exact authorized process."""
+        self._scope(capability)
+        self._limit(limit)
+        if offset is not None:
+            if type(offset) is int and offset >= 0:
+                pass
+            elif isinstance(offset, str):
+                try:
+                    offset = str(uuid.UUID(offset))
+                except (ValueError, TypeError, AttributeError):
+                    raise ValueError("INVALID_OFFSET") from None
+            else:
+                raise ValueError("INVALID_OFFSET")
+        body = {
+            "filter": self._filter(capability), "limit": limit,
+            "with_payload": True, "with_vector": False,
+        }
+        if offset is not None:
+            body["offset"] = offset
+        result = self._result(self._request("POST", self._base + "/scroll", body), "SCROLL")
+        points = result.get("points") if isinstance(result, dict) else None
+        if not isinstance(points, list) or len(points) > limit:
+            raise RuntimeError("SCROLL_FAILED")
+        items = []
+        for point in points:
+            payload = point.get("payload") if isinstance(point, dict) else None
+            if not isinstance(payload, dict) or not self._matches(payload, capability):
+                raise AccessDenied("ACCESS_DENIED")
+            items.append({**payload, "id": point.get("id")})
+        next_offset = result.get("next_page_offset")
+        if next_offset is not None:
+            if type(next_offset) is int and next_offset >= 0:
+                pass
+            elif isinstance(next_offset, str):
+                try:
+                    next_offset = str(uuid.UUID(next_offset))
+                except (ValueError, TypeError, AttributeError):
+                    raise RuntimeError("SCROLL_FAILED") from None
+            else:
+                raise RuntimeError("SCROLL_FAILED")
+        return {"items": items, "next_offset": next_offset}
+
     def by_source(self, capability: AuthorizedScope, source_ref: str, limit: int = 30) -> dict:
         self._scope(capability)
         self._limit(limit)
