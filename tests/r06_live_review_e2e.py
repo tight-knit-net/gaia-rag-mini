@@ -178,7 +178,7 @@ def main():
                 newproposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-22_PREPARE_AFTER_APPROVED_RETURNS_SAME",not err and newproposal["status"]=="approved" and count()==1)
                 # R07 candidate-only contract checks on disposable Qdrant and DEMO ledger.
-                new_tools={"memory_process_timeline","memory_export_process",
+                new_tools={"memory_auto_prepare","memory_process_timeline","memory_export_process",
                            "memory_approval_audit","memory_stats",
                            "memory_index_preview","gaia_skill_read_chunk"}
                 check("R07-01_NEW_TOOLS",new_tools<=tools)
@@ -208,6 +208,30 @@ def main():
                       and pending_after["storage_available"])
                 check("R07-09_INDEX_PERSISTED_POST_CLICK",
                       obtained["items"][0].get("index_method")=="r07_deterministic_v1")
+                second_source = "DEMO-DOC-002"
+                second_approval = "DEMO-APPROVAL-002"
+                docs.write_text(json.dumps({"approved_documents":[{
+                   "namespace":NS,"tenant_id":TA,"process_id":PA,
+                   "source_ref":SOURCE,"approval_ref":APPROVAL,
+                   "document_sha256":SHA,"status":"approved"},{
+                   "namespace":NS,"tenant_id":TA,"process_id":PA,
+                   "source_ref":second_source,"approval_ref":second_approval,
+                   "document_sha256":SHA,"status":"approved"}]}))
+                assist={**scope,"title":"DEMO nova instrução",
+                        "summary":"Procedimento fictício novo a conferir antes de protocolo.",
+                        "source_ref":second_source,
+                        "document_approval_ref":second_approval,
+                        "document_sha256":SHA}
+                draft,err,_=tool("memory_auto_prepare",assist)
+                check("R07-10_AUTO_PREVIEW_NO_WRITE",
+                      not err and draft["status"]=="PREVIEW_ONLY_CONFIRM_TO_PREPARE"
+                      and draft["proposal_prepared"] is False and count()==1)
+                assisted,err,_=tool("memory_auto_prepare",
+                                    {**assist,"user_confirmed_proposal":True})
+                check("R07-11_PREPARE_NO_QDRANT_WRITE",
+                      not err and assisted["proposal_prepared"]
+                      and assisted["status"]=="pending"
+                      and assisted["human_save_required"] and count()==1)
                 # Same GAIA owner must see approved memory from a different client.
                 id_b="22222222-2222-4222-8222-222222222222"
                 payload_b={"namespace":NS,"tenant_id":TB,"process_id":PB,
