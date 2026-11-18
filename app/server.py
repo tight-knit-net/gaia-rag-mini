@@ -241,11 +241,12 @@ def memory_process_timeline(process_id: str, namespace: str = "chatgpt",
 
 @mcp.tool()
 def memory_export_process(process_id: str, namespace: str = "chatgpt",
-                          max_items: int = 100) -> dict:
+                          max_items: int = 100,
+                          offset: str | int | None = None) -> dict:
     """Bounded export of approved summaries with hash and continuation marker."""
     cap = _require(namespace, process_id)
     return {"process_id": process_id, **lifecycle_read.process_export(
-        _reader(), cap, max_items=max_items)}
+        _reader(), cap, max_items=max_items, offset=offset)}
 
 
 @mcp.tool()
