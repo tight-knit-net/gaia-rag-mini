@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sqlite3
+import unicodedata
 from pathlib import Path
 
 
@@ -202,7 +203,9 @@ def index_candidate_preview(*, process_id: str, title: str, summary: str,
     if evidence_status not in {"alegada", "documentada", "confirmada", "simulada"}:
         raise ValueError("INVALID_EVIDENCE_STATUS")
     from .institutional_memory import _normalized
-    normalized = _normalized(title + " " + summary)
+    normalized = "".join(ch for ch in unicodedata.normalize(
+        "NFKD", _normalized(title + " " + summary))
+        if not unicodedata.combining(ch))
     words = re.findall(r"[a-zA-ZÀ-ÿ]{4,}", normalized)
     tags = sorted({w[:48] for w in words if w not in _STOP})[:12]
     matches = [category for category, terms in _CATEGORIES.items()
