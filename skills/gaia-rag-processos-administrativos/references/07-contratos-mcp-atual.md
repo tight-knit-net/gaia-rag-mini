@@ -1,4 +1,34 @@
-# 07 — Contrato GAIA RAG disponível em 17/11/2026 (AS-IS)
+# 07 — Contrato MCP R06 (prévia na Linode)
+
+A fonte de verdade para este contrato é a lista `tools/list` e os recursos retornados pela imagem R06. **Não confundir com a MCP R05/legada da DigitalOcean.** O ambiente R06 ainda não utiliza credenciais, usuários ou dados reais de clientes e a skill não está homologada para ativação automática em ChatGPT/Work.
+
+## Ferramentas expostas pela R06
+
+| Ferramenta | Entrada principal | Efeito |
+|---|---|---|
+| `memory_status`, `memory_policy` | sem parâmetros | Estado e política; não comprovam disponibilidade de dados |
+| `memory_process_start` | namespace, tenant_id, process_id, description? | Contexto autorizado, sem escrita |
+| `memory_list_process` | namespace, tenant_id, process_id, limit? | Scroll de memórias aprovadas, ACL backend |
+| `memory_search` | query, namespace, tenant_id, process_id, limit? | Busca semântica autorizada |
+| `memory_get` | point_id, namespace, tenant_id, process_id | UUID com filtro ACL antes do readback |
+| `memory_find_by_source` | source_ref, namespace, tenant_id, process_id, limit? | Fonte com ACL no backend |
+| `memory_similar_cases` | description, namespace, tenant_id, process_id, limit? | Só processos que o sujeito possui permissão, dentro do mesmo tenant |
+| `memory_prepare_after_approval` | namespace, tenant_id, process_id, title, summary, source_ref, document_approval_ref, document_sha256 | Apenas prepara proposta após aprovação documental confirmada em registro server-owned |
+| `memory_proposal_preview` | namespace, tenant_id, process_id, proposal_id | Inspeciona proposta permitida |
+| `memory_pending_reviews` | namespace, tenant_id, process_id, limit? | Consulta propostas permitidas |
+| `gaia_skill_catalog`, `gaia_skill_read` | path permitido para leitura | Descoberta e conteúdo progressivo da skill; não instala automaticamente no host |
+
+A imagem registra **13 ferramentas**. Três recursos são servidos por MCP `resources/list`/`resources/read`: `skill://gaia-rag-processos-administrativos/SKILL.md`, `references/02-recuperacao.md` e `references/03-producao-e-proposta.md`. Não se declara suporte à extensão beta `skills/list/get` sem implementação e negociação efetiva.
+
+**A aprovação no portal não é ferramenta MCP.** Após o registro de documento aprovado e a preparação, a `review_url` aponta a uma página HTTPS; apenas um POST de formulário humano autenticado, com proteção contra CSRF/origem, chama a escrita. O Qdrant é consultado após gravação; a memória só é confirmada com readback. Propostas em erro de escrita/readback ficam em estado de conciliação, sem repetição automática.
+
+## Segurança e indisponibilidade
+
+O servidor verifica assinatura JWT CF Access e issuer/audience, consulta grants de origem controlada pelo servidor a cada chamada e exige tenant/processo. Sem `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `GAIA_RAG_GRANTS_FILE`, `QDRANT_URL`, `QDRANT_API_KEY`, `GAIA_RAG_APPROVED_DOCS_FILE`, URL real de revisão e chave CSRF, **o fluxo não está operante**. Não preencher esses valores com amostras DEMO no staging oficial. `GAIA_RAG_ENABLE_REVIEW` fica desligado até homologação controlada.
+
+## Documentação histórica da MCP legada — apenas comparação
+
+## Contrato legado observado em 17/11/2026 (DigitalOcean)
 
 A skill **não implementa** as rotas da proposta R02 (`gaia_memoria_salvar`, `gaia_skill_catalogo`, `gaia_contexto_processo`, `gaia_documento_buscar` etc.). Elas NÃO foram observadas nesta MCP atual. Revalidar a lista quando instalar.
 
