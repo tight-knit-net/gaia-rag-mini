@@ -146,3 +146,10 @@ O operador autenticado deve **provisionar diretamente** no host, por canal segur
 **Após isso, o fato de um contêiner subir não equivale à homologação:** confirmar Cloudflare API status healthy, conexões ativas e estáveis, origin interno HTTP 200, Access ingress e audience preservados, retry/boot, status legado healthy e ambos CNAMEs sem alteração. Sem corte do domínio de produção e sem merge PR #4.
 
 **Declaração operacional nesta execução: TÚNEL R06 AINDA BLOQUEADO — conector preparado/autoacionável, mas não iniciado por ausência de credencial de túnel.**
+
+
+### Operação adicional — recepção local de segredo, sem exposição na IA
+
+Instalado na Linode o utilitário interativo **/usr/local/sbin/gaia-r06-provision-cloudflare-token** (root:root, modo 0700), para um operador com SSH autenticado. Foi testado em modo somente status e retornou **token_file=absent**. Executado sem parâmetros em terminal SSH interativo e com sudo, recebe o token existente por **entrada oculta (getpass)**, não por argumento CLI, ambiente Docker ou chat; valida formato mínimo, grava atomicamente via arquivo temporário no diretório aprovado, altera dono para UID:GID **65532:65532** e modo **0400**. O monitor systemd.path já habilitado observa a criação do arquivo e aciona o Compose preparado.
+
+O utilitário recusa substituir credencial existente, recusa chamada não interativa e não imprime nem o token nem seu hash. **Nenhum token foi provisionado nesta execução.** Para chegar a HEALTHY ainda é necessário obter a credencial na sessão autenticada Cloudflare do proprietário e digitá-la no terminal seguro da Linode, fora desta conversa; depois executar as verificações de conectividade e API Cloudflare. Não reiniciar outros serviços, alterar DNS ou mesclar o PR #4.
