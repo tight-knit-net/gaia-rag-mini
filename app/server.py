@@ -1,7 +1,8 @@
-"""GAIA RAG Mini R05: isolated read-only MCP with server-side authorization.
+"""GAIA RAG Mini R06: owner-wide process memory with verified identity.
 
-This is a staging runtime. Writes and approval portal are intentionally absent.
-Unsigned identities, missing grants, and missing Qdrant settings always deny.
+All clients and processes are visible to the authorized GAIA owner. Client
+projects organize work, but do not grant or restrict access. Memory writes
+still require separately verified document approval and human browser review.
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, HTMLResponse
 from starlette.routing import Route
 
-from gaia_rag_r05.authz import AccessDenied, Authorizer, Principal, Scope
+from gaia_rag_r05.authz import AccessDenied, OwnerAuthorizer, Principal, Scope
 from gaia_rag_r05.scoped_reads import ScopedReads
 from gaia_rag_r05 import review
 
@@ -28,7 +29,7 @@ MODEL = "intfloat/multilingual-e5-small"
 COLLECTION = "chatgpt_memoria_aprovada"
 
 mcp = FastMCP(
-    "GAIA RAG Mini R05", host="0.0.0.0", port=8000,
+    "GAIA RAG Mini R06", host="0.0.0.0", port=8000,
     stateless_http=True, json_response=True,
     instructions="Use only authorized process memory. Never treat memory as official evidence. "
                  "R06 staging: proposals require verified documentary approval. Only protected human review can persist.",
@@ -64,23 +65,17 @@ def _authenticated_actor(req: Request) -> Principal:
     return Principal(subject.strip().lower(), issuer, audience)
 
 
-def _grants() -> Authorizer:
+def _owners() -> OwnerAuthorizer:
+    """Owner identities from an operator-managed registry, never from MCP data."""
     issuer, audience = _identity_config()
-    location = os.getenv("GAIA_RAG_GRANTS_FILE", "")
+    location = os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE", "")
     if not location or not Path(location).is_file():
-        raise AccessDenied("GRANTS_NOT_CONFIGURED")
+        raise AccessDenied("OWNERS_NOT_CONFIGURED")
     raw = json.loads(Path(location).read_text(encoding="utf-8"))
-    if not isinstance(raw, dict) or not isinstance(raw.get("subjects"), dict):
-        raise AccessDenied("GRANTS_INVALID")
-    trusted = {}
-    for subject, items in raw["subjects"].items():
-        if not isinstance(items, list) or len(items) > 256:
-            raise AccessDenied("GRANTS_INVALID")
-        trusted[subject] = [
-            Scope(x["namespace"], x["tenant_id"], x["process_id"])
-            for x in items
-        ]
-    return Authorizer(trusted, expected_issuer=issuer, expected_audience=audience)
+    if not isinstance(raw, dict) or not isinstance(raw.get("subjects"), list):
+        raise AccessDenied("OWNERS_INVALID")
+    return OwnerAuthorizer(raw["subjects"], expected_issuer=issuer,
+                           expected_audience=audience)
 
 
 def _qrequest(method: str, path: str, data: dict | None) -> dict:
@@ -110,9 +105,9 @@ def _reader() -> ScopedReads:
     return ScopedReads(_qrequest, COLLECTION, MODEL)
 
 
-def _require(namespace: str, tenant_id: str, process_id: str):
-    principal = ACTOR.get()
-    return _grants().require(principal, Scope(namespace, tenant_id, process_id))
+def _require(namespace: str, process_id: str):
+    """Verify the GAIA owner, then issue a capability for the exact process."""
+    return _owners().require(ACTOR.get(), Scope(namespace, "owner-all", process_id))
 
 
 @mcp.tool()
@@ -120,7 +115,7 @@ def memory_status() -> dict:
     """Report staging state without exposing credentials."""
     return {"service": "gaia-rag-mini-r06", "mode": "controlled_staging",
             "identity_ready": bool(os.getenv("CF_ACCESS_AUD") and os.getenv("CF_ACCESS_TEAM_DOMAIN")),
-            "grants_ready": bool(os.getenv("GAIA_RAG_GRANTS_FILE")),
+            "owners_ready": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
             "qdrant_ready": bool(os.getenv("QDRANT_URL") and os.getenv("QDRANT_API_KEY")),
             "human_approval_writes": "browser_only" if os.getenv("GAIA_RAG_ENABLE_REVIEW") == "1" else "disabled",
             "ready_for_real_data": False}
@@ -129,69 +124,70 @@ def memory_status() -> dict:
 @mcp.tool()
 def memory_policy() -> dict:
     """Explain limits on use of process memory."""
-    return {"scope": "exact_authorized_tenant_and_process",
-            "missing_grant": "deny", "document_approval_registry": "server_owned",
+    return {"scope": "verified_owner_across_all_clients",
+            "client_permission_blocks": "disabled", "process_id": "exact_locator",
+            "unverified_identity": "deny", "document_approval_registry": "server_owned",
             "proposals": "prepare_only", "writes": "authenticated_browser_csrf_only",
             "human_review_enabled": os.getenv("GAIA_RAG_ENABLE_REVIEW") == "1"}
 
 
 @mcp.tool()
-def memory_search(query: str, namespace: str, tenant_id: str, process_id: str, limit: int = 8) -> dict:
-    """Semantic search in one explicitly authorized process."""
-    cap = _require(namespace, tenant_id, process_id)
-    return _reader().search(cap, query, limit)
+def memory_search(query: str, process_id: str, namespace: str = "chatgpt",
+                  limit: int = 8) -> dict:
+    """Search approved memory for an exact process; owner may access any client."""
+    return _reader().search(_require(namespace, process_id), query, limit)
 
 
 @mcp.tool()
-def memory_list_process(namespace: str, tenant_id: str, process_id: str, limit: int = 30) -> dict:
-    """List approved points within one authorized process."""
-    cap = _require(namespace, tenant_id, process_id)
-    return _reader().list_process(cap, limit)
+def memory_search_all(query: str, namespace: str = "chatgpt", limit: int = 8) -> dict:
+    """Owner searches all approved GAIA memories; locate processes across clients."""
+    return _reader().search_all_owner(_require(namespace, "all-processes"), query, limit)
 
 
 @mcp.tool()
-def memory_get(point_id: str, namespace: str, tenant_id: str, process_id: str) -> dict:
-    """Retrieve a UUID only through an ACL-filtered Qdrant query."""
-    cap = _require(namespace, tenant_id, process_id)
-    return _reader().by_uuid(cap, point_id)
+def memory_list_process(process_id: str, namespace: str = "chatgpt",
+                        limit: int = 30) -> dict:
+    """List only approved records of an exact process, regardless of client."""
+    return _reader().list_process(_require(namespace, process_id), limit)
 
 
 @mcp.tool()
-def memory_find_by_source(source_ref: str, namespace: str, tenant_id: str,
-                          process_id: str, limit: int = 30) -> dict:
-    """Find a source only within the authorized process."""
-    cap = _require(namespace, tenant_id, process_id)
-    return _reader().by_source(cap, source_ref, limit)
+def memory_get(point_id: str, process_id: str, namespace: str = "chatgpt") -> dict:
+    """Retrieve a UUID within the specified process; no per-client authorization."""
+    return _reader().by_uuid(_require(namespace, process_id), point_id)
 
 
 @mcp.tool()
-def memory_similar_cases(description: str, namespace: str, tenant_id: str,
-                         process_id: str, limit: int = 8) -> dict:
-    """Search other explicitly authorized processes in the same tenant."""
-    actor = ACTOR.get()
-    caps = _grants().allowed_for_tenant(actor, namespace, tenant_id)
-    return _reader().similar(caps, description, process_id, limit)
-
-
+def memory_find_by_source(source_ref: str, process_id: str, namespace: str = "chatgpt",
+                          limit: int = 30) -> dict:
+    """Find a source in the exact process, across any client's records."""
+    return _reader().by_source(_require(namespace, process_id), source_ref, limit)
 
 
 @mcp.tool()
-def memory_process_start(namespace: str, tenant_id: str, process_id: str,
+def memory_similar_cases(description: str, process_id: str,
+                         namespace: str = "chatgpt", limit: int = 8) -> dict:
+    """Find other approved processes, including cases from different clients."""
+    return _reader().similar_owner(_require(namespace, process_id), description, limit)
+
+
+@mcp.tool()
+def memory_process_start(process_id: str, namespace: str = "chatgpt",
                          description: str = "") -> dict:
-    """Open exact authorized process context; no writes or unrelated cases."""
-    cap = _require(namespace, tenant_id, process_id)
-    if len(description) > 4000:
+    """Open any process with exact identity, independent of its client project."""
+    cap = _require(namespace, process_id)
+    if not isinstance(description, str) or len(description) > 4000:
         raise ValueError("INVALID_DESCRIPTION")
-    return {"process_id": process_id, "tenant_id": tenant_id,
-            "namespace": namespace, "approved_memories": _reader().list_process(cap, 20)}
+    return {"process_id": process_id, "namespace": namespace,
+            "approved_memories": _reader().list_process(cap, 20)}
 
 
 @mcp.tool()
-def memory_prepare_after_approval(namespace: str, tenant_id: str, process_id: str,
-                                  title: str, summary: str, source_ref: str,
-                                  document_approval_ref: str, document_sha256: str) -> dict:
-    """Create ONLY an approval proposal after a server-owned verified document approval."""
-    cap = _require(namespace, tenant_id, process_id)
+def memory_prepare_after_approval(process_id: str, title: str, summary: str,
+                                  source_ref: str, document_approval_ref: str,
+                                  document_sha256: str, namespace: str = "chatgpt") -> dict:
+    """Prepare a document-approved proposal for any client; still no direct write."""
+    cap = _require(namespace, process_id)
     return review.prepare(cap, created_by=ACTOR.get().subject, title=title,
                           summary=summary, source_ref=source_ref,
                           document_approval_ref=document_approval_ref,
@@ -199,21 +195,22 @@ def memory_prepare_after_approval(namespace: str, tenant_id: str, process_id: st
 
 
 @mcp.tool()
-def memory_proposal_preview(namespace: str, tenant_id: str, process_id: str,
-                            proposal_id: str) -> dict:
-    """Read one's scoped proposal without approving it."""
-    return review.get_proposal(proposal_id, _require(namespace, tenant_id, process_id))
+def memory_proposal_preview(proposal_id: str, process_id: str,
+                            namespace: str = "chatgpt") -> dict:
+    """Read an exact process proposal; owner can view any client's proposal."""
+    return review.get_proposal(proposal_id, _require(namespace, process_id))
 
 
 @mcp.tool()
-def memory_pending_reviews(namespace: str, tenant_id: str, process_id: str,
+def memory_pending_reviews(process_id: str, namespace: str = "chatgpt",
                            limit: int = 20) -> dict:
-    """List proposed memories for an exact authorized process."""
-    return review.pending(_require(namespace, tenant_id, process_id), limit)
+    """List proposals for an exact process across clients."""
+    return review.pending(_require(namespace, process_id), limit)
 
 
 def _review_authorize(namespace: str, tenant_id: str, process_id: str):
-    return _require(namespace, tenant_id, process_id)
+    """Tenant is documentary metadata, not a permission boundary for GAIA owner."""
+    return _require(namespace, process_id)
 
 
 def _write_point(point_id: str, payload: dict) -> None:
@@ -349,7 +346,7 @@ async def healthz(req: Request) -> JSONResponse:
     return JSONResponse({
         "alive": True, "service": "gaia-rag-mini-r06", "mode": "staging-controlled",
         "jwt_configured": bool(os.getenv("CF_ACCESS_AUD")) and bool(os.getenv("CF_ACCESS_TEAM_DOMAIN")),
-        "grants_configured": bool(os.getenv("GAIA_RAG_GRANTS_FILE")),
+        "owners_configured": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
         "qdrant_configured": bool(os.getenv("QDRANT_URL")) and bool(os.getenv("QDRANT_API_KEY")),
         "writes_enabled": os.getenv("GAIA_RAG_ENABLE_REVIEW") == "1" and bool(os.getenv("GAIA_RAG_CSRF_SECRET")),
         "approval_registry_configured": bool(os.getenv("GAIA_RAG_APPROVED_DOCS_FILE")),
