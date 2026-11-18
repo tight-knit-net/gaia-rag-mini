@@ -127,8 +127,8 @@ def main():
                 uri="skill://gaia-rag-processos-administrativos/SKILL.md"
                 check("R06-03A_MCP_RESOURCES_LIST",resources.status_code==200 and uri in listed)
                 contents=call("resources/read",{"uri":uri})
-                docs=contents.json().get("result",{}).get("contents",[])
-                check("R06-03B_MCP_RESOURCES_READ",contents.status_code==200 and bool(docs) and "gaia-rag-processos-administrativos" in docs[0].get("text",""))
+                resource_items=contents.json().get("result",{}).get("contents",[])
+                check("R06-03B_MCP_RESOURCES_READ",contents.status_code==200 and bool(resource_items) and "gaia-rag-processos-administrativos" in resource_items[0].get("text",""))
                 denied,err,_=tool("gaia_skill_read",{"path":"../../etc/passwd"})
                 check("R06-04_PATH_TRAVERSAL_DENIED",err is True,"file read rejected")
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
