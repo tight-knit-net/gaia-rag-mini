@@ -30,17 +30,23 @@ class TestR07TestLabPreflight(unittest.TestCase):
             preflight.safe_container_name("gaia-rag-r07-;docker rm")
 
     def test_absent_workspace_fails_without_creating_anything(self):
-        path = "/home/ubuntu/gaia-test-lab-homologacao/gaia-rag-r07-nonexistent-synth"
-        result = preflight.inspect(path, HEAD)
-        self.assertFalse(result["workspace_present"])
-        self.assertEqual(result["blockers"], ["R07_WORKSPACE_NOT_INSTALLED"])
-        self.assertFalse(result["mutation_performed"])
-        self.assertFalse(result["testlab_homologated"])
+        # Synthetic workspace: never access retired TestLab or /home/ubuntu.
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "gaia-rag-r07-nonexistent-synth")
+            with patch.object(preflight, "safe_workspace", return_value=Path(path)):
+                result = preflight.inspect(path, HEAD)
+            self.assertFalse(result["workspace_present"])
+            self.assertEqual(result["blockers"], ["R07_WORKSPACE_NOT_INSTALLED"])
+            self.assertFalse(result["mutation_performed"])
+            self.assertFalse(result["testlab_homologated"])
 
     def test_sha_must_be_exact(self):
-        with self.assertRaisesRegex(ValueError, "INVALID_SHA"):
-            preflight.inspect("/home/ubuntu/gaia-test-lab-homologacao/gaia-rag-r07-unit",
-                              "not-a-sha")
+        # Invalid SHA is tested without probing any real host directory.
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "gaia-rag-r07-unit")
+            with patch.object(preflight, "safe_workspace", return_value=Path(path)):
+                with self.assertRaisesRegex(ValueError, "INVALID_SHA"):
+                    preflight.inspect(path, "not-a-sha")
 
     def test_matching_checkout_and_isolated_container(self):
         with tempfile.TemporaryDirectory() as d:
