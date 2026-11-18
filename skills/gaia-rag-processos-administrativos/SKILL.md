@@ -1,11 +1,11 @@
 ---
 name: gaia-rag-processos-administrativos
-description: "Consultar, continuar e preparar propostas de memória de processos administrativos do GAIA OFFICE usando a MCP GAIA RAG já instalada. Use para buscar memória aprovada de um processo identificado, separar fatos e normas, redigir ou revisar peças, e extrair aprendizado após aprovação de documento ou processo. Mantenha processos e clientes distintos; nunca grave no Qdrant sem revisão humana nem confunda skill com autorização do servidor."
+description: "Consultar, continuar e preparar propostas de memória de processos administrativos do GAIA OFFICE usando a MCP GAIA RAG R06 acessível e autenticada. Use para buscar memória aprovada de um processo identificado, separar fatos e normas, redigir ou revisar peças, e extrair aprendizado após aprovação de documento ou processo. Mantenha processos e clientes distintos; nunca grave no Qdrant sem revisão humana nem confunda skill com autorização do servidor."
 compatibility: "Requer acesso autorizado às ferramentas GAIA RAG MCP para ações reais; sem o conector funciona apenas como guia offline."
 metadata:
-  version: "0.5.0-prehomologacao"
+  version: "0.6.0-r06-preview"
   owner: "GAIA OFFICE"
-  status: "integracao_r05_nao_homologada"
+  status: "integracao_r06_preview_nao_homologada"
 ---
 
 # GAIA RAG — Skill única de memória administrativa (R05 candidata)
@@ -31,11 +31,11 @@ A descrição e este arquivo são o ponto de entrada. Arquivos auxiliares são l
 
 ## Escolha do modo e fronteiras de autorização
 
-**BUSCA (somente leitura).** Identificar `process_id` real e `namespace` autorizado. Para abertura de processo administrativo, chamar `memory_process_start`; depois preferir `memory_list_process` para registros exatos e `memory_search(query, process_id)` para semântica. Conferir data, fonte e status; resultado vazio significa somente ausência de registro recuperado. `memory_find_by_source` e `memory_get` não expõem filtro explícito por processo no contrato documentado; **não chamar para dados multi-cliente enquanto a autorização de identidade/cliente/processo ANTES do retorno não tiver sido comprovada no backend**. Conferir `process_id` depois do retorno não protege contra vazamento ao host. `memory_similar_cases` também não tem filtro explícito por cliente: **não usar para dados reais multi-cliente sem ACL server-side comprovada**. Se não for possível comprovar a autorização, registrar limitação e usar apenas rotas comprovadamente autorizadas; nunca tentar compensar com filtragem no texto da resposta.
+**BUSCA (somente leitura).** Identificar `namespace`, `tenant_id` e `process_id` **exatos** e autenticação Cloudflare Access validada no servidor. Na R06 candidata, `memory_process_start`, `memory_list_process`, `memory_search`, `memory_get`, `memory_find_by_source` e `memory_similar_cases` exigem escopo explícito e verificam autorizações no backend **antes da consulta Qdrant**. Nunca preencher `tenant_id` por adivinhação e nunca ampliar a pesquisa para outro cliente por similaridade. Dados históricos sem `tenant_id` demonstrado permanecem inacessíveis. As assinaturas R05 legadas podem ser diferentes: usar somente as funções realmente listadas no host. Conferir data, fonte, jurisdição e status após a leitura continua obrigatório para interpretação, mas não substitui a ACL backend.
 
 **PROCESSO (produção documental).** Identificar matéria, ente, município/UF, órgão, fase, documento e objetivo. Separar fatos comprovados, alegações, hipóteses, norma a verificar, minuta interna, protocolo e decisão oficial. Validar legislação pela fonte primária e pela competência territorial/temporal; não extrapolar a Lei 9.784/1999 para município sem examinar regramento local. Produzir/revisar peça sem inventar protocolo, prazo, resultado ou dispositivo.
 
-**PRODUCAO (proposta de memória).** Uma conversa não é memória. Após **aprovação identificável do documento ou processo**, selecionar atos, decisões e aprendizados úteis, resumir de modo atômico com origem e restrições, deduplicar no processo e mostrar candidatos ao usuário. Apenas quando couber preparar `memory_prepare_after_approval`, usando os argumentos de fato aceitos pela MCP. A ferramenta só gera proposta/link; salvar depende de clique humano no portal HTTPS protegido por Cloudflare Access. Se não há aprovação prévia da peça/processo, **não chamar**. Nunca afirmar PERSISTIDO apenas porque a proposta foi criada.
+**PRODUCAO (proposta de memória).** Uma conversa não é memória. A R06 exige um documento **previamente aprovado em registro controlado pelo servidor**, representado por `source_ref`, `document_approval_ref` e `document_sha256` conferidos no backend. Primeiro deduplicar em `namespace/tenant_id/process_id`; depois chamar `memory_prepare_after_approval(namespace, tenant_id, process_id, title, summary, source_ref, document_approval_ref, document_sha256)` **apenas se a ferramenta estiver disponível**. Isso cria proposta, nunca memória. O usuário humano autenticado abre a `review_url` verdadeira e faz clique explícito no portal protegido; somente depois de gravação e readback confirmados declarar memória persistida. Se o registro documental ou portal não estiver configurado, não tentar contornar ou inventar autorização.
 
 **GOVERNANCA.** Classificar natureza da informação, fonte, confirmação, nível de acesso, vigência e versão. Somente orientar; sem mutação de Qdrant, Cloudflare ou MCP.
 
@@ -60,4 +60,4 @@ LIMITAÇÕES: permissão, cobertura, verificação legal, ausência de prova
 PRÓXIMO PASSO: objetivo e seguro; sem ação implícita de escrita
 ```
 
-Fontes, testes e decisões de revisão estão em `governanca/FONTES_E_STATUS.md`, `tests/aceite.md` e na raiz do projeto `MATRIZ_EVIDENCIAS_R04.md`. **Estado R05: derivada da R04; NÃO homologada em host, ACL multi-tenant, Cloudflare nem persistência. Originais R04/R03.1 preservados no Drive.**
+Fontes, testes e decisões de revisão estão em `governanca/FONTES_E_STATUS.md`, `tests/aceite.md` e na raiz do projeto `MATRIZ_EVIDENCIAS_R04.md`. **Estado R06: o pacote é carregável pelo runtime MCP de prévia, com recursos `skill://` e ferramentas `gaia_skill_catalog` / `gaia_skill_read`; seleção automática pelo ChatGPT/Work e Cloudflare/Qdrant de produção ainda NÃO homologados. Originais R04/R03.1 preservados no Drive.**
