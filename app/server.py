@@ -289,6 +289,58 @@ def memory_index_preview(process_id: str, title: str, summary: str,
         source_ref=source_ref, evidence_status=evidence_status)
 
 
+
+@mcp.tool()
+def memory_auto_prepare(
+    process_id: str, title: str, summary: str, source_ref: str,
+    document_approval_ref: str, document_sha256: str,
+    kind: str = "auto", evidence_status: str = "documentada",
+    prior_point_id: str = "", user_confirmed_proposal: bool = False,
+    namespace: str = "chatgpt",
+) -> dict:
+    """LLM-assisted editorial preparation, NEVER automatic Qdrant persistence.
+
+    In preview mode no changes occur. Explicitly confirmed preparation still
+    requires documentary registry approval and human browser click/readback.
+    """
+    _require(namespace, process_id)
+    indexed = lifecycle_read.index_candidate_preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, evidence_status=evidence_status)
+    chosen_kind = indexed["suggested_kind"] if kind == "auto" else kind
+    assessment = memory_assimilation_preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, kind=chosen_kind,
+        evidence_status=evidence_status, prior_point_id=prior_point_id,
+        namespace=namespace)
+    result = {
+        "candidate": indexed, "assessment": assessment,
+        "proposal_prepared": False, "persisted": False,
+        "human_save_required": True,
+        "external_llm_used": False,
+    }
+    if (assessment["blockers"] or assessment["disposition"] != "NOVA_CANDIDATA"
+            or not indexed["recommend_review"]):
+        result["status"] = "BLOCKED_FOR_EDITORIAL_REVIEW"
+        return result
+    if user_confirmed_proposal is not True:
+        result["status"] = "PREVIEW_ONLY_CONFIRM_TO_PREPARE"
+        return result
+    cap = _require(namespace, process_id)
+    proposed = review.prepare(
+        cap, created_by=ACTOR.get().subject, title=title,
+        summary=summary, source_ref=source_ref,
+        document_approval_ref=document_approval_ref,
+        document_sha256=document_sha256)
+    result["proposal_prepared"] = True
+    result["status"] = proposed["status"]
+    result["proposal_id"] = proposed["proposal_id"]
+    result["review_url"] = proposed["review_url"]
+    result["persisted"] = proposed.get("stored") is True
+    result["human_save_required"] = proposed.get("stored") is not True
+    return result
+
+
 @mcp.tool()
 def memory_prepare_after_approval(process_id: str, title: str, summary: str,
                                   source_ref: str, document_approval_ref: str,
