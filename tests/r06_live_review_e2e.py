@@ -122,6 +122,13 @@ def main():
                 check("R06-02_SKILL_MANIFEST",not err and len(catalog["files"])>=10,str(len(catalog.get("files",[]))))
                 skill,err,_=tool("gaia_skill_read",{"path":"SKILL.md"})
                 check("R06-03_SKILL_READ",not err and "gaia-rag-processos-administrativos" in skill["content"])
+                resources=call("resources/list")
+                listed={x.get("uri") for x in resources.json().get("result",{}).get("resources",[])}
+                uri="skill://gaia-rag-processos-administrativos/SKILL.md"
+                check("R06-03A_MCP_RESOURCES_LIST",resources.status_code==200 and uri in listed)
+                contents=call("resources/read",{"uri":uri})
+                docs=contents.json().get("result",{}).get("contents",[])
+                check("R06-03B_MCP_RESOURCES_READ",contents.status_code==200 and bool(docs) and "gaia-rag-processos-administrativos" in docs[0].get("text",""))
                 denied,err,_=tool("gaia_skill_read",{"path":"../../etc/passwd"})
                 check("R06-04_PATH_TRAVERSAL_DENIED",err is True,"file read rejected")
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
@@ -136,6 +143,8 @@ def main():
                    "namespace":NS,"tenant_id":TA,"process_id":PA,
                    "source_ref":SOURCE,"approval_ref":APPROVAL,
                    "document_sha256":SHA,"status":"approved"}]}))
+                opened,err,_=tool("memory_process_start",scope)
+                check("R06-06A_EXACT_PROCESS_START",not err and opened["process_id"]==PA and opened["approved_memories"]["items"]==[])
                 proposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-07_CREATE_PROPOSAL",not err and proposal["status"]=="pending",str(proposal))
                 ident=proposal["proposal_id"]
