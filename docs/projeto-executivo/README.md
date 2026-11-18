@@ -32,7 +32,7 @@ Este repositório contém proposta de infra e CI para revisão. **Não executar*
 - Histórico R04: 23 regressões estáticas e testes de pacote, não homologação no ChatGPT.
 - Instância DigitalOcean: ativa anteriormente, sem alteração nesta fase.
 - Linode: preparação anterior sem container GAIA RAG iniciado; capacidade em staging exige benchmark.
-- Revisão técnica: parecer independente verificável ainda é necessário para o DG-03; o CodeRabbit foi retirado da configuração do projeto a pedido do proprietário.
+- Revisão técnica: parecer independente verificável ainda é necessário para o DG-03. O CodeRabbit foi reativado na configuração para revisão adicional consultiva, sem substituir o aceite responsável.
 - Skill no host: pendente; artefato de CI não prova instalação ou carregamento.
 
 **Fontes canônicas:** [R04 no Drive](https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-) e [R03.1 preservada](https://drive.google.com/drive/folders/15X-POHeZGrzQlY8ZeJYxgrW0eJYvZmMf).
