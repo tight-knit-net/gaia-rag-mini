@@ -65,3 +65,17 @@ Para produção, continuam pendentes CAS/If-Match real, unicidade/transação no
 **Rollback:** reverter somente commit(s) do G14-B na nossa branch, sem afetar R07/R06, NOM/OCR, Qdrant, GitLab, Linear, objetos ou serviço externo. Nenhum histórico BC01 foi importado.
 
 **Status de autoria deste MD:** relatório preparado na branch; resultado real da CI, SHA final e eventuais falhas devem ser verificados por readback do GitHub antes de declarar PASS.
+
+## 7. Checkpoint pós-execução e readback em 2026-11-18T20:43:12-03:00
+
+**Relógio:** ferramenta de hora local do ChatGPT, America/Sao_Paulo. **Commit técnico:** `82a5181c329458902071ee5595a73eb5eccd12e1`, registrado no GitHub às 2026-11-18T23:42:10Z (20:42:10 BRT).
+
+**Resultado CI específica em SHA técnico:** [workflow 44422989675](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44422989675) — `success`, logs: **49** testes dos contratos v2, **13** testes OCR/NOM, **39** testes de correlação P0/P1 e **39** testes do G14-B = **140/140 aprovados**. Testes são sintéticos; não há ambiente real homologado.
+
+**Workflow herdado R05/R07:** [run 44422998443](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44422998443) — `success` no mesmo SHA técnico; não significa autorização de merge/deploy. Congelamento dos jobs de publicação verificado na CI própria.
+
+**Readback do diff:** base `646a611227a64677a4a294083c7dae860790dd1d` → `82a5181c329458902071ee5595a73eb5eccd12e1`: **sete arquivos**, incluindo dois módulos Python novos, um arquivo de 39 testes, workflow CI próprio, índice e dois documentos Markdown. **Contratos, schemas e branches anteriores intocados.** PR #7 aberta em `Draft`.
+
+**Gates efetivamente aprovados:** B0 a B6 **PASSOU** dentro do recorte de código e teste sintético; B7 **BLOQUEADO** para autenticação real, memória Qdrant, persistência SQL, acesso a clientes, OCR/NOM TestLab, integração, merge e deploy. Nenhum resultado de mock pode ser tratado como evidência E2E.
+
+**Próximo gate proposto, não executado:** G14-C — ensaio de concorrência com armazenamento descartável e controle de principal autenticado em bancada isolada, após autorização específica. Para memória institucional, elaborar fluxo de agrupamento/revisão humana R06 a fim de evitar um clique manual por documento, sem eliminar o gate documental e readback Qdrant.
