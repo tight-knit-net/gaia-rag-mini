@@ -12,6 +12,7 @@ on:
       - "tests/test_hybrid_mcp.py"
       - "tests/test_correlation_gate.py"
       - "tests/test_owner_process_learning.py"
+      - "tests/test_g14c_disposable.py"
       - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
   pull_request:
     paths:
@@ -23,6 +24,7 @@ on:
       - "tests/test_hybrid_mcp.py"
       - "tests/test_correlation_gate.py"
       - "tests/test_owner_process_learning.py"
+      - "tests/test_g14c_disposable.py"
       - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
   workflow_dispatch:
 
@@ -40,7 +42,7 @@ jobs:
           python-version: "3.12"
       - name: Contract syntax and JSON schemas
         run: |
-          python -m compileall -q gaia_document_mcp tests/test_document_mcp.py tests/test_hybrid_mcp.py tests/test_correlation_gate.py tests/test_owner_process_learning.py
+          python -m compileall -q gaia_document_mcp tests/test_document_mcp.py tests/test_hybrid_mcp.py tests/test_correlation_gate.py tests/test_owner_process_learning.py tests/test_g14c_disposable.py
           python - <<'PY'
           import json
           from pathlib import Path
@@ -56,6 +58,7 @@ jobs:
           python -m unittest discover -s tests -p test_hybrid_mcp.py -v
           python -m unittest discover -s tests -p test_correlation_gate.py -v
           python -m unittest discover -s tests -p test_owner_process_learning.py -v
+          python -m unittest discover -s tests -p test_g14c_disposable.py -v
       - name: Validate single disabled jobs in inherited publication workflows
         run: |
           python - <<'PY'
