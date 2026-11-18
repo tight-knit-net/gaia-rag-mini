@@ -16,6 +16,7 @@ import secrets
 import sqlite3
 import time
 import uuid
+from contextlib import closing
 from pathlib import Path
 
 from .authz import AccessDenied, AuthorizedScope, require_issued_scope
@@ -124,7 +125,7 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
     identity_key = _digest(s.namespace, tenant_id, s.process_id, source_ref,
                            document_sha256, title.strip(), summary.strip())
     point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "gaia-r06:" + identity_key))
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         row = conn.execute("SELECT * FROM proposals WHERE identity_key=?", (identity_key,)).fetchone()
         if row is None:
@@ -147,7 +148,7 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
 
 def get_proposal(identifier: str, capability: AuthorizedScope) -> dict:
     s = require_issued_scope(capability)
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         row = conn.execute("SELECT * FROM proposals WHERE id=?", (str(uuid.UUID(identifier)),)).fetchone()
         if row is None or row["namespace"] != s.namespace or row["process_id"] != s.process_id:
             raise AccessDenied("PROPOSAL_NOT_FOUND")
@@ -193,7 +194,7 @@ def verify_csrf(identifier: str, actor: str, token: str):
         raise AccessDenied("CSRF_DENIED") from None
 
 def review_view(identifier: str, actor: str, authorize) -> dict:
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         row = _checked_row(conn,identifier,actor,authorize)
         return {"id":row["id"],"title":row["title"],"summary":row["summary"],
                 "source_ref":row["source_ref"],"status":row["status"],
@@ -202,7 +203,7 @@ def review_view(identifier: str, actor: str, authorize) -> dict:
 
 def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read_point) -> dict:
     # Browser-mediated: only caller that verified Access JWT and explicit CSRF POST can call.
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         row = _checked_row(conn,identifier,actor,authorize)
         verify_csrf(row["id"],actor,csrf)
@@ -245,7 +246,7 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
             or item.get("index_method")!="r07_deterministic_v1"
             or item.get("index_keywords_suggested")!=indexing["suggested_tags"]):
         raise RuntimeError("READBACK_UNCONFIRMED")
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         conn.execute("UPDATE proposals SET status='approved',approved_by=?,approved_at=? WHERE id=? AND status='approving'",
                      (actor,_now(),row["id"]))
@@ -254,17 +255,32 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
         conn.commit()
     return {"stored":True,"point_id":row["point_id"],"replayed":False}
 
+def _ledger_supports_discard(conn: sqlite3.Connection) -> bool:
+    """Old R06 SQLite CHECK constraints cannot be expanded by CREATE IF NOT EXISTS.
+
+    Fail closed and require a separately approved, backed-up schema migration.
+    Never attempt an automatic migration during a browser click.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='proposals'"
+    ).fetchone()
+    return (row is not None and isinstance(row["sql"], str)
+            and "'discarded'" in row["sql"].lower())
+
+
 def discard(identifier: str, actor: str, authorize, csrf: str) -> dict:
     """Explicit human browser action, never an MCP direct mutation."""
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         row = _checked_row(conn, identifier, actor, authorize)
         verify_csrf(row["id"], actor, csrf)
         if row["status"] == "discarded":
             conn.commit()
             return {"discarded": True, "proposal_id": row["id"], "replayed": True}
-        if row["status"] != "pending":
+        if row["status"] != "pending" or row["expires_at"] < _now():
             raise AccessDenied("DISCARD_NOT_PENDING")
+        if not _ledger_supports_discard(conn):
+            raise AccessDenied("DISCARD_SCHEMA_MIGRATION_REQUIRED")
         conn.execute("UPDATE proposals SET status='discarded' WHERE id=? AND status='pending'",
                      (row["id"],))
         conn.execute("INSERT INTO audit(at,proposal_id,event,actor) VALUES (?,?,?,?)",
@@ -277,7 +293,7 @@ def pending(capability: AuthorizedScope, limit: int = 20) -> dict:
     s=require_issued_scope(capability)
     if type(limit)!=int or not 1<=limit<=50:
         raise ValueError("INVALID_LIMIT")
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         rows=conn.execute("""SELECT id,title,status,expires_at FROM proposals
            WHERE namespace=? AND process_id=?
            ORDER BY created_at DESC LIMIT ?""",
