@@ -90,6 +90,13 @@ class LifecycleReadTests(unittest.TestCase):
         self.assertTrue(x["human_memory_approval_required"])
         self.assertTrue(x["suggested_tags"])
 
+    def test_portuguese_accents_are_normalized_for_kind(self):
+        x = mod.index_candidate_preview(
+            process_id=PROC, title="Procuração",
+            summary="Procuração administrativa revisada para assinatura.",
+            source_ref="DEMO-SOURCE-PT")
+        self.assertEqual(x["suggested_kind"], "modelo")
+
     def test_index_blocks_unverified_facts(self):
         x = mod.index_candidate_preview(
             process_id=PROC, title="Alegação", summary="Hipótese não comprovada.",
