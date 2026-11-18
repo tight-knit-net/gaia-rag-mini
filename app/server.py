@@ -22,7 +22,7 @@ from starlette.routing import Route
 
 from gaia_rag_r05.authz import AccessDenied, OwnerAuthorizer, Principal, Scope
 from gaia_rag_r05.scoped_reads import ScopedReads
-from gaia_rag_r05 import review
+from gaia_rag_r05 import review, institutional_memory
 
 ACTOR: ContextVar[Principal | None] = ContextVar("gaia_r05_actor", default=None)
 MODEL = "intfloat/multilingual-e5-small"
@@ -190,6 +190,46 @@ def memory_process_start(process_id: str, namespace: str = "chatgpt",
 
 
 @mcp.tool()
+def memory_assimilation_preview(
+    process_id: str, title: str, summary: str, source_ref: str,
+    kind: str = "registro_caso", evidence_status: str = "documentada",
+    prior_point_id: str = "", namespace: str = "chatgpt",
+) -> dict:
+    """Compare approved history to an institutional candidate: NO write/revoke.
+
+    A later or more precise source is only a PROPOSED revision until
+    documentary approval and the existing human review portal confirm it.
+    """
+    cap = _require(namespace, process_id)
+    reader = _reader()
+    items = []
+    offset = None
+    complete = False
+    for _ in range(3):  # max 300 records; report partial coverage explicitly.
+        page = reader.list_process(cap, limit=100, offset=offset)
+        items.extend(page["items"])
+        offset = page["next_offset"]
+        if offset is None:
+            complete = True
+            break
+    if prior_point_id and not any(str(x.get("id")) == prior_point_id for x in items):
+        prior = reader.by_uuid(cap, prior_point_id)
+        if prior.get("found"):
+            items.append(prior["item"])
+        elif complete:
+            raise ValueError("PRIOR_NOT_FOUND_IN_PROCESS")
+    assessment = institutional_memory.preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, kind=kind, evidence_status=evidence_status,
+        previous=items, prior_point_id=prior_point_id,
+        coverage_complete=complete,
+    )
+    assessment["observed_history_count"] = len(items)
+    assessment["tool_side_effects"] = "none"
+    return assessment
+
+
+@mcp.tool()
 def memory_prepare_after_approval(process_id: str, title: str, summary: str,
                                   source_ref: str, document_approval_ref: str,
                                   document_sha256: str, namespace: str = "chatgpt") -> dict:
@@ -301,6 +341,7 @@ _SKILL_FILES = (
     "references/07-contratos-mcp-atual.md",
     "references/08-arquitetura-tecnica-nao-mutativa.md",
     "references/09-instalacao-e-portabilidade.md",
+    "references/10-assimilacao-institucional.md",
     "governanca/POLITICA_MEMORIA.md",
     "assets/templates/memoria.md",
 )
