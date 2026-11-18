@@ -13,13 +13,16 @@ import sqlite3
 from pathlib import Path
 
 
-def collect_process(reader, capability, *, max_items: int = 300, page_size: int = 100):
+def collect_process(reader, capability, *, max_items: int = 300, page_size: int = 100,
+                    start_offset: str | int | None = None):
     """Bounded pagination with explicit incomplete-coverage warning."""
     if type(max_items) is not int or not 1 <= max_items <= 300:
         raise ValueError("INVALID_MAX_ITEMS")
     if type(page_size) is not int or not 1 <= page_size <= 100:
         raise ValueError("INVALID_PAGE_SIZE")
-    items, cursor, seen_ids, seen_cursors = [], None, set(), set()
+    items, cursor, seen_ids, seen_cursors = [], start_offset, set(), set()
+    if start_offset is not None:
+        seen_cursors.add(str(start_offset))
     while len(items) < max_items:
         requested = min(page_size, max_items - len(items))
         page = reader.list_process(capability, limit=requested, offset=cursor)
@@ -68,9 +71,11 @@ def process_timeline(reader, capability, *, max_items: int = 300):
     }
 
 
-def process_export(reader, capability, *, max_items: int = 100):
+def process_export(reader, capability, *, max_items: int = 100,
+                   offset: str | int | None = None):
     """Owned, bounded export of approved summaries, never source documents."""
-    page = collect_process(reader, capability, max_items=max_items)
+    page = collect_process(reader, capability, max_items=max_items,
+                           start_offset=offset)
     payload = json.dumps(page["items"], ensure_ascii=False,
                          sort_keys=True, separators=(",", ":")).encode("utf-8")
     return {
