@@ -37,6 +37,7 @@ jobs:
           PY
           bash -n .github/deploy/linode/gaia-rag-mini-deploy.sh
           bash -n .github/deploy/linode/ssh-gate.sh
+          if test -f scripts/install-staging.sh; then bash -n scripts/install-staging.sh; fi
           test -s .github/deploy/linode/known_hosts
           echo "Shell/known_hosts OK"
       - name: Validate archive locally without uploading artifacts
