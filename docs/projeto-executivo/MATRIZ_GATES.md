@@ -14,7 +14,7 @@
 | ID | Teste | Situação |
 |---|---|---|
 | G01 | Skill/YAML/JSON e regressão estática | Automatizado, revalidar no HEAD |
-| G02 | ACL backend por cliente/processo, UUID/fonte/similaridade | NÃO EXECUTADO |
+| G02 | ACL backend por cliente/processo, UUID/fonte/similaridade | 35 testes OFFLINE sintéticos concluídos no PR #3; integração com backend real NÃO EXECUTADA |
 | G03 | Proposta não grava; só clique humano autenticado grava com readback | NÃO EXECUTADO |
 | G04 | Contrato MCP e ativação real da skill no host | NÃO EXECUTADO |
 | G05 | Falhas, timeouts e rollback | NÃO EXECUTADO |
