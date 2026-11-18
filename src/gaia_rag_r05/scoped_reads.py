@@ -37,8 +37,9 @@ class ScopedReads:
         namespace, tenant, process = cls._scope(capability)
         must = [cls._condition("namespace", namespace),
                 cls._condition("approved", True),
-                cls._condition("tenant_id", tenant),
                 cls._condition("process_id", process)]
+        if capability.access_mode != "owner":
+            must.append(cls._condition("tenant_id", tenant))
         if source_ref:
             must.append(cls._condition("source_ref", source_ref))
         return {"must": must}
@@ -47,7 +48,8 @@ class ScopedReads:
     def _matches(cls, item: dict, capability: AuthorizedScope) -> bool:
         namespace, tenant, process = cls._scope(capability)
         return (item.get("approved") is True and item.get("namespace") == namespace
-                and item.get("tenant_id") == tenant and item.get("process_id") == process)
+                and item.get("process_id") == process
+                and (capability.access_mode == "owner" or item.get("tenant_id") == tenant))
 
     @staticmethod
     def _limit(limit: int, max_limit: int = 100) -> None:
@@ -222,6 +224,64 @@ class ScopedReads:
             payload = point.get("payload") if isinstance(point, dict) else None
             cap = authorized.get(payload.get("process_id")) if isinstance(payload, dict) else None
             if cap is None or not self._matches(payload, cap):
+                raise AccessDenied("ACCESS_DENIED")
+            hits.append({"id": point.get("id"), "score": point.get("score"), **payload})
+        return {"similar": hits}
+
+    @staticmethod
+    def _owner(capability: AuthorizedScope) -> tuple[str, str]:
+        scope = require_issued_scope(capability)
+        if capability.access_mode != "owner" or scope.tenant_id != "owner-all":
+            raise AccessDenied("ACCESS_DENIED")
+        return scope.namespace, scope.process_id
+
+    def search_all_owner(self, capability: AuthorizedScope, query: str, limit: int = 8) -> dict:
+        """Search all approved GAIA memory, including older points without tenant tags."""
+        namespace, _ = self._owner(capability)
+        self._limit(limit, 20)
+        if not isinstance(query, str) or not query.strip() or len(query) > 4000:
+            raise ValueError("INVALID_QUERY")
+        filt = {"must": [self._condition("namespace", namespace),
+                         self._condition("approved", True)]}
+        res = self._request("POST", self._base + "/query", {
+            "query": {"text": query, "model": self._model}, "limit": limit,
+            "with_payload": True, "filter": filt})
+        result = self._result(res, "SEARCH")
+        points = result.get("points") if isinstance(result, dict) else None
+        if not isinstance(points, list):
+            raise RuntimeError("SEARCH_FAILED")
+        hits = []
+        for point in points:
+            payload = point.get("payload") if isinstance(point, dict) else None
+            if (not isinstance(payload, dict) or payload.get("approved") is not True
+                    or payload.get("namespace") != namespace):
+                raise AccessDenied("ACCESS_DENIED")
+            hits.append({**payload, "id": point.get("id"), "score": point.get("score")})
+        return {"hits": hits}
+
+    def similar_owner(self, capability: AuthorizedScope, query: str, limit: int = 8) -> dict:
+        """Cross-client comparable cases, never relying on a client's ACL."""
+        namespace, current_process_id = self._owner(capability)
+        self._limit(limit, 20)
+        if not isinstance(query, str) or not query.strip() or len(query) > 4000:
+            raise ValueError("INVALID_QUERY")
+        filt = {"must": [self._condition("namespace", namespace),
+                         self._condition("approved", True)],
+                "must_not": [self._condition("process_id", current_process_id)]}
+        res = self._request("POST", self._base + "/query", {
+            "query": {"text": query, "model": self._model}, "limit": limit,
+            "with_payload": True, "filter": filt})
+        result = self._result(res, "SEARCH")
+        points = result.get("points") if isinstance(result, dict) else None
+        if not isinstance(points, list):
+            raise RuntimeError("SEARCH_FAILED")
+        hits = []
+        for point in points:
+            payload = point.get("payload") if isinstance(point, dict) else None
+            if (not isinstance(payload, dict) or payload.get("approved") is not True
+                    or payload.get("namespace") != namespace
+                    or not isinstance(payload.get("process_id"), str)
+                    or payload["process_id"] == current_process_id):
                 raise AccessDenied("ACCESS_DENIED")
             hits.append({"id": point.get("id"), "score": point.get("score"), **payload})
         return {"similar": hits}
