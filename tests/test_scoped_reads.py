@@ -224,6 +224,36 @@ class ScopedReadTests(unittest.TestCase):
         with self.assertRaises(AccessDenied):
             self.reader.by_source(self.cap, "DEMO-DOC")
 
+    def test_list_process_applies_exact_process_filter(self):
+        self.assertEqual(self.reader.list_process(self.cap), {"items": [], "next_offset": None})
+        method, path, body = self.q.requests[0]
+        self.assertEqual(method, "POST")
+        self.assertTrue(path.endswith("/scroll"))
+        conditions = body["filter"]["must"]
+        self.assertEqual(
+            {c["key"]: c["match"]["value"] for c in conditions},
+            {"namespace": "chatgpt", "approved": True,
+             "tenant_id": "DEMO-TENANT-A", "process_id": "DEMO-A1"},
+        )
+
+    def test_list_process_authorized_result(self):
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": ID, "payload": payload()}], "next_page_offset": None}}
+        items = self.reader.list_process(self.cap)["items"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["id"], ID)
+
+    def test_list_process_denies_cross_tenant_result(self):
+        self.q.response = {"status": "ok", "result": {"points": [
+            {"id": ID, "payload": payload(S_B)}]}}
+        with self.assertRaises(AccessDenied):
+            self.reader.list_process(self.cap)
+
+    def test_list_process_rejects_invalid_offset_without_request(self):
+        with self.assertRaises(ValueError):
+            self.reader.list_process(self.cap, offset="DEMO-CROSS-TENANT")
+        self.assertEqual(self.q.requests, [])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
