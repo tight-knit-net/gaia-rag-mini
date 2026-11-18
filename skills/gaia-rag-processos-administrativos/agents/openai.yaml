@@ -1,7 +1,7 @@
 interface:
   display_name: "GAIA RAG | Processos Administrativos"
   short_description: "Consulta e produção governada de memória processual"
-  default_prompt: "Use a skill GAIA RAG para identificar este processo, recuperar memórias aprovadas e apontar fontes e pendências. Não prepare nem salve uma nova memória sem seguir a aprovação prevista."
+  default_prompt: "Use a skill GAIA RAG com escopo namespace/tenant_id/process_id autorizado, verifique fontes e pendências. Na R06, nunca proponha memória sem registro documental aprovado; nunca afirme escrita antes do clique humano no portal e readback."
 policy:
   allow_implicit_invocation: true
 # Vinculação ao servidor MCP efetivo deve ser conferida no Work antes de publicar.
