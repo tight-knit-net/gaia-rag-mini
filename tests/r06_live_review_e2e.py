@@ -132,6 +132,46 @@ def main():
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
                          "source_ref":SOURCE,"document_approval_ref":APPROVAL,
                          "document_sha256":SHA,**scope}
+                # R07 Skilldrum-style route tests use DEMO identity and installed modules.
+                skill_route_tools={"gaia_skill_route","gaia_skill_route_read"}
+                check("R07-SR01_TOOLS_EXPOSED",skill_route_tools<=tools)
+                route,err,_=tool("gaia_skill_route",{**scope,"mission":"memory_search"})
+                check("R07-SR02_EXACT_ROUTE",not err and route["status"]=="READY_FOR_HOST_LOAD"
+                      and route["modules"][1]["path"]=="references/02-recuperacao.md"
+                      and route["host_must_explicitly_load"] is True)
+                selected=route["modules"][1]
+                load_args={**scope,"mission":"memory_search","path":selected["path"],
+                           "route_sha256":route["route_sha256"],
+                           "expected_sha256":selected["sha256"],"max_chars":200}
+                loaded,err,_=tool("gaia_skill_route_read",load_args)
+                check("R07-SR03_PROGRESSIVE_MODULE_READ",
+                      not err and loaded["path"]==selected["path"]
+                      and len(loaded["content"])<=200
+                      and loaded["host_activation_confirmed"] is False)
+                wrong_scope,err,_=tool("gaia_skill_route_read",
+                                      {**load_args,"process_id":PB})
+                check("R07-SR04_CROSS_PROCESS_ROUTE_MISMATCH",err is True)
+                wrong_hash,err,_=tool("gaia_skill_route_read",
+                                     {**load_args,"expected_sha256":"0"*64})
+                check("R07-SR05_STALE_FILE_HASH_DENIED",err is True)
+                other_module,err,_=tool("gaia_skill_route_read",
+                       {**load_args,"path":"references/03-producao-e-proposta.md"})
+                check("R07-SR06_UNSELECTED_MODULE_DENIED",err is True)
+                unknown_route,err,_=tool("gaia_skill_route",
+                                          {**scope,"mission":"delete_memories"})
+                check("R07-SR07_UNKNOWN_MISSION_FAIL_CLOSED",
+                      not err and unknown_route["status"]=="NO_ROUTE"
+                      and unknown_route["modules"]==[])
+                illicit_route,err,_=tool("gaia_skill_route",
+                                          {**scope,"mission":"memory_search"},
+                                          identity=B)
+                check("R07-SR08_NONOWNER_DENIED",err is True)
+                owner_other_process,err,_=tool("gaia_skill_route",
+                                      {**bscope,"mission":"memory_search"},identity=A)
+                check("R07-SR09_OWNER_CROSS_CLIENT_NOT_BLOCKED",
+                      not err and owner_other_process["status"]=="READY_FOR_HOST_LOAD"
+                      and owner_other_process["route_sha256"]!=route["route_sha256"])
+                check("R07-SR10_ROUTER_NEVER_PERSISTS",count()==0)
                 other,err,_=tool("memory_prepare_after_approval",{**prepare,"process_id":PB},identity=B)
                 check("R06-05_NONOWNER_CANNOT_PROPOSE",err is True)
                 docs.write_text('{"approved_documents":[]}')
