@@ -1,6 +1,9 @@
 """GAIA R05 host integration test: real disposable Qdrant, synthetic tenants only."""
 from __future__ import annotations
 import json
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd() / "src"))
 import time
 import uuid
 from urllib import request, error
