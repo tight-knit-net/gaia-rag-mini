@@ -1,5 +1,8 @@
 # GAIA Document MCP — plano do próximo gate P0/P1: autenticação, concorrência e persistência
 
+> **ADITIVO DE ESCOPO — AUTORIZAÇÃO EXPRESSA DO TITULAR EM 18/11/2026:** a premissa de controle de acesso entre clientes/processos deste planejamento não descreve o GAIA, que tem um único operador. Os números e IDs dos processos administrativos servem para contexto e proveniência, não como barreiras de permissão. A aprendizagem deve capturar automaticamente candidatos e recuperar memórias aprovadas de forma transversal, sem confundir analogias entre processos. Ver [documento 15 — G14-B revisado](15_G14B_OPERADOR_UNICO_APRENDIZAGEM_HIBRIDA.md). Este aditivo **prevalece sobre as premissas incompatíveis** do texto histórico abaixo; não altera a regra de persistência oficial R06 sem gate de revisão humana. 
+
+
 **Versão:** 1.0.0 — PLANO PARA APROVAÇÃO, não implementação.  
 **Data/hora de emissão aferida:** 2026-11-18T20:28:11-03:00; fuso `America/Sao_Paulo`; origem do relógio: ferramenta de horário local do ChatGPT. A data do commit GitHub, se publicado, é uma segunda evidência e não é confundida com a aferição.  
 **Área exclusiva de escrita:** `tight-knit-net/gaia-rag-mini` → `feat/gaia-document-mcp-isolado`; PR [#7](https://github.com/tight-knit-net/gaia-rag-mini/pull/7), **Draft**, base `feat/r07-office-knowledge-assimilation`.  
