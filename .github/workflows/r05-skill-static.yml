@@ -213,6 +213,20 @@ jobs:
       - name: Validate explicit host selection, complete chunks, hashes and denial
         run: python -m unittest discover -s tests -p 'test_r07_host_contract.py' -v
 
+  r07_s6_security:
+    name: R07 S6 security boundaries and legacy ledger compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify owner access, CSRF, discard state and migration fail-closed
+        run: python -m unittest discover -s tests -p 'test_r07_s6_security.py' -v
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -222,6 +236,7 @@ jobs:
       - r07_operational_isolated
       - r07_skill_router_synthetic
       - r07_host_contract_synthetic
+      - r07_s6_security
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
