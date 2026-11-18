@@ -83,7 +83,7 @@ A revisão detectou a antiga instrução em `SKILL.md` de verificar `process_id`
 
 Esses achados são **revisão documental assistida**, não homologação do runtime nem auditoria externa certificada. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
 
-**Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
+**Decisão executiva resultante (atualizada conforme autorização limitada de 17/11/2026):** documentação estruturada e revisada, **CÓDIGO OFFLINE DE ACL + TESTES SINTÉTICOS AUTORIZADO EM BRANCH ISOLADA**, porém **INTEGRAÇÃO DO RUNTIME, MERGE E PUBLICAÇÃO = NÃO AUTORIZADOS**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
 
 ## 7. Estado do ambiente e caminho de desenvolvimento
 A pasta Linode `/opt/gaia-rag-mini` e usuário de deploy restrito foram preparados anteriormente, **sem iniciar o container GAIA RAG**. O SSH foi validado localmente; ligação GitHub Actions → Linode **não foi demonstrada**. Há quatro containers NestGround preservados. Não há aprovação para publicar imagem ou habilitar `RAG_STAGING_APPROVED=1`.
