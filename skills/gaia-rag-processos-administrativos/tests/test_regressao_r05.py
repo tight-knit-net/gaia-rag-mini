@@ -10,18 +10,19 @@ class RegressaoR05(unittest.TestCase):
   self.assertTrue(SK.startswith('---\n'))
   fm=yaml.safe_load(SK.split('---',2)[1]); self.assertEqual(fm['name'],ROOT.name)
   self.assertLessEqual(len(fm['description']),1024)
-  self.assertEqual(fm['metadata']['version'],'0.6.1-owner-global-preview')
+  self.assertEqual(fm['metadata']['version'],'0.7.0-institutional-assimilation-preview')
  def test_yaml_negativo_rejeitado(self):
   with self.assertRaises(yaml.YAMLError):yaml.safe_load('description: algo: outro: valor')
- def test_nove_modulos(self):
-  self.assertEqual(len(list((ROOT/'references').glob('*.md'))),9)
+ def test_dez_modulos_r07(self):
+  self.assertEqual(len(list((ROOT/'references').glob('*.md'))),10)
   self.assertTrue(all((ROOT/'references'/(f'{i:02d}-'+name)).is_file() for i,name in enumerate([
    'contexto-e-isolamento.md','recuperacao.md','producao-e-proposta.md','governanca-e-evidencia.md',
    'esquema-logico.md','continuidade-processual.md','contratos-mcp-atual.md',
-   'arquitetura-tecnica-nao-mutativa.md','instalacao-e-portabilidade.md'],1)))
+   'arquitetura-tecnica-nao-mutativa.md','instalacao-e-portabilidade.md',
+   'assimilacao-institucional.md'],1)))
  def test_nomes_referenciados(self):
   refs=set(re.findall(r'`(references/[0-9]{2}-[^`]+\.md)`',SK))
-  self.assertEqual(len(refs),9)
+  self.assertEqual(len(refs),10)
   self.assertTrue(all((ROOT/r).is_file() for r in refs))
  def test_segundo_gate_de_aprovacao(self):
   self.assertIn('aprovação',SK.lower());self.assertIn('clique humano',SK.lower())
