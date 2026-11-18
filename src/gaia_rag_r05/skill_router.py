@@ -151,6 +151,8 @@ def read_selected(root: Path, *, mission: str, namespace: str,
             or expected_sha256 != selected["sha256"]):
         raise SkillRoutingError("SKILL_VERSION_MISMATCH")
     raw = _read_installed(root, path)
+    if hashlib.sha256(raw).hexdigest() != selected["sha256"]:
+        raise SkillRoutingError("SKILL_CONTENT_DRIFT")
     try:
         contents = raw.decode("utf-8")
     except UnicodeError as exc:
