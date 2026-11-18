@@ -185,6 +185,20 @@ jobs:
         run: bash tests/r07_isolated_runtime_smoke.sh
 
 
+  r07_skill_router_synthetic:
+    name: R07 Skilldrum route simulation (offline, no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test fixed route taxonomy, digest binding and progressive loads
+        run: python -m unittest discover -s tests -p 'test_r07_skill_router.py' -v
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -192,6 +206,7 @@ jobs:
       - staging_image_smoke
       - r06_lifecycle_synthetic
       - r07_operational_isolated
+      - r07_skill_router_synthetic
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
