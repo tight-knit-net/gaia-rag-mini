@@ -1,8 +1,8 @@
-# Parecer de revisão técnica documental — GAIA RAG Mini R05
+# Parecer de revisão técnica documental — GAIA RAG Mini R05 (registro histórico)
 **Data de referência:** 17/11/2026
 **Autor da revisão:** ChatGPT (revisão de consistência assistida; também participou da elaboração anterior; **NÃO é revisor externo independente**).
 **Escopo:** documentação e configuração versionada na branch `docs/r05-gaia-rag-homologacao`, PR #1 do repositório privado `tight-knit-net/gaia-rag-mini`.
-**Resultado:** **AJUSTES SOLICITADOS**, com correções documentais aplicadas e bloqueadores para próxima etapa. DG-03 **NÃO APROVADO**.
+**Resultado histórico na data da primeira revisão:** **AJUSTES SOLICITADOS**. O status documental posterior e a governança simplificada estão no arquivo `AUDITORIA_TECNICA_ENXUTA_R05_2026-11-17.md`; não usar este parecer como bloqueio externo atualizado.
 **Limite:** nenhuma implementação nova de runtime, instalação, publicação, operação Cloudflare/Qdrant/Linode ou migração foi realizada.
 
 ## Base examinada
