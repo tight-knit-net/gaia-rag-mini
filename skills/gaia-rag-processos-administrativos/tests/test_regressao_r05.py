@@ -10,7 +10,7 @@ class RegressaoR05(unittest.TestCase):
   self.assertTrue(SK.startswith('---\n'))
   fm=yaml.safe_load(SK.split('---',2)[1]); self.assertEqual(fm['name'],ROOT.name)
   self.assertLessEqual(len(fm['description']),1024)
-  self.assertEqual(fm['metadata']['version'],'0.5.0-prehomologacao')
+  self.assertEqual(fm['metadata']['version'],'0.6.0-r06-preview')
  def test_yaml_negativo_rejeitado(self):
   with self.assertRaises(yaml.YAMLError):yaml.safe_load('description: algo: outro: valor')
  def test_nove_modulos(self):
