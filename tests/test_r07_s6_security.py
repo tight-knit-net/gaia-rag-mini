@@ -116,6 +116,7 @@ class ReviewS6Tests(unittest.TestCase):
                 );
             """)
             ident = self._insert(db)
+            db.commit()
         with closing(review._connect()) as read:
             self.assertFalse(review._ledger_supports_discard(read))
         with self.assertRaisesRegex(AccessDenied, "DISCARD_SCHEMA_MIGRATION_REQUIRED"):
