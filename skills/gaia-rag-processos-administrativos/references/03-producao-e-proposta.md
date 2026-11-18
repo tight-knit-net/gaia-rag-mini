@@ -4,6 +4,14 @@
 
 A pessoa aprova previamente o DOCUMENTO ou PROCESSO. Só então a skill pode usar `memory_prepare_after_approval` para uma proposta, que **não grava**. A decisão de salvar a memória é nova e independente, feita no portal protegido com Cloudflare Access e clique humano. A aprovação de conversa genérica, sem peça ou processo aprovado, não basta para afirmar que o gatilho do serviço foi cumprido.
 
+## R06: autorização documental verificável e aprovação técnica humana
+
+A prévia R06 requer um registro servidor-controlado de documento aprovado (`source_ref`, `document_approval_ref`, `document_sha256`) vinculado a `namespace + tenant_id + process_id`. Uma alegação no prompt de que a peça foi aprovada não cria esse registro.
+
+`memory_prepare_after_approval(namespace, tenant_id, process_id, title, summary, source_ref, document_approval_ref, document_sha256)` valida o documento e gera uma proposta idempotente, **sem escrita Qdrant**. `memory_proposal_preview` e `memory_pending_reviews` permitem visualizar somente propostas no escopo autorizado. A `review_url` vem do serviço, nunca deve ser fabricada. A aprovação técnica exige formulário humano e autenticação Access; falha, expiração ou ausência de clique não gravam. Apenas retorno de readback associado à mesma fonte e processo confirma `MEMORIA_CONFIRMADA`. O servidor pode desativar todo esse módulo com `GAIA_RAG_ENABLE_REVIEW=0`.
+
+**Atenção:** o detalhamento abaixo sobre assinaturas opcionais `kind`/`source_type` é histórico da DigitalOcean; esses argumentos **não** estão presentes no contrato R06. O R06 não expõe uma ferramenta MCP para clicar/autorizar escrita.
+
 ## Seleção: o que merece memória
 
 Guardar síntese enxuta de: ato confirmado, contexto necessário para continuidade, decisão interna efetivamente adotada, exigência formal, providência pendente, fundamento oficial verificado, lição decorrente de resultado real e referência do documento final. Não guardar o chat bruto, raciocínio exploratório, palpites, dados pessoais desnecessários, senhas, segredos, duplicatas ou texto integral dos autos.
