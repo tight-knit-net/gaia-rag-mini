@@ -1,5 +1,11 @@
 # 02 — Recuperação de memória (somente leitura)
 
+## Contrato efetivo da prévia R06
+
+Toda leitura de processo na prévia R06 requer `namespace`, `tenant_id` e `process_id` exatos. A verificação do vínculo após o resultado é revisão editorial, **não autorização**. Na R06 o servidor nega antes do acesso Qdrant quando a identidade/grant não cobre o escopo; por UUID, fonte e similaridade, o filtro tenant/processo também é obrigatório no backend. Sem uma fonte autoritativa de permissões, não executar a consulta.
+
+A seção histórica abaixo documenta parâmetros da MCP legada e deve ser interpretada somente quando essa versão legada for de fato selecionada. Nunca preencher `tenant_id` por inferência. Para contrato R06, consultar [07](07-contratos-mcp-atual.md).
+
 ## Fluxo por finalidade
 
 | Objetivo | Ferramenta atual | Regra |
