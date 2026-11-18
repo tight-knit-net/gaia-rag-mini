@@ -1,5 +1,5 @@
 # Backlog de implementação R05 — ESPECIFICAÇÃO, NÃO EXECUÇÃO
-**Estado:** documentação auditada; novo código depende de autorização de escopo DG-04/DG-06 e testes dos controles aplicáveis. `RF-*` e `RNF-*` referem-se ao projeto executivo.
+**Estado:** autorização concedida para código offline de ACL + testes sintéticos na branch `feat/r05-mcp-acl-offline`; integração do servidor e deploy não autorizados nesta etapa. `RF-*` e `RNF-*` referem-se ao projeto executivo.
 
 ## Etapa A — descoberta técnica da origem (read-only até autorização)
 | ID | Dependência | Entrega verificável | Gate |
