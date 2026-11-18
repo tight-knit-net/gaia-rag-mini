@@ -148,6 +148,43 @@ def main():
                       not err and loaded["path"]==selected["path"]
                       and len(loaded["content"])<=200
                       and loaded["host_activation_confirmed"] is False)
+                # S5: simulate an MCP host explicitly loading the *entire*
+                # selected route (not just a single preview chunk).
+                host_loaded={}
+                catalog_by_path={x["path"]:x["sha256"] for x in catalog["files"]}
+                for module in route["modules"]:
+                    fragments=[]
+                    cursor=0
+                    for step in range(200):
+                        item,read_err,_=tool("gaia_skill_route_read",{
+                            **scope, "mission":route["mission"],
+                            "path":module["path"],
+                            "route_sha256":route["route_sha256"],
+                            "expected_sha256":module["sha256"],
+                            "offset":cursor,"max_chars":119})
+                        if read_err or not item or item.get("host_activation_confirmed") is not False:
+                            raise AssertionError("S5_HOST_READ_FAILED")
+                        fragments.append(item["content"])
+                        next_cursor=item["next_offset"]
+                        if next_cursor is None:
+                            break
+                        if not isinstance(next_cursor,int) or next_cursor<=cursor:
+                            raise AssertionError("S5_HOST_PAGE_STALLED")
+                        cursor=next_cursor
+                    else:
+                        raise AssertionError("S5_HOST_PAGE_LIMIT")
+                    full="".join(fragments)
+                    if (hashlib.sha256(full.encode("utf-8")).hexdigest()!=module["sha256"]
+                            or catalog_by_path.get(module["path"])!=module["sha256"]):
+                        raise AssertionError("S5_HOST_MANIFEST_SHA_MISMATCH")
+                    host_loaded[module["path"]]=full
+                check("R07-S5-01_HOST_FULL_ROUTE_LOAD",
+                      len(host_loaded)==3 and "SKILL.md" in host_loaded
+                      and "references/02-recuperacao.md" in host_loaded)
+                check("R07-S5-02_FULL_BYTE_HASHES_AND_CATALOG",
+                      all(hashlib.sha256(v.encode("utf-8")).hexdigest()
+                          ==catalog_by_path[k] for k,v in host_loaded.items()))
+                check("R07-S5-03_HOST_READ_DOES_NOT_SAVE",count()==0)
                 wrong_scope,err,_=tool("gaia_skill_route_read",
                                       {**load_args,"process_id":PB})
                 check("R07-SR04_CROSS_PROCESS_ROUTE_MISMATCH",err is True)
