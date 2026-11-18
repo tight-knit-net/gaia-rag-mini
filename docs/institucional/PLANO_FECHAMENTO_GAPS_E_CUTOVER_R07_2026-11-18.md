@@ -97,10 +97,15 @@ e então desativar o endpoint legado, mantendo backup, código, container e
 ledger preservados para reversão. Desativar uma branch Git não substitui
 desativar o serviço; não apagar a branch legado nem os dados.
 
-## 5. Grok / xAI — opcional, desligado até decisão de privacidade
-A API oficial xAI dispõe de '/v1/responses' e saída estruturada, mas não há
-necessidade técnica de chave de Grok para classificação básica. Neste estágio
-nenhum dado vai para xAI. Futuro adaptador deve exigir:
+## 5. GroqCloud (Groq, com Q) — opcional, DESLIGADO
+O provedor pretendido pelo titular é **GroqCloud da Groq**, não Grok/xAI.
+A documentação oficial descreve a API compatível com OpenAI em
+`https://api.groq.com/openai/v1` (chat completions e saídas estruturadas):
+https://console.groq.com/docs/openai
+https://console.groq.com/docs/structured-outputs
+Nenhuma chamada, dependência, chave ou custo Groq foi ativado nesta etapa.
+A classificação determinística e a LLM do host bastam para o piloto sintético.
+Um futuro adaptador Groq deve exigir:
 1. autorização explícita do proprietário para processamento externo;
 2. minimização/anonimização de dados de clientes e base legal LGPD;
 3. modelo e despesas definidos, limite de tokens, timeout, política de retenção;
