@@ -127,6 +127,42 @@ def main():
                 contents=call("resources/read",{"uri":uri})
                 resource_items=contents.json().get("result",{}).get("contents",[])
                 check("R06-03B_MCP_RESOURCES_READ",contents.status_code==200 and bool(resource_items) and "gaia-rag-processos-administrativos" in resource_items[0].get("text",""))
+                # S6: a valid Cloudflare JWT belonging to a NON-owner must not
+                # expose skill instructions, resources or catalog metadata.
+                for skill_tool, args in (
+                    ("gaia_skill_catalog", {}),
+                    ("gaia_skill_read", {"path": "SKILL.md"}),
+                    ("gaia_skill_read_chunk", {"path": "SKILL.md"}),
+                ):
+                    denied_content, skill_err, _ = tool(skill_tool, args, identity=B)
+                    check("S6_OWNER_ONLY_" + skill_tool, skill_err is True
+                          and not (isinstance(denied_content, dict)
+                                   and denied_content.get("content")))
+                denied_resource = call("resources/read", {"uri": uri}, identity=B)
+                response_json = denied_resource.json()
+                check("S6_OWNER_ONLY_MCP_RESOURCE",
+                      "error" in response_json or
+                      (response_json.get("result", {}).get("isError") is True))
+                # A symlinked parent directory must not be used to read a
+                # plausible allowlisted filename outside the installed skill.
+                fake_root = root / "symlinked-skills"
+                fake_root.mkdir()
+                outside = root / "outside-skill-package"
+                outside.mkdir()
+                (outside / "02-recuperacao.md").write_text(
+                    "S6-SYNTHETIC-UNTRUSTED-CONTENT", encoding="utf-8")
+                (fake_root / "references").symlink_to(outside, target_is_directory=True)
+                original_skill_root = server._skill_root
+                server._skill_root = lambda: fake_root
+                try:
+                    escaped, escape_err, _ = tool(
+                        "gaia_skill_read",
+                        {"path": "references/02-recuperacao.md"})
+                    check("S6_SYMLINK_PARENT_DENIED",
+                          escape_err is True
+                          and "S6-SYNTHETIC-UNTRUSTED-CONTENT" not in str(escaped))
+                finally:
+                    server._skill_root = original_skill_root
                 denied,err,_=tool("gaia_skill_read",{"path":"../../etc/passwd"})
                 check("R06-04_PATH_TRAVERSAL_DENIED",err is True,"file read rejected")
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
