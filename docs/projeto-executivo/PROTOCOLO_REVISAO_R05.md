@@ -3,7 +3,7 @@
 **Status:** documentos consolidados; revisão técnica independente PENDENTE; desenvolvimento e publicação NÃO autorizados.
 
 ## Decisão de governança
-Por decisão expressa do proprietário em 17/11/2026, o CodeRabbit deixa de ser requisito ou ferramenta de revisão deste projeto. O arquivo de integração `.coderabbit.yaml` foi retirado da branch R05. A revisão independente continua obrigatória, mas **sem dependência de uma GitHub App de revisão automática**.
+Após a retirada anterior, o proprietário solicitou expressamente a **reintegração do CodeRabbit**. O arquivo `.coderabbit.yaml` foi restaurado na branch R05 para revisão automática e manual do PR. O parecer do bot é **consultivo e não canônico**: cada observação será verificada de forma independente contra o código, a arquitetura e a documentação técnica. A revisão independente permanece como gate obrigatório até decisão explícita de governança.
 
 ## Escopo da revisão humana/independente
 1. Consistência entre o AS-IS observado na DigitalOcean, o TO-BE da Linode e a topologia Cloudflare Access/Tunnel/Qdrant Cloud.
@@ -26,5 +26,5 @@ A ausência de observações não significa aprovação. Nenhum comentário exte
 - DG-06: autorização expressa para começar a escrever código, nunca inferida do aceite do projeto.
 - Publicação, GHCR, container, Linode, Cloudflare, Qdrant, merge e mudanças de segurança permanecem proibidos sem autorização específica posterior.
 
-## Registro de retirada da ferramenta anterior
-O projeto já teve solicitações históricas de revisão automática no PR #1, sem parecer observado. Essa tentativa foi encerrada por decisão do proprietário. A revogação da **GitHub App** em nível de conta/repositório precisa ser confirmada nas instalações do GitHub; remoção do arquivo não revoga o acesso que o aplicativo eventualmente tenha. A configuração de GitHub App para outros repositórios não pode ser alterada como efeito colateral.
+## Reintegração e evidência de autorização
+O usuário relatou ter concedido novas autorizações no GitHub e pediu reativar o CodeRabbit. O vínculo efetivo da GitHub App ao repositório **não pode ser concluído pela existência do `.coderabbit.yaml`** e deve ser comprovado por resposta do bot ou por registro autenticado de instalação. O pedido `@coderabbitai full review` somente solicita revisão; sem comentário/check/review do bot, o status é **PENDENTE**, nunca aprovado. Os pedidos antigos cancelados permanecem no histórico do PR.
