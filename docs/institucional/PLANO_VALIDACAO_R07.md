@@ -38,3 +38,19 @@ A homologação técnica candidata passa a exigir, no **HEAD exato** da PR #5, c
 Status `CI_CANDIDATE_PASS` significa **aptidão para revisão técnica e preparação de implantação futura**, não homologação operacional real. A integração com Cloudflare Access, acesso ao Qdrant real, backup/restauração, migração de propostas, ativação do botão para o proprietário, migração/cutover e desligamento do legado dependem de ambiente operacional futuro identificado, autorização específica e readback.
 
 **A PR #5 permanece draft, sem merge ou deploy automático.** A próxima etapa não deve solicitar o antigo TestLab como pré-condição.
+
+## Gate de compatibilidade Skilldrum → R07 (18/11/2026)
+
+**ESCOPO:** incorporar somente o contrato de seleção e leitura progressiva de módulos de uma skill já instalada. Não copiar o motor Skilldrum, alterar GRC/GitLab, adicionar autorização por cliente ou ativar memória automática.
+
+**Implementação isolada:** `src/gaia_rag_r05/skill_router.py`, ferramentas MCP `gaia_skill_route` e `gaia_skill_route_read` no `app/server.py`, testes `tests/test_r07_skill_router.py` e 10 verificações MCP em `tests/r06_live_review_e2e.py`.
+
+**Missões reconhecidas:** `process_context`, `memory_search`, `memory_assimilation`, `memory_proposal`, `administrative_document`, `evidence_governance`, `skill_maintenance`. Missão desconhecida retorna `NO_ROUTE`. Módulos são selecionados por uma tabela fixa: nenhum caminho ou regra arbitrária é executado.
+
+**Compatibilidade:** plano vinculado a `namespace`, `process_id`, arquivos e hashes; leitura somente de módulos selecionados com validação SHA-256, offsets progressivos e negativa de symlinks/caminhos inválidos. `process_id` é contexto, não ACL por cliente. A autorização continua exclusivamente no servidor pelo proprietário autenticado. O host deve efetuar o carregamento: leitura MCP não prova ativação automática da skill.
+
+**Evidências:** GitHub Actions [execução 44419478201](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44419478201): 6/6 jobs aprovados; suite do roteador 14/14 testes unitários; integração MCP 10/10 verificações positivas/negativas. A suíte R06/R07 completa terminou com 59 verificações, inclusive aprovação humana sintética, Qdrant de demonstração e ausência de escrita pelo roteador.
+
+**Fonte comparada:** Skilldrum GitLab `gaia_workspace1/gaia-mcp-100-update`, branch `work/gaia-skilldrum-isolado-20261113`, HEAD observado `1017fc9a9ca3e65388f07d067d5f241a7910e7ec`; AMP09 9 PASS/3 FAIL e AMP10 24 PASS/0 FAIL de protótipo *offline*, não código homologado do GRC. O contrato foi reimplementado em escopo reduzido, não copiado para a R07.
+
+**STATUS:** PASS da compatibilidade do núcleo por CI; PENDENTE de host real e publicação da R07. PR #5 permanece draft, sem merge, deploy, chamada Groq, migração de Qdrant ou alteração da R06 e do legado.
