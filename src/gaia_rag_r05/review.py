@@ -88,7 +88,7 @@ def _connect():
             created_by TEXT NOT NULL, title TEXT NOT NULL, summary TEXT NOT NULL,
             source_ref TEXT NOT NULL, document_approval_ref TEXT NOT NULL,
             document_sha256 TEXT NOT NULL, point_id TEXT NOT NULL UNIQUE,
-            status TEXT NOT NULL CHECK(status IN ('pending','approving','approved')),
+            status TEXT NOT NULL CHECK(status IN ('pending','approving','approved','discarded')),
             created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,
             approved_by TEXT, approved_at INTEGER);
         CREATE TABLE IF NOT EXISTS audit (
@@ -253,6 +253,25 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
                      (_now(),row["id"],"readback_confirmed",actor))
         conn.commit()
     return {"stored":True,"point_id":row["point_id"],"replayed":False}
+
+def discard(identifier: str, actor: str, authorize, csrf: str) -> dict:
+    """Explicit human browser action, never an MCP direct mutation."""
+    with _connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = _checked_row(conn, identifier, actor, authorize)
+        verify_csrf(row["id"], actor, csrf)
+        if row["status"] == "discarded":
+            conn.commit()
+            return {"discarded": True, "proposal_id": row["id"], "replayed": True}
+        if row["status"] != "pending":
+            raise AccessDenied("DISCARD_NOT_PENDING")
+        conn.execute("UPDATE proposals SET status='discarded' WHERE id=? AND status='pending'",
+                     (row["id"],))
+        conn.execute("INSERT INTO audit(at,proposal_id,event,actor) VALUES (?,?,?,?)",
+                     (_now(), row["id"], "human_discarded", actor))
+        conn.commit()
+    return {"discarded": True, "proposal_id": row["id"], "replayed": False}
+
 
 def pending(capability: AuthorizedScope, limit: int = 20) -> dict:
     s=require_issued_scope(capability)
