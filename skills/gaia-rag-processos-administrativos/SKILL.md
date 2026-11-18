@@ -28,6 +28,31 @@ Orientar o trabalho do ChatGPT com a **MCP GAIA RAG existente**, sem alterar inf
 | Investigar arquitetura atual × propostas R01/R02 | `references/08-arquitetura-tecnica-nao-mutativa.md` | `governanca/DECISOES_ARQUITETURA.md` |
 | Instalar, versionar, testar, distribuir skill | `references/09-instalacao-e-portabilidade.md` | `tests/aceite.md` |
 
+### Roteamento assistido na candidata R07 (somente quando o host expuser as ferramentas)
+
+O adaptador inspirado no contrato do Skilldrum seleciona a skill **já instalada** e
+módulos permitidos, sem importar o GRC, o motor Skilldrum nem novas permissões.
+Para o processo exato (ou `all-processes` na busca global do proprietário):
+1. Identificar a missão explicitamente: `process_context`, `memory_search`,
+   `memory_assimilation`, `memory_proposal`, `administrative_document`,
+   `evidence_governance` ou `skill_maintenance`.
+2. Chamar `gaia_skill_route(mission, process_id, namespace?)` somente se a
+   ferramenta estiver disponível na R07. Recusar `NO_ROUTE`; não improvisar outra.
+3. Ler somente os módulos do plano, na ordem, com
+   `gaia_skill_route_read(mission, process_id, path, route_sha256,
+   expected_sha256, namespace?, offset?, max_chars?)`.
+   Conferir hash e `next_offset`; repetir até encerrar. Se o SHA mudou,
+   refazer a seleção em vez de carregar arquivo antigo.
+4. O **host** precisa carregar e aplicar a instrução. Resultado do roteador ou
+   leitura MCP não prova ativação da skill pelo ChatGPT.
+5. Roteamento não concede autenticação, autorização de ação, permissão por
+   cliente nem aprovação de memória. A consulta transversal do proprietário
+   é preservada e o botão humano **Salvar memória** permanece obrigatório.
+
+Este comportamento está em **código candidato R07**, não no conector R06
+publicado. Sem ferramentas R07 realmente disponíveis, usar a tabela de
+gatilhos estática acima e informar a limitação.
+
 A descrição e este arquivo são o ponto de entrada. Arquivos auxiliares são lidos **por necessidade**; se o host não os disponibilizar, avise a limitação, não finja leitura. Não carregar a arquitetura Qdrant para um requerimento simples.
 
 ## Escolha do modo e fronteiras de autorização
