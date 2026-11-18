@@ -1,24 +1,20 @@
-# GAIA Document MCP — isolated development scaffold
+# GAIA Document MCP — contratos v2 (fase 0.1)
 
-State: **phase 0, contract kernel and synthetic tests, no MCP server or external integration active**.
+**Estado:** kernel de contratos e testes sintéticos; sem servidor MCP ou adaptadores conectados.
 
-## Goal
-A single document-processing MCP for the GAIA ecosystem, with adapters for Stirling-PDF, DocuSeal, GroqCloud, Google Drive/Docs/Sheets and the existing nomenclature pipeline, sending **reviewed institutional candidates** to GAIA RAG R07/R06. The GAIA RAG core remains the sole controller of approved Qdrant memories.
+## Componentes
+- `contracts.py`: evento e fonte documentais, origem Drive/Dropbox/local/gerado/Notion, cliente e processo opcionais na triagem, checagem antecipada de `source_ref`, identificação `operation_id`/`event_revision` e digest de evidências.
+- `trust.py`: verifica atestação HMAC do serviço confiável futuro; **não emite** assinaturas ou aprovações. O emissor autenticado deve comprovar identidade, revisão e dados originais.
+- `pipeline.py`: recibos transitórios em RAM sem texto OCR integral, candidatura editorial bloqueada sem atestação, vínculo de processo, hash e revisão. Não comunica com Qdrant.
+- `schemas/gaia.document-event.v2.schema.json` e `schemas/gaia.document-receipt.v2.schema.json`: evento e recibo em contratos distintos. O arquivo `v1` permanece histórico.
+- `settings.py`: gates conservadores; flags de ambiente não são autenticação nem autorização por arquivo.
 
-## Implemented now
-- Pure Python versioned document-source/evidence/event contract.
-- Local in-memory synthetic operation receipts and idempotent fingerprints.
-- Fail-closed memory preview with explicit blocks and provenance.
-- High-level intended tool capability catalog and conservative feature flags.
-- Offline unittest suite and branch-only GitHub Actions workflow.
+## Teste sintético
+`python -m unittest discover -s tests -p test_document_mcp.py -v`
 
-## Not implemented / not authorized
-No network server, live MCP registration, OAuth/token exchange, Drive read/write, PDF OCR, Groq invocation, DocuSeal API, persistent operational store, R07 call, Qdrant write, deployment or handling of real documents. No change to app/server.py or any parent branch.
+## Não implementado
+Servidor MCP, emissão autenticada de atestação, armazenamento transacional, OCR Stirling, DocuSeal, Groq, Google Workspace, OCR→NOM, consulta R07, aprovação R06. Nenhum documento de cliente pode ser usado nesta fase.
 
-## Offline validation
-```bash
-python -m unittest discover -s tests -p test_document_mcp.py -v
-```
+A assinatura HMAC por si só não comprova a qualidade do conteúdo ou autorização humana. A proposta R07 é um passo independente da aprovação documental R06 e do clique de memória.
 
-See `docs/document-mcp/` for source audit, architecture, requirements, integration matrix, security and acceptance gates.
-
+Relatório: `docs/document-mcp/08_SANEAMENTO_CONTRATOS_V2.md`.

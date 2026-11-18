@@ -6,7 +6,7 @@
 |---|---|---|
 | D00 | GitHub branches, SHAs, arquivo de origem, main não tocada; baseline R07 | VERIFICADO no GitHub, sujeito a mudanças |
 | D01 | Fontes oficiais, limitações, versão de API, licença e privacidade documentadas | REVISÃO DOCUMENTAL INICIAL |
-| D02 | Compilação, esquema, 21 testes sintéticos, checks de congelamento | ACOMPANHAR GitHub Actions do HEAD |
+| D02 | Compilação, schemas v1/v2, regressões sintéticas e checagem job-level dos workflows | PASSOU na CI do commit 6a5db124 (antes da documentação); revalidar HEAD documental |
 | D03 | MCP server remoto funcional, autenticação OAuth/Access, negative tests por objeto | PENDENTE |
 | D04 | Stirling Docker pinned digest, REST OCR com PDF nativo e scan, por/eng, hashes | PENDENTE |
 | D05 | Pipeline OCR para NOM; campos revisados, vínculo NNN, rule_id, conflito e colisões | PENDENTE |
