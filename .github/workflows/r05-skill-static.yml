@@ -109,6 +109,28 @@ jobs:
             http://127.0.0.1:18082/mcp)
           test "$code" = 401 || { echo "Auth must deny; got HTTP $code"; exit 1; }
           echo "Unauthorized MCP access correctly rejected (HTTP 401)"
+      - name: Real Qdrant synthetic isolation tests (no production data)
+        run: |
+          set -Eeuo pipefail
+          docker network create --internal gaia-rag-r05-synthetic-net
+          cleanup() {
+            docker rm -f gaia-rag-r05-qdrant-test 2>/dev/null || true
+            docker network rm gaia-rag-r05-synthetic-net 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          docker run -d --name gaia-rag-r05-qdrant-test \
+            --network gaia-rag-r05-synthetic-net \
+            --tmpfs /qdrant/storage:rw,size=128m \
+            --cpus 1 --memory 512m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            -e QDRANT__TELEMETRY_DISABLED=true \
+            qdrant/qdrant:v1.15.5
+          docker run --rm --network gaia-rag-r05-synthetic-net \
+            --read-only --tmpfs /tmp:rw,size=32m \
+            --cpus 1 --memory 384m --pids-limit 96 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            -v "$PWD/tests/test_live_qdrant_synthetic.py:/app/tests_real_qdrant.py:ro" \
+            --entrypoint python gaia-rag-mini:r05-ci /app/tests_real_qdrant.py
       - name: Print isolated logs on failure
         if: failure()
         run: docker logs gaia-rag-mini-ci --tail 100 || true
