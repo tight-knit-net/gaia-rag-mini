@@ -47,7 +47,7 @@ Nunca promover exemplos sintéticos a precedentes reais; não gravar dados pesso
 
 ## Complemento R07 — fechamento da governança (somente após publicação separada)
 Ferramentas da branch candidata, **não presumir disponíveis no runtime R06**:
-- `memory_index_preview`: classificação local e palavras-chave sugeridas, sem envio a Grok/xAI e sem escrita;
+- `memory_index_preview`: classificação local e palavras-chave sugeridas, sem envio à GroqCloud e sem escrita;
 - `memory_list_process(offset=...)`: percorrer todas as páginas; respeitar `next_offset`;
 - `memory_export_process(max_items=100,offset=...)`: exportação verificável de resumos aprovados, com SHA-256 por lote e `truncated`;
 - `memory_process_timeline`: cronologia por aprovação, não cronologia jurídica do processo nem declaração de vigência;
@@ -66,7 +66,7 @@ a cópia é desnecessária. Propostas pendentes do legado exigem reconciliação
 comprovação documental separadas. Nunca desligar o legado só por sucesso de CI.
 Guia: `docs/institucional/PLANO_FECHAMENTO_GAPS_E_CUTOVER_R07_2026-11-18.md`.
 
-**Grok/xAI:** nenhum envio externo foi implementado ou autorizado neste estágio.
+**GroqCloud (Groq, com Q):** nenhuma chamada externa foi implementada ou autorizada neste estágio.
 Usar o modelo do chat para sugerir candidatas sem armazenar automaticamente;
 integração de API externa fica condicionada à política de privacidade e LGPD.
 
