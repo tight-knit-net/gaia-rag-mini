@@ -47,3 +47,12 @@ Revisão: 2026-11-18 | Branch: feat/r07-office-knowledge-assimilation | Base: fe
 - Cadeia verificada: PR #1 -> #3 -> #4 -> #5; nenhum merge para main.
 - Congelamento administrativo somente por baseline SHA e PR draft; main e R07 estavam sem proteção técnica de branch (protected=false).
 - Status de CI do SHA final e aceitação condicional deverão constar em comentário de controle da PR #5; qualquer commit posterior invalida o marco até revalidação.
+
+## Complemento de topologia — gate CI R07 sem TestLab obrigatório (18/11/2026)
+Os artefatos históricos do TestLab permanecem para auditoria, mas não integram mais o caminho crítico. Código e testes novos na R07:
+- `scripts/r07_candidate_acceptance.py`: inspeção estática de contratos e bloqueios de produção, sem efeitos externos.
+- `.github/workflows/r05-skill-static.yml`: job `r07_candidate_acceptance`, dependente dos quatro jobs de validação sintética.
+- `docs/institucional/PLANO_VALIDACAO_R07.md`: contrato atualizado de aceite da candidata pelo GitHub Actions.
+- `docs/institucional/R07_GATE_CI_SEM_TESTLAB_2026-11-18.md`: relatório do novo gate e das limitações, quando publicado.
+- `scripts/r07_testlab_preflight.py`: ferramenta preservada apenas como código histórico; **não executar no antigo TestLab** nesta frente.
+A documentação original de R07 e os relatórios G4 não devem ser reescritos retroativamente; este complemento registra a decisão posterior de não usar o antigo ambiente.
