@@ -24,7 +24,7 @@ cleanup() {
   fi
   rm -f "$BACKUP"
 }
-trap cleanup EXIT
+trap 'rm -f "$BACKUP"' EXIT
 [[ "$(id -u)" == 0 ]] || { echo "Run as root on the intended staging host" >&2; exit 2; }
 [[ "$(hostname -s)" == "nestground-ai" ]] || { echo "Refusing wrong host" >&2; exit 2; }
 [[ -f "$SOURCE/Dockerfile" && -f "$SOURCE/app/server.py" ]] || { echo "Missing R05 runtime sources" >&2; exit 2; }
@@ -32,6 +32,7 @@ trap cleanup EXIT
 grep -Fxq 'RAG_STAGING_APPROVED=1' "$RUNTIME_ENV" || { echo "Staging gate not approved" >&2; exit 2; }
 grep -Fq '127.0.0.1:18081:8000' "$COMPOSE" || { echo "Staging must bind to loopback only" >&2; exit 2; }
 if [[ -f "$IMAGE_FILE" ]]; then cp "$IMAGE_FILE" "$BACKUP"; fi
+trap cleanup EXIT
 COMMIT="$(git -C "$SOURCE" rev-parse --verify HEAD)"
 [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || exit 2
 IMAGE="gaia-rag-mini:staging-${COMMIT:0:12}"
