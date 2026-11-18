@@ -45,6 +45,7 @@ REQUIRED_TESTS = (
     "tests/r06_live_review_e2e.py",
     "tests/r07_isolated_runtime_smoke.sh",
     "tests/test_r07_skill_router.py",
+    "tests/test_r07_host_contract.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -116,6 +117,7 @@ def evaluate(root: Path) -> dict:
             "  r06_lifecycle_synthetic:", "  r07_operational_isolated:",
             "  r07_candidate_acceptance:",
             "  r07_skill_router_synthetic:",
+            "  r07_host_contract_synthetic:",
         )
     )
     checks["no_image_publication"] = (
@@ -130,6 +132,7 @@ def evaluate(root: Path) -> dict:
         and "skill_router.read_selected(" in app
         and "host_must_explicitly_load" in router
         and "SKILL_VERSION_MISMATCH" in router
+        and "SKILL_CONTENT_DRIFT" in router
         and "memory_write_permitted" in router
         and "_require(namespace, process_id)" in app
     )
