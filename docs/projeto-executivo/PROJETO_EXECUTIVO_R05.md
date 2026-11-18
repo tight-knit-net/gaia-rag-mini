@@ -1,5 +1,5 @@
 # GAIA RAG Mini — Projeto Executivo R05
-**Revisão:** 2026-11-17 | **Estado documental:** REVISADO NA AUTOAUDITORIA ENXUTA | **Escopo de código:** A DEFINIR PELO RESPONSÁVEL | **Código novo:** NÃO AUTORIZADO | **Publicação/deploy:** BLOQUEADOS.
+**Revisão:** 2026-11-17 | **Estado documental:** REVISADO NA AUTOAUDITORIA ENXUTA | **Código novo:** AUTORIZADO SOMENTE EM BRANCH ISOLADA (ACL OFFLINE + TESTES) | **Runtime/merge/publicação/deploy:** BLOQUEADOS.
 
 > Este documento é a especificação executiva para futura implementação. O fato de sua redação estar concluída **não** autoriza início de desenvolvimento, merge, publicação de imagem, implantação ou migração. A liberação do desenvolvimento dependerá de revisão técnica documentada, conclusão dos gates de projeto e aprovação expressa.
 
@@ -83,7 +83,7 @@ A revisão detectou a antiga instrução em `SKILL.md` de verificar `process_id`
 
 Esses achados são **revisão documental assistida**, não homologação do runtime nem auditoria externa certificada. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
 
-**Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
+**Decisão executiva resultante (atualizada conforme autorização limitada de 17/11/2026):** documentação estruturada e revisada, **CÓDIGO OFFLINE DE ACL + TESTES SINTÉTICOS AUTORIZADO EM BRANCH ISOLADA**, porém **INTEGRAÇÃO DO RUNTIME, MERGE E PUBLICAÇÃO = NÃO AUTORIZADOS**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
 
 ## 7. Estado do ambiente e caminho de desenvolvimento
 A pasta Linode `/opt/gaia-rag-mini` e usuário de deploy restrito foram preparados anteriormente, **sem iniciar o container GAIA RAG**. O SSH foi validado localmente; ligação GitHub Actions → Linode **não foi demonstrada**. Há quatro containers NestGround preservados. Não há aprovação para publicar imagem ou habilitar `RAG_STAGING_APPROVED=1`.
@@ -104,9 +104,9 @@ O código novo **não pode começar** enquanto faltar qualquer item obrigatório
 - **DG-03** Autoauditoria documental rastreável registrada, sem exigência de revisão externa; riscos operacionais mantidos no backlog.
 - **DG-04** Definições de escopo, pontos canônicos, interfaces e plano de testes aprovados por responsável autorizado.
 - **DG-05** Confirmação do freeze de publicação e implantação, com segregação do PR e `main`.
-- **DG-06** Autorização explícita para iniciar desenvolvimento (não inclui autorização de deploy).
+- **DG-06** Autorização explícita para iniciar desenvolvimento; em 17/11/2026 foi concedida para inspeção read-only da origem e módulo ACL offline com testes sintéticos, não para ativar runtime ou deploy.
 
-**Estado desta entrega:** DG-01/DG-02 documentados e DG-03 revisado na auditoria enxuta; DG-04/DG-06 dependem da decisão do proprietário sobre o próximo escopo. Este pacote **não é homologação operacional**.
+**Estado desta entrega:** DG-01/DG-02 documentados; DG-03 revisado na auditoria enxuta; DG-06 autorizado somente para módulo ACL offline e testes sintéticos. DG-04 e a integração real dependem da fonte canônica de grants e decisão futura. Este pacote **não é homologação operacional**.
 
 ## 9. Evidências e rastreabilidade
 - Skill R04 e relatório no Drive: https://drive.google.com/drive/folders/1UVHd6Vz0FaI7QLVcZCNbVOyy5b6WcQ2-
