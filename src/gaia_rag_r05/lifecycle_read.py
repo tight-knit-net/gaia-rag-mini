@@ -11,6 +11,7 @@ import os
 import re
 import sqlite3
 import unicodedata
+from contextlib import closing
 from pathlib import Path
 
 
@@ -116,7 +117,7 @@ def pending_reviews(namespace: str, process_id: str, *, limit: int = 20,
     if con is None:
         return {"proposals": [], "storage_available": False,
                 "next_offset": None, "coverage": "unavailable"}
-    with con:
+    with closing(con):
         rows = con.execute(
             "SELECT id,title,status,expires_at,process_id,created_at "
             "FROM proposals WHERE namespace=? AND process_id=? AND status='pending' "
@@ -149,7 +150,7 @@ def approval_events(namespace: str, *, process_id: str = "",
         params.append(process_id)
     sql += " ORDER BY a.id DESC LIMIT ? OFFSET ?"
     params.extend([limit + 1, offset])
-    with con:
+    with closing(con):
         rows = con.execute(sql, params).fetchall()
     return {
         "events": [dict(row) for row in rows[:limit]],
@@ -171,7 +172,7 @@ def proposal_statistics(namespace: str, *, process_id: str = ""):
         sql += " AND process_id=?"
         params.append(process_id)
     sql += " GROUP BY status"
-    with con:
+    with closing(con):
         rows = con.execute(sql, params).fetchall()
     counts = {"pending": 0, "approving": 0, "approved": 0, "discarded": 0}
     for row in rows:
