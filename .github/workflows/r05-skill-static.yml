@@ -46,6 +46,8 @@ jobs:
           unzip -tq "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
           sha256sum "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
           echo "Archive validated in ephemeral runner only; not uploaded or published."
+      - name: R05 backend authorization unit tests (synthetic, no network)
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Assert GHCR and Linode deployment freeze
         run: |
           python - <<'PY'
