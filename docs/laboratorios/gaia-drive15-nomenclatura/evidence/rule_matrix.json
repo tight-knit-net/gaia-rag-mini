@@ -1,0 +1,348 @@
+{
+  "summary": {
+    "total": 56,
+    "ok": 56,
+    "pending": 0,
+    "byReason": {},
+    "automatic_rules": 19,
+    "manual_selection_rules": 37
+  },
+  "rows": [
+    {
+      "id": "NOM-001",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_DANFSe-03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-002",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CNPJ_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-003",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_AF-esci-03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-004",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_DE_HABITE-SE_esci.pdf"
+    },
+    {
+      "id": "NOM-005",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RELATÓRIO_PREVENTIVO_CONTRA_INCÊNDIO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-006",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_CRA_esci_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-007",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_DE_APROVAÇÃO_DE_PPCI.pdf"
+    },
+    {
+      "id": "NOM-008",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_AI-esci-03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-009",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_DE_FUNCIONAMENTO_2026.pdf"
+    },
+    {
+      "id": "NOM-010",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_Indeferimento-esci-EXEMPLO.pdf"
+    },
+    {
+      "id": "NOM-011",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_DAM-esci-03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-012",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_Protocolo-esci-EXEMPLO.pdf"
+    },
+    {
+      "id": "NOM-013",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RECIBO_DE_PAGAMENTO_GAIA_R$1500"
+    },
+    {
+      "id": "NOM-014",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_A.R.T_PPCI_assinar.pdf"
+    },
+    {
+      "id": "NOM-015",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_DE_APROVAÇÃO_PPCI_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-016",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_2ª_ALTERAÇÃO_JUCESC_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-017",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_A.R.T_PPCI_assinado_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-018",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CERTIDÃO_DE_IPTU_006.pdf"
+    },
+    {
+      "id": "NOM-019",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ALVARÁ_SANITÁRIO_val_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-020",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ALVARÁ_CONDICIONADO_val_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-021",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CONTRATO_SOCIAL_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-022",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CONTRATO_DE_LOCAÇÃO_DE_IMÓVEL_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-023",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ANEXO_H_ESCI_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-024",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ANEXO_I_ESCI_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-025",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_EIS+A.R.T_assinado_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-026",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_DARE_MULTA_BOMBEIRO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-027",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ALVARA_DE_FUNCIONAMENTO_PMF_2026.pdf"
+    },
+    {
+      "id": "NOM-028",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_A.R.T_EXEMPLO.pdf"
+    },
+    {
+      "id": "NOM-029",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_A.R.T_LAUDO_TECNICO_assinado.pdf"
+    },
+    {
+      "id": "NOM-030",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_ATESTADO_DE_ADEQUAÇÃO.pdf"
+    },
+    {
+      "id": "NOM-031",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CERTIDÃO_SANITÁRIA.pdf"
+    },
+    {
+      "id": "NOM-032",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CND_PMF_CNPJ.pdf"
+    },
+    {
+      "id": "NOM-033",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CNH.pdf"
+    },
+    {
+      "id": "NOM-034",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_PROCURACAO_PARTICULAR_assinado.pdf"
+    },
+    {
+      "id": "NOM-035",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_LAUDO_TECNICO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-036",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_INSCRIÇÃO_ESTADUAL_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-037",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CONTRATO_DE_SERVIÇOS_GAIA_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-038",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_DBE_EXEMPLO.pdf"
+    },
+    {
+      "id": "NOM-039",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_PROTOCOLO_ALVARÁ_SANITÁRIO_2026.pdf"
+    },
+    {
+      "id": "NOM-040",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_REQUERIMENTO_SANITÁRIO_EXEMPLO.pdf"
+    },
+    {
+      "id": "NOM-041",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_REQUERIMENTO_ALTERAÇÃO_CADASTRAL_PMF_03-08-2026_assinado.pdf"
+    },
+    {
+      "id": "NOM-042",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_REQUERIMENTO_ALTERAÇÃO_CADASTRAL_PMF_03-08-2026.docx"
+    },
+    {
+      "id": "NOM-043",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_SOLICITAÇÃO_JURÍDICA_SANITÁRIA_EXEMPLO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-044",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_BOLETO_ART_EXEMPLO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-045",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_BOLETO_ALVARÁ_SANITÁRIO_EXEMPLO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-046",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_VIABILIDADE_JUCESC_EXEMPLO_03-08-2026.pdf"
+    },
+    {
+      "id": "NOM-047",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_2-Requerimento_de_Alteracao__PMF_assinado.pdf"
+    },
+    {
+      "id": "NOM-048",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RELATÓRIO DETALHADO PGFN.pdf"
+    },
+    {
+      "id": "NOM-049",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RG"
+    },
+    {
+      "id": "NOM-050",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_CCMEI-12345678000199.pdf"
+    },
+    {
+      "id": "NOM-051",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_PROTOCOLO_DBE"
+    },
+    {
+      "id": "NOM-052",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_PROTOCOLO_DE_SOLICITAÇÃO_PGFN_.pdf"
+    },
+    {
+      "id": "NOM-053",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_DAS PARCELAMENTO MEI 05-2026.pdf"
+    },
+    {
+      "id": "NOM-054",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_FICHA_CADASTRAL_JUCESC"
+    },
+    {
+      "id": "NOM-055",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RELATORIO_DIVIDA_ATIVA_PGFN.pdf"
+    },
+    {
+      "id": "NOM-056",
+      "status": "OK",
+      "reason": null,
+      "filename": "027_RECIBO DE PARCELAMENTO MEI.pdf"
+    }
+  ]
+}

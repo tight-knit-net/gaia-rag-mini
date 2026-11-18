@@ -1,0 +1,285 @@
+{
+  "synthetic": true,
+  "drive1_mutations": 0,
+  "boletim1": {
+    "schema": "gaia.drive1.topology-bulletin.v1",
+    "batchId": "demo-sintetico-001",
+    "driveId": "0ALBFaLnE8ZPHUk9PVA",
+    "sourceFolderId": "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+    "topologyFolderId": "1obPrd8IpvOvlFSgx5tGa1lQtt7x6SwEb",
+    "permanentTraceFolderId": "1HUYGCWM3xhBIuv1vX_rNaZwjC0H3V57y",
+    "sequence": 1,
+    "previousSha256": null,
+    "observedAt": "2026-11-18T09:00:00Z",
+    "operatorScopeRef": "simulacao-local-sem-autorizacao",
+    "inventoryDigest": "7bf9c6a35d71143852c910fcbaf35001d2e58ab40230318bc6506d44e83e8ac1",
+    "counts": {
+      "total": 4,
+      "files": 2,
+      "folders": 2
+    },
+    "state": "INVENTORY_COMPLETE",
+    "entries": [
+      {
+        "ordinal": 1,
+        "fileId": "synthetic_batch_a01",
+        "kind": "FOLDER",
+        "currentName": "LOTE FICTICIO",
+        "sourceParentId": "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/vnd.google-apps.folder",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 2,
+        "fileId": "synthetic_document_a01",
+        "kind": "FILE",
+        "currentName": "arquivo antigo 1.pdf",
+        "sourceParentId": "synthetic_batch_a01",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_document_a01"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/pdf",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 3,
+        "fileId": "synthetic_subdir_a",
+        "kind": "FOLDER",
+        "currentName": "subpasta fictícia",
+        "sourceParentId": "synthetic_batch_a01",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_subdir_a"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/vnd.google-apps.folder",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 4,
+        "fileId": "synthetic_document_b02",
+        "kind": "FILE",
+        "currentName": "arquivo antigo 2.pdf",
+        "sourceParentId": "synthetic_subdir_a",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_subdir_a",
+          "synthetic_document_b02"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/pdf",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      }
+    ],
+    "updates": [],
+    "persistedToDrive1": false,
+    "execution_attempted": false,
+    "verified_effect": false,
+    "sha256": "8d2845c884a4534314a87347863837e01f8649a2e130f905817212f11e89a845"
+  },
+  "boletim2": {
+    "schema": "gaia.drive1.topology-bulletin.v1",
+    "batchId": "demo-sintetico-001",
+    "driveId": "0ALBFaLnE8ZPHUk9PVA",
+    "sourceFolderId": "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+    "topologyFolderId": "1obPrd8IpvOvlFSgx5tGa1lQtt7x6SwEb",
+    "permanentTraceFolderId": "1HUYGCWM3xhBIuv1vX_rNaZwjC0H3V57y",
+    "sequence": 2,
+    "previousSha256": "8d2845c884a4534314a87347863837e01f8649a2e130f905817212f11e89a845",
+    "observedAt": "2026-11-18T09:05:00Z",
+    "operatorScopeRef": "simulacao-local-sem-autorizacao",
+    "inventoryDigest": "7bf9c6a35d71143852c910fcbaf35001d2e58ab40230318bc6506d44e83e8ac1",
+    "counts": {
+      "total": 4,
+      "files": 2,
+      "folders": 2
+    },
+    "state": "TOPOLOGY_IN_PROGRESS",
+    "entries": [
+      {
+        "ordinal": 1,
+        "fileId": "synthetic_batch_a01",
+        "kind": "FOLDER",
+        "currentName": "LOTE FICTICIO",
+        "sourceParentId": "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/vnd.google-apps.folder",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 2,
+        "fileId": "synthetic_document_a01",
+        "kind": "FILE",
+        "currentName": "arquivo antigo 1.pdf",
+        "sourceParentId": "synthetic_batch_a01",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_document_a01"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/pdf",
+        "metadataParentVerified": true,
+        "stage": "NAMING_PREVIEW",
+        "proposedName": "027_DANFSe-03-08-2026.pdf",
+        "proposedParentId": "synthetic_destination_a",
+        "ruleId": "NOM-001",
+        "evidenceRefs": [
+          "synthetic_proof_001"
+        ],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 3,
+        "fileId": "synthetic_subdir_a",
+        "kind": "FOLDER",
+        "currentName": "subpasta fictícia",
+        "sourceParentId": "synthetic_batch_a01",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_subdir_a"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/vnd.google-apps.folder",
+        "metadataParentVerified": true,
+        "stage": "INVENTORIED",
+        "proposedName": null,
+        "proposedParentId": null,
+        "ruleId": null,
+        "evidenceRefs": [],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      },
+      {
+        "ordinal": 4,
+        "fileId": "synthetic_document_b02",
+        "kind": "FILE",
+        "currentName": "arquivo antigo 2.pdf",
+        "sourceParentId": "synthetic_subdir_a",
+        "pathIds": [
+          "1xcVof9_m37MQZCR3Fa2-TL3hwwqY4dj-",
+          "synthetic_batch_a01",
+          "synthetic_subdir_a",
+          "synthetic_document_b02"
+        ],
+        "sourceVersion": "1",
+        "sourceMimeType": "application/pdf",
+        "metadataParentVerified": true,
+        "stage": "NAMING_PREVIEW",
+        "proposedName": "027_CNPJ_09-01-2026.pdf",
+        "proposedParentId": "synthetic_destination_a",
+        "ruleId": "NOM-002",
+        "evidenceRefs": [
+          "synthetic_proof_002"
+        ],
+        "blockers": [],
+        "mutationStatus": "NOT_EXECUTED"
+      }
+    ],
+    "updates": [
+      {
+        "fileId": "synthetic_document_a01",
+        "stage": "NAMING_PREVIEW"
+      },
+      {
+        "fileId": "synthetic_document_b02",
+        "stage": "NAMING_PREVIEW"
+      }
+    ],
+    "persistedToDrive1": false,
+    "execution_attempted": false,
+    "verified_effect": false,
+    "sha256": "fd9953af90326fe65a400b306199ffe108c032b6b9f709815ed66b3a8b50534a"
+  },
+  "plan": {
+    "schema": "gaia.drive1.batch-plan.v1",
+    "batchId": "demo-sintetico-001",
+    "driveId": "0ALBFaLnE8ZPHUk9PVA",
+    "state": "BLOCKED",
+    "blockers": [
+      "CLIENT_REGISTRATION_WAIT",
+      "TOPOLOGY_BULLETIN_NOT_PERSISTED"
+    ],
+    "fileCount": 2,
+    "items": [
+      {
+        "fileId": "synthetic_document_a01",
+        "expectedVersion": "1",
+        "from": "synthetic_batch_a01",
+        "to": "synthetic_destination_a",
+        "oldName": "arquivo antigo 1.pdf",
+        "newName": "027_DANFSe-03-08-2026.pdf",
+        "ruleId": "NOM-001",
+        "status": "PREVIEW",
+        "reason": null
+      },
+      {
+        "fileId": "synthetic_document_b02",
+        "expectedVersion": "1",
+        "from": "synthetic_subdir_a",
+        "to": "synthetic_destination_a",
+        "oldName": "arquivo antigo 2.pdf",
+        "newName": "027_CNPJ_09-01-2026.pdf",
+        "ruleId": "NOM-002",
+        "status": "PREVIEW",
+        "reason": null
+      }
+    ],
+    "approvalRef": null,
+    "execution_allowed": false,
+    "execution_attempted": false,
+    "effect_status": "NOT_EXECUTED",
+    "readback_status": "NOT_APPLICABLE"
+  }
+}

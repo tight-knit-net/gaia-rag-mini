@@ -1,0 +1,6 @@
+.clasp.json
+.env
+.env.*
+*.key
+*.pem
+node_modules/

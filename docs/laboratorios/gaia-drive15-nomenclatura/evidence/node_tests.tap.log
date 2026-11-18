@@ -1,0 +1,21 @@
+✔ 56 regras vigentes carregadas (0.840257ms)
+✔ NOM-001: NNN e data (0.671136ms)
+✔ NOM-002: CNPJ (0.191018ms)
+✔ NOM-018: extração da unidade IPTU (0.325487ms)
+✔ NOM-016: consolidação (0.205991ms)
+✔ campos faltantes ficam pendentes (0.134917ms)
+✔ data com formato incorreto fica pendente (0.101402ms)
+✔ regressão: data impossível é aceita pelo legado, bloqueada no isolado (0.19522ms)
+✔ regressão: nome com separador de diretório é bloqueado (0.309732ms)
+✔ regra inexistente não gera nome (0.209878ms)
+✔ sem evidências de reconhecimento suficientes não escolhe regra (3.698022ms)
+✔ entrada inválida bloqueada (0.125397ms)
+✔ núcleo isolado não usa serviços de escrita/leitura do Google (0.504796ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69.452055

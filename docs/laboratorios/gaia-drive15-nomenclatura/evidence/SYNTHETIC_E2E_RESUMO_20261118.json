@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "ocrUsed": false,
+  "drive1Mutations": 0,
+  "documents": 17,
+  "documentFormats": {
+    "pdf": 15,
+    "docx": 2
+  },
+  "proposals": 7,
+  "blocked": 10,
+  "reasons": {
+    "FILENAME_COLLISION": 2,
+    "NOM_SOURCE_REVIEW_REQUIRED": 1,
+    "VARIAVEIS_FALTANTES": 1,
+    "THIRD_PARTY_CONFLICT": 1,
+    "DATA_CALENDARIO_INVALIDA": 1,
+    "METADATA_TYPE_UNRECOGNIZED": 1,
+    "MIME_TYPE_CONFLICT": 1,
+    "METADATA_MISSING": 1,
+    "CLIENT_MISMATCH": 1
+  },
+  "expectationMismatches": [],
+  "batchState": "BLOCKED",
+  "batchBlockers": [
+    "FILENAME_COLLISION",
+    "PREVIEW_INCOMPLETE",
+    "CLIENT_REGISTRATION_WAIT",
+    "TOPOLOGY_BULLETIN_NOT_PERSISTED"
+  ],
+  "renameCopiesVerified": 7,
+  "rawSourceUntouched": true,
+  "drive1FilesChanged": 0,
+  "batchEffect": "NOT_EXECUTED",
+  "localRenameOnly": true,
+  "originalPdfAndDocxRemainInSource": true,
+  "topologyBulletinsProduced": 2,
+  "bulletinHashChainVerified": true
+}

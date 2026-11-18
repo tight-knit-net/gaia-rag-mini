@@ -1,0 +1,233 @@
+{
+  "summary": {
+    "total": 19,
+    "exact": 17,
+    "ambiguous": 2,
+    "other": 0
+  },
+  "results": [
+    {
+      "id": "NOM-038",
+      "status": "OK",
+      "recognizedRule": "NOM-038",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "DOCUMENTO BASICO DE ENTRADA DO CNPJ",
+        "PROTOCOLO REDESIM"
+      ]
+    },
+    {
+      "id": "NOM-039",
+      "status": "OK",
+      "recognizedRule": "NOM-039",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "DADOS DO REQUERIMENTO",
+        "SOLICITACAO REVALIDACAO DE ALVARA",
+        "DIRETORIA DE VIGILANCIA"
+      ]
+    },
+    {
+      "id": "NOM-040",
+      "status": "OK",
+      "recognizedRule": "NOM-040",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "REQUERIMENTO A",
+        "VIGILANCIA SANITARIA MUNICIPAL"
+      ]
+    },
+    {
+      "id": "NOM-041",
+      "status": "PENDENTE_NOMENCLATURA",
+      "recognizedRule": null,
+      "reason": "AMBIGUIDADE_DE_REGRA",
+      "candidates": [
+        "NOM-041",
+        "NOM-042"
+      ],
+      "signals": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ]
+    },
+    {
+      "id": "NOM-042",
+      "status": "PENDENTE_NOMENCLATURA",
+      "recognizedRule": null,
+      "reason": "AMBIGUIDADE_DE_REGRA",
+      "candidates": [
+        "NOM-041",
+        "NOM-042"
+      ],
+      "signals": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ]
+    },
+    {
+      "id": "NOM-043",
+      "status": "OK",
+      "recognizedRule": "NOM-043",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "SOLICITACAO JURIDICA",
+        "DADOS PROCESSUAIS"
+      ]
+    },
+    {
+      "id": "NOM-044",
+      "status": "OK",
+      "recognizedRule": "NOM-044",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "CREA SC",
+        "LINHA DIGITAVEL",
+        "NUMERO DO DOCUMENTO",
+        "ART"
+      ]
+    },
+    {
+      "id": "NOM-045",
+      "status": "OK",
+      "recognizedRule": "NOM-045",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "FUNDO MUNICIPAL DE SAUDE DE FLORIANOPOLIS",
+        "RECIBO DO PAGADOR",
+        "PROTOCOLO",
+        "ALVARA"
+      ]
+    },
+    {
+      "id": "NOM-046",
+      "status": "OK",
+      "recognizedRule": "NOM-046",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "REGIN",
+        "PEDIDO DE VIABILIDADE",
+        "JUCESC"
+      ]
+    },
+    {
+      "id": "NOM-047",
+      "status": "OK",
+      "recognizedRule": "NOM-047",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "FICHA DE ALTERACAO CADASTRAL",
+        "PESSOA JURIDICA"
+      ]
+    },
+    {
+      "id": "NOM-048",
+      "status": "OK",
+      "recognizedRule": "NOM-048",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "DETALHAMENTO DE INSCRICAO EM DIVIDA ATIVA",
+        "RELATORIO DETALHADO",
+        "SITUACAO DA INSCRICAO"
+      ]
+    },
+    {
+      "id": "NOM-049",
+      "status": "OK",
+      "recognizedRule": "NOM-049",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "INSTITUTO DE IDENTIFICACAO"
+      ]
+    },
+    {
+      "id": "NOM-050",
+      "status": "OK",
+      "recognizedRule": "NOM-050",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "ENQUADRADO NA CONDICAO DE MEI"
+      ]
+    },
+    {
+      "id": "NOM-051",
+      "status": "OK",
+      "recognizedRule": "NOM-051",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "RECIBO DE TRANSMISSAO DA SOLICITACAO",
+        "PROTOCOLO REDESIM",
+        "REDESIM",
+        "PEDIDO DE BAIXA"
+      ]
+    },
+    {
+      "id": "NOM-052",
+      "status": "OK",
+      "recognizedRule": "NOM-052",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "PROCURADORIA GERAL DA FAZENDA NACIONAL",
+        "RECIBO DO PROTOCOLO",
+        "DADOS DO PROTOCOLO"
+      ]
+    },
+    {
+      "id": "NOM-053",
+      "status": "OK",
+      "recognizedRule": "NOM-053",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "DOCUMENTO DE ARRECADACAO DO SIMPLES NACIONAL",
+        "DAS DE PARCMEI",
+        "NUMERO DO PARCELAMENTO"
+      ]
+    },
+    {
+      "id": "NOM-054",
+      "status": "OK",
+      "recognizedRule": "NOM-054",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "FICHA CADASTRAL SIMPLIFICADA",
+        "JUNTA COMERCIAL DO ESTADO DE SANTA CATARINA"
+      ]
+    },
+    {
+      "id": "NOM-055",
+      "status": "OK",
+      "recognizedRule": "NOM-055",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "RELATORIO CONSOLIDADO DA DIVIDA"
+      ]
+    },
+    {
+      "id": "NOM-056",
+      "status": "OK",
+      "recognizedRule": "NOM-056",
+      "reason": null,
+      "candidates": null,
+      "signals": [
+        "ECAC",
+        "SALDO DEVEDOR ORIGINAL"
+      ]
+    }
+  ]
+}

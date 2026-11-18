@@ -1,0 +1,2316 @@
+/**
+ * RulesData — 56 regras normalizadas embutidas no runtime (slim, sem _legacy).
+ * Gerado de data/nomenclature_rules.normalized.json. Fonte de verdade: Drive.
+ */
+var NOMENCLATURE_RULES = [
+  {
+    "rule_id": "NOM-001",
+    "status": "VIGENTE",
+    "document_type": "NFS-e / DANFSe",
+    "identification": "Documento Auxiliar da NFS-e / DANFSe referente a nota fiscal de serviço eletrônica.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "DANFSe",
+        "NFS-e",
+        "Documento Auxiliar da NFS-e",
+        "Nota Fiscal de Serviço Eletrônica"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "DANFSe-{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_da_NFSe_DANFSe",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "DANFSe-03-08-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-001",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-002",
+    "status": "VIGENTE",
+    "document_type": "Comprovante de Inscrição e Situação Cadastral CNPJ",
+    "identification": "Comprovante de Inscrição e de Situação Cadastral do CNPJ emitido pela Receita Federal. A data do nome é a emissão no rodapé.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "CADASTRO NACIONAL DA PESSOA JURÍDICA",
+        "COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL",
+        "NÚMERO DE INSCRIÇÃO",
+        "NOME EMPRESARIAL",
+        "Emitido no dia",
+        "data e hora de Brasília"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CNPJ_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data e hora de emissão impressas no rodapé do comprovante da Receita Federal",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO_COMPROVANTE_RFB",
+    "example_approved": "CNPJ_09-01-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-002",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-003",
+    "status": "VIGENTE",
+    "document_type": "Auto de Fiscalização",
+    "identification": "Auto de Fiscalização do CBMSC/e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Auto de Fiscalização",
+        "CBMSC",
+        "e-SCI"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "AF-esci-{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_do_auto_de_fiscalizacao",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "AF-esci-14-07-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-003",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-004",
+    "status": "VIGENTE",
+    "document_type": "Atestado de Habite-se do CBMSC/e-SCI",
+    "identification": "Atestado de Habite-se emitido pelo CBMSC no sistema e-SCI, com RE, protocolo, identificação da edificação, resultado e autenticidade e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "ATESTADO DE HABITE-SE",
+        "CORPO DE BOMBEIROS MILITAR DE SANTA CATARINA",
+        "Registro de Endereço (RE)",
+        "DADOS DA SOLICITAÇÃO",
+        "RESULTADO DA SOLICITAÇÃO",
+        "Autenticidade e-SCI"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_DE_HABITE-SE_esci.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "ATESTADO_DE_HABITE-SE_esci.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-004",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-005",
+    "status": "VIGENTE",
+    "document_type": "Relatório Preventivo Contra Incêndio (RPCI)",
+    "identification": "Relatório Preventivo Contra Incêndio / RPCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Relatório Preventivo Contra Incêndio",
+        "RPCI",
+        "CBMSC"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "RELATÓRIO_PREVENTIVO_CONTRA_INCÊNDIO_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_documental_validada_para_nomenclatura",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO_PARA_NOMENCLATURA",
+    "example_approved": "Relatório Preventivo Contra Incêndio-06-11-2024.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-005",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-006",
+    "status": "VIGENTE",
+    "document_type": "Atestado para Construção, Reforma ou Ampliação",
+    "identification": "Atestado para Construção, Reforma ou Ampliação emitido no contexto CBMSC/e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Atestado para Construção, Reforma ou Ampliação",
+        "CBMSC",
+        "e-SCI"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_CRA_esci_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_documental_validada_para_nomenclatura",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO_PARA_NOMENCLATURA",
+    "example_approved": "Atestado CRA-esci-06-11-2024.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-006",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-007",
+    "status": "VIGENTE",
+    "document_type": "Atestado de Aprovação de Projeto / PPCI",
+    "identification": "Atestado de Aprovação de Projeto relacionado ao PPCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_DE_APROVAÇÃO_DE_PPCI.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "Atestado de aprovação de PPCI.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-007",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-008",
+    "status": "VIGENTE",
+    "document_type": "Auto de Infração - Multa",
+    "identification": "Auto de Infração, inclusive multa, emitido pelo CBMSC/e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Auto de Infração",
+        "CBMSC",
+        "e-SCI",
+        "multa"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "AI-esci-{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_do_auto_de_infracao",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "AI-esci-21-05-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-008",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-009",
+    "status": "VIGENTE",
+    "document_type": "Atestado de Funcionamento",
+    "identification": "Atestado de Funcionamento emitido pelo CBMSC.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Atestado de Funcionamento",
+        "CBMSC"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_DE_FUNCIONAMENTO_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "AAAA",
+        "source": "ano_da_emissao_do_atestado_de_funcionamento",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "Atestado de funcionamento-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-009",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-010",
+    "status": "VIGENTE",
+    "document_type": "Relatório de Indeferimento Sumário de Funcionamento",
+    "identification": "Relatório de indeferimento emitido no e-SCI/CBMSC.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Relatório de Indeferimento",
+        "Indeferimento Sumário",
+        "e-SCI",
+        "CBMSC",
+        "funcionamento"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "Indeferimento-esci-{TIPO}.pdf",
+    "variables": [
+      {
+        "name": "TIPO",
+        "format": "TEXTO",
+        "source": "objeto_funcional_do_indeferimento",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "Indeferimento-esci-funcionamento.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-010",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-011",
+    "status": "VIGENTE",
+    "document_type": "Taxa de Segurança Contra Incêndios / e-SCI",
+    "identification": "Documento de arrecadação/taxa de Segurança Contra Incêndios vinculado ao e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Documento de arrecadação",
+        "Taxa de Segurança Contra Incêndios",
+        "DAM",
+        "e-SCI"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "DAM-esci-{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_do_DAM_taxa",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "DAM-esci-30-07-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-011",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-012",
+    "status": "VIGENTE",
+    "document_type": "Comprovante de Solicitação de Funcionamento / Protocolo e-SCI",
+    "identification": "Comprovante de solicitação/protocolo no e-SCI/CBMSC.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Comprovante de Solicitação",
+        "Protocolo",
+        "e-SCI",
+        "CBMSC"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "Protocolo-esci-{NUMERO_OFICIAL}.pdf",
+    "variables": [
+      {
+        "name": "NUMERO_OFICIAL",
+        "format": "TEXTO",
+        "source": "numero_oficial_do_protocolo_solicitacao",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "Protocolo-esci-F8105150190A.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-012",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-013",
+    "status": "VIGENTE",
+    "document_type": "Recibo de Pagamento GAIA",
+    "identification": "Recibo de pagamento emitido ou assinado pela GAIA LICENCIAMENTO E TECNOLOGIA LTDA, inclusive por responsável autorizado em nome da GAIA.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Recibo de Pagamento",
+        "GAIA LICENCIAMENTO E TECNOLOGIA LTDA",
+        "GAIA",
+        "valor total recebido"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "RECIBO_DE_PAGAMENTO_GAIA_R${VALOR}",
+    "variables": [
+      {
+        "name": "VALOR",
+        "format": "VALOR_INTEIRO_BRL",
+        "source": "valor_total_recebido_no_recibo",
+        "required": true
+      }
+    ],
+    "extension": null,
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "RECIBO_DE_PAGAMENTO_GAIA_R$500",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-013",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-014",
+    "status": "VIGENTE",
+    "document_type": "ART PPCI - não assinada / para assinatura",
+    "identification": "Anotação de Responsabilidade Técnica (ART) vinculada ao PPCI/SCI, emitida pelo CREA-SC, ainda sem assinatura aposta no documento. Linhas de assinatura permanecem sem assinatura; a mera presença de nomes impressos não caracteriza assinatura.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": false,
+    "approved_pattern": "A.R.T_PPCI_assinar.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "A.R.T_PPCI_assinar.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-014",
+    "human_decision_evidence": null,
+    "notes": "",
+    "requires_absence_of_signatures": true
+  },
+  {
+    "rule_id": "NOM-015",
+    "status": "VIGENTE",
+    "document_type": "Atestado de Aprovação de Projeto / PPCI - modelo legado CBMSC",
+    "identification": "Atestado de Aprovação de Projeto do modelo legado do CBMSC/Setor de Atividades Técnicas, anterior ao padrão atual do e-SCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Setor de Atividades Técnicas",
+        "SAT",
+        "Atestado de Aprovação de Projeto",
+        "PPCI",
+        "CBMSC"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_DE_APROVAÇÃO_PPCI_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data_de_emissao_impressa_no_atestado_legado",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "ATESTADO_DE_APROVAÇÃO_PPCI_15-08-2014.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-015",
+    "human_decision_evidence": null,
+    "notes": "",
+    "coexists_with_rule": "NOM-007"
+  },
+  {
+    "rule_id": "NOM-016",
+    "status": "VIGENTE",
+    "document_type": "Alteração Contratual registrada na JUCESC",
+    "identification": "Ato de alteração contratual registrado na JUCESC. Ratificação de cláusulas anteriores não equivale a consolidação.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "ALTERAÇÃO CONTRATUAL",
+        "Junta Comercial do Estado de Santa Catarina",
+        "ATO 002 - ALTERAÇÃO",
+        "ordinal da alteração",
+        "fecho do instrumento",
+        "assinatura do sócio",
+        "CONSOLIDAÇÃO quando expressa"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "{ORDINAL}ª_ALTERAÇÃO_JUCESC_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data do próprio instrumento/assinatura societária impressa no fecho",
+        "required": true
+      },
+      {
+        "name": "ORDINAL",
+        "format": "ORDINAL",
+        "source": "ordinal declarado no instrumento; se ausente, sequência societária validada pelo proprietário",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_INSTRUMENTO_SOCIAL",
+    "example_approved": "3ª_ALTERAÇÃO_JUCESC_CONSOLIDADO_05-08-2021.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-016",
+    "human_decision_evidence": null,
+    "notes": "",
+    "variant_when_consolidated": {
+      "key": "CONSOLIDADO",
+      "approved_pattern": "{ORDINAL}ª_ALTERAÇÃO_JUCESC_CONSOLIDADO_{DATA}.pdf",
+      "condition": "somente declaração expressa de consolidação e reprodução consolidada do contrato"
+    }
+  },
+  {
+    "rule_id": "NOM-017",
+    "status": "VIGENTE",
+    "document_type": "ART PPCI - assinada",
+    "identification": "Anotação de Responsabilidade Técnica emitida pelo CREA-SC, efetivamente assinada, vinculada a PPCI/SCI, prevenção e combate a incêndio ou respectivos sistemas/serviços. Confirmar pelo conteúdo da ART, não apenas pelo nome do arquivo.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "CREA-SC",
+        "assinatura digital",
+        "assinado digitalmente",
+        "data de assinatura",
+        "assinaturas da ART"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "A.R.T_PPCI_assinado_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data de assinatura documental validada na seção de assinaturas / assinatura digital da ART",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ASSINATURA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-017",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-018",
+    "status": "VIGENTE",
+    "document_type": "Certidão / Cadastro Imobiliário IPTU por unidade",
+    "identification": "Certidão Cadastral para Fins Gerais ou cadastro imobiliário municipal com inscrição completa. A unidade é o penúltimo grupo de três algarismos.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "CERTIDÃO CADASTRAL PARA FINS GERAIS",
+        "Código do imóvel",
+        "Inscrição imobiliária",
+        "Logradouro",
+        "Número",
+        "DADOS DO CONTRIBUINTE",
+        "Características do Imóvel"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CERTIDÃO_DE_IPTU_{UNIDADE_IPTU}.pdf",
+    "variables": [
+      {
+        "name": "UNIDADE_IPTU",
+        "format": "NNN",
+        "source": "grupo de três algarismos imediatamente anterior ao último grupo de três algarismos da inscrição imobiliária completa",
+        "required": true,
+        "extraction": {
+          "field": "UNIDADE_IPTU",
+          "source_field": "inscricao_imobiliaria_completa",
+          "regex": "(?:^|\\D)(\\d{3})[.\\-](\\d{3})(?:\\D|$)",
+          "selected_group": 1,
+          "preserve_leading_zeroes": true,
+          "example": {
+            "24.56.060.0600.006.157": "006"
+          },
+          "on_missing_or_ambiguous": "PENDENTE_NOMENCLATURA:INSCRICAO_IMOBILIARIA_COMPLETA"
+        }
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "CERTIDÃO_DE_IPTU_006.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-018",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-019",
+    "status": "VIGENTE",
+    "document_type": "Alvará Sanitário Municipal",
+    "identification": "Alvará Sanitário Municipal emitido pela Secretaria Municipal de Saúde / Diretoria de Vigilância em Saúde de Florianópolis. O nome usa a validade, não a data de emissão, impressão ou protocolo.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "ALVARÁ SANITÁRIO MUNICIPAL",
+        "número do alvará",
+        "VALIDADE",
+        "razão social/nome",
+        "CNPJ/CPF",
+        "nome fantasia",
+        "endereço",
+        "CNAE",
+        "local e data",
+        "protocolo"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ALVARÁ_SANITÁRIO_val_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "campo VALIDADE do Alvará Sanitário Municipal",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "VALIDADE",
+    "example_approved": "ALVARA_SANITÁRIO_val_09-11-2023.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-019",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-020",
+    "status": "VIGENTE",
+    "document_type": "Alvará de Funcionamento Condicionado Municipal",
+    "identification": "Alvará de Licença para Localização e/ou Funcionamento, modalidade ALVARÁ DE FUNCIONAMENTO CONDICIONADO, emitido pela Prefeitura de Florianópolis.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "ALVARÁ DE FUNCIONAMENTO CONDICIONADO",
+        "razão social",
+        "CPF/CNPJ",
+        "endereço",
+        "CMC",
+        "Processo Lançamento",
+        "Válido até",
+        "Data Início Ativ."
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ALVARÁ_CONDICIONADO_val_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "VALIDADE — campo Válido até do Alvará de Funcionamento Condicionado",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "VALIDADE",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-020",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-021",
+    "status": "VIGENTE",
+    "document_type": "Contrato Social com teor integral",
+    "identification": "Instrumento que contém o teor integral do contrato social. Pode integrar ato de transformação quando o documento declarar que transcreve integralmente o CONTRATO SOCIAL.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "CONTRATO SOCIAL",
+        "passa a transcrever, na íntegra, seu CONTRATO SOCIAL",
+        "nome empresarial",
+        "sede",
+        "objeto social",
+        "capital social",
+        "sócios",
+        "administração",
+        "data do instrumento"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CONTRATO_SOCIAL_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data do próprio instrumento social/assinatura impressa no fecho",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_INSTRUMENTO_SOCIAL",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-021",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-022",
+    "status": "VIGENTE",
+    "document_type": "Contrato de Locação de Imóvel",
+    "identification": "Contrato de locação de imóvel e aditivos vinculados ao estabelecimento/imóvel. Para pacote com aditivos, identificar qual ato altera o locatário ou a relação vigente e usar a data de assinatura desse ato quando esse for o documento revisado.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "locador",
+        "locatário",
+        "imóvel/endereço",
+        "cláusulas/aditivos",
+        "data de assinatura",
+        "assinaturas das partes",
+        "reconhecimento de firma como evidência auxiliar"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CONTRATO_DE_LOCAÇÃO_DE_IMÓVEL_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data de assinatura do instrumento/aditivo que define a relação locatícia considerada no documento; reconhecimento de firma posterior não substitui a assinatura",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ASSINATURA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-022",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-023",
+    "status": "VIGENTE",
+    "document_type": "Anexo H e-SCI - Relatório de conformidade e termo de responsabilidade para Atestado de Habite-se",
+    "identification": "Formulário CBMSC de relatório de conformidade e termo de responsabilidade no processo simplificado de fiscalização - Atestado para Habite-se.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "título do formulário",
+        "Responsável técnico",
+        "RE",
+        "Protocolo",
+        "ocupação",
+        "endereço",
+        "quadro de SMSCI",
+        "assinatura do RT",
+        "data/hora"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ANEXO_H_ESCI_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data da assinatura/declaração do responsável técnico impressa no Anexo H",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ASSINATURA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-023",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-024",
+    "status": "VIGENTE",
+    "document_type": "Anexo I e-SCI - Termo de entrega do imóvel",
+    "identification": "Formulário CBMSC Termo de entrega do imóvel, com identificação do responsável pelo imóvel, RT, dados da solicitação e descritivo/fotos dos SMSCI.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "título Termo de entrega do imóvel",
+        "responsável pelo imóvel",
+        "responsável técnico",
+        "RE",
+        "Protocolo",
+        "área/ocupação/risco",
+        "assinaturas",
+        "data digital",
+        "anexo fotográfico"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ANEXO_I_ESCI_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data da assinatura digital/documental do termo; se houver múltiplas assinaturas obrigatórias em datas diferentes, usar a data em que o documento ficou integralmente assinado",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ASSINATURA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-024",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-025",
+    "status": "VIGENTE",
+    "document_type": "Estudo de Impacto Simplificado + ART assinada",
+    "identification": "Pacote documental que reúne Estudo de Impacto Simplificado (EIS) e a respectiva ART do responsável técnico, ambos vinculados ao mesmo empreendimento/processo.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Estudo de Impacto Simplificado",
+        "razão social/CNPJ",
+        "endereço/inscrição imobiliária",
+        "responsável técnico/CREA",
+        "processo municipal",
+        "data/assinatura do estudo",
+        "ART anexa",
+        "número da ART",
+        "assinaturas da ART"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "EIS+A.R.T_assinado_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data em que o conjunto documental está assinado; validar a assinatura do estudo e da ART e usar a data comum/final de assinatura do pacote",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ASSINATURA_PACOTE",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-025",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-026",
+    "status": "VIGENTE",
+    "document_type": "Família DARE-SC - Documento de Arrecadação de Receitas Estaduais",
+    "identification": "DARE-SC é uma família estadual de arrecadação, não um serviço específico. Distinguir de DAM municipal e DARF federal. A sigla DARE isolada nunca define TEOR.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "DARE",
+        "Documento de Arrecadação Estadual",
+        "Estado de Santa Catarina",
+        "receita",
+        "Informações Adicionais",
+        "Documento",
+        "Referência",
+        "Vencimento"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "DARE_{TEOR}_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data impressa no campo Vencimento ou Pagar este documento até",
+        "required": true
+      },
+      {
+        "name": "TEOR",
+        "format": "SUBTIPO",
+        "source": "subtipo comprovado pelo cruzamento de codigo_receita + descricao_receita + informacoes_adicionais + documento_ou_referencia",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "VENCIMENTO_DARE",
+    "example_approved": "DARE_MULTA_BOMBEIRO_21-02-2025.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-026",
+    "human_decision_evidence": null,
+    "notes": "",
+    "family": {
+      "recognition_criteria": {
+        "issuer_or_system": "Estado de Santa Catarina / Secretaria de Estado da Fazenda / DARE-SC",
+        "required_family_anchors": [
+          "DARE-SC",
+          "Documento de Arrecadação de Receitas Estaduais",
+          "Código Receita",
+          "Receita",
+          "Número S@T",
+          "Total a Pagar"
+        ],
+        "subtype_classification_key_fields": [
+          "codigo_receita",
+          "descricao_receita",
+          "informacoes_adicionais",
+          "documento_ou_referencia"
+        ],
+        "date_key_fields": [
+          "Vencimento",
+          "Pagar este documento até"
+        ],
+        "code_alone_is_sufficient": false,
+        "payer_alone_is_sufficient": false,
+        "amount_alone_is_sufficient": false,
+        "do_not_infer_from_folder_or_filename": true,
+        "preserve_acronym": "DARE"
+      },
+      "approved_subtypes": {
+        "ALTERAÇÃO_JUCESC": {
+          "required_positive_anchors": [
+            "7650",
+            "JUCESC - Serviço de Registro do Comércio"
+          ],
+          "required_any_additional_anchor": [
+            "Sociedades Empresárias - Alteração contratual",
+            "Empresário - Alteração"
+          ],
+          "teor_exact_value": "ALTERAÇÃO_JUCESC",
+          "resulting_pattern": "DARE_ALTERAÇÃO_JUCESC_DD-MM-AAAA.pdf",
+          "date_source": "campo Pagar este documento até ou Vencimento",
+          "negative_rule": "código 7650 e palavra JUCESC sem descrição expressa do ato não autorizam este subtipo",
+          "missing_date_result": "PENDENTE_NOMENCLATURA",
+          "approval_source": "INSTRUCAO_HUMANA_EXPLICITA_2026-08-23"
+        },
+        "CERTIDÃO_INTEIRO_TEOR_JUCESC": {
+          "required_positive_anchors": [
+            "JUCESC",
+            "Certidão de Inteiro Teor"
+          ],
+          "supporting_anchors": [
+            "Serviço de Registro do Comércio",
+            "certidão",
+            "ato arquivado"
+          ],
+          "teor_exact_value": "CERTIDÃO_INTEIRO_TEOR_JUCESC",
+          "resulting_pattern": "DARE_CERTIDÃO_INTEIRO_TEOR_JUCESC_DD-MM-AAAA.pdf",
+          "date_source": "campo Pagar este documento até ou Vencimento",
+          "negative_rule": "menção a contrato social ou alteração como ato copiado não transforma a taxa da certidão em DARE de alteração",
+          "missing_date_result": "PENDENTE_NOMENCLATURA",
+          "approval_source": "INSTRUCAO_HUMANA_EXPLICITA_2026-08-23_E_FONTE_OFICIAL_JUCESC"
+        },
+        "MULTA_BOMBEIRO": {
+          "required_positive_anchors": [
+            "Corpo de Bombeiro Militar",
+            "Multa"
+          ],
+          "supporting_anchors": [
+            "7196",
+            "referência de auto ou multa"
+          ],
+          "teor_exact_value": "MULTA_BOMBEIRO",
+          "resulting_pattern": "DARE_MULTA_BOMBEIRO_DD-MM-AAAA.pdf",
+          "date_source": "campo Pagar este documento até ou Vencimento",
+          "code_alone_is_sufficient": false,
+          "reviewed_example": {
+            "revenue_description": "Corpo de Bombeiro Militar SC - Multa",
+            "revenue_code": "7196",
+            "reference": "MUL8105000036A/25",
+            "due_date": "21-02-2025",
+            "approved_title": "DARE_MULTA_BOMBEIRO_21-02-2025.pdf"
+          }
+        }
+      },
+      "unknown_subtype_result": "PENDENTE_NOMENCLATURA"
+    }
+  },
+  {
+    "rule_id": "NOM-027",
+    "status": "VIGENTE",
+    "document_type": "Alvará de Funcionamento comum da PMF",
+    "identification": "Alvará de Licença para Localização da Prefeitura de Florianópolis, modalidade Estabelecido, não condicionado.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "ALVARÁ DE FUNCIONAMENTO CONDICIONADO",
+        "Válido até"
+      ],
+      "signals": [
+        "ALVARÁ DE LICENÇA PARA LOCALIZAÇÃO",
+        "Prefeitura Municipal de Florianópolis",
+        "Modalidade",
+        "Estabelecido",
+        "CADASTRO MUNICIPAL",
+        "Atividades"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ALVARA_DE_FUNCIONAMENTO_PMF_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "AAAA",
+        "source": "ano de vigência impresso no alvará",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "ANO_VIGENCIA",
+    "example_approved": "ALVARA_DE_FUNCIONAMENTO_PMF_2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-027",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-028",
+    "status": "VIGENTE",
+    "document_type": "ART genérica identificada por número sem assinatura integral comprovada",
+    "identification": "ART CREA-SC de escopo não PPCI, com número oficial comprovado e sem prova positiva de assinatura integral do profissional e do contratante.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Anotação de Responsabilidade Técnica",
+        "CREA-SC",
+        "ART OBRA OU SERVIÇO",
+        "número da ART",
+        "Atividade Técnica",
+        "Assinaturas"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "A.R.T_{NUMERO_ART}.pdf",
+    "variables": [
+      {
+        "name": "NUMERO_ART",
+        "format": "TEXTO",
+        "source": "número oficial da ART impresso no documento",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "A.R.T_8539913-8.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-028",
+    "human_decision_evidence": null,
+    "notes": "",
+    "signature_gate": "SEM_PROVA_POSITIVA_DE_ASSINATURA_INTEGRAL"
+  },
+  {
+    "rule_id": "NOM-029",
+    "status": "VIGENTE",
+    "document_type": "ART de Laudo Técnico integralmente assinada",
+    "identification": "ART CREA-SC para laudo/vistoria técnica, com atividade Laudo e prova positiva das assinaturas exigidas.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "Anotação de Responsabilidade Técnica",
+        "CREA-SC",
+        "Laudo",
+        "Vistoria",
+        "edificação para fins comerciais",
+        "Assinaturas"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "A.R.T_LAUDO_TECNICO_assinado.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "A.R.T_LAUDO_TECNICO_assinado.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-029",
+    "human_decision_evidence": null,
+    "notes": "",
+    "signature_gate": "PROVA_VISUAL_OU_DIGITAL_POSITIVA_DAS_ASSINATURAS"
+  },
+  {
+    "rule_id": "NOM-030",
+    "status": "VIGENTE",
+    "document_type": "Atestado de Adequação ao Zoneamento",
+    "identification": "Atestado técnico de adequação de atividades ao zoneamento do imóvel.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "ATESTADO DE ADEQUAÇÃO DE ATIVIDADES AO ZONEAMENTO",
+        "Inscrição Imobiliária",
+        "zoneada como",
+        "códigos CNAE",
+        "Engenheiro Civil",
+        "CREA/SC"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "ATESTADO_DE_ADEQUAÇÃO.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "ATESTADO_DE_ADEQUAÇÃO.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-030",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-031",
+    "status": "VIGENTE",
+    "document_type": "Certidão de Dispensa de Alvará Sanitário",
+    "identification": "Certidão de Dispensa de Alvará Sanitário Municipal da Prefeitura de Florianópolis.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "ALVARÁ SANITÁRIO MUNICIPAL",
+        "NÚMERO ALVARÁ",
+        "VALIDADE"
+      ],
+      "signals": [
+        "CERTIDÃO DE DISPENSA DE ALVARÁ SANITÁRIO MUNICIPAL",
+        "Dados do Estabelecimento",
+        "CNPJ",
+        "Atividade(s)",
+        "Baixo Risco",
+        "dispensada(s) de alvará sanitário"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CERTIDÃO_SANITÁRIA.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "CERTIDÃO_SANITÁRIA.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-031",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-032",
+    "status": "VIGENTE",
+    "document_type": "Certidão Negativa de Débitos PMF por CNPJ",
+    "identification": "Certidão Negativa de Débitos tributários da Prefeitura de Florianópolis emitida para pessoa jurídica/CNPJ.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "RECEITA FEDERAL",
+        "CERTIDÃO NEGATIVA DE DÉBITOS TRABALHISTAS",
+        "ESTADO DE SANTA CATARINA"
+      ],
+      "signals": [
+        "CERTIDÃO NEGATIVA DE DÉBITOS",
+        "Florianópolis",
+        "CNPJ",
+        "não constam débitos tributários",
+        "Número",
+        "Validade",
+        "Código de Controle"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CND_PMF_CNPJ.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "CND_PMF_CNPJ.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-032",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-033",
+    "status": "VIGENTE",
+    "document_type": "Carteira Nacional de Habilitação",
+    "identification": "Documento visual oficial Carteira Nacional de Habilitação.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "CARTEIRA NACIONAL DE HABILITAÇÃO",
+        "NOME E SOBRENOME",
+        "CPF",
+        "Nº REGISTRO",
+        "DATA EMISSÃO",
+        "VALIDADE",
+        "CAT. HAB."
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CNH.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "CNH.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-033",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-034",
+    "status": "VIGENTE",
+    "document_type": "Procuração Particular assinada",
+    "identification": "Instrumento Particular de Procuração com outorgante, outorgado, poderes e assinatura comprovada.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "INSTRUMENTO PARTICULAR DE PROCURAÇÃO",
+        "OUTORGANTE",
+        "OUTORGADO",
+        "PODERES GERAIS",
+        "local e data",
+        "assinatura"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "PROCURACAO_PARTICULAR_assinado.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": "PROCURACAO_PARTICULAR_assinado.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-034",
+    "human_decision_evidence": null,
+    "notes": "",
+    "signature_gate": "PROVA_POSITIVA_DE_ASSINATURA"
+  },
+  {
+    "rule_id": "NOM-035",
+    "status": "VIGENTE",
+    "document_type": "Laudo Técnico",
+    "identification": "Laudo técnico emitido por profissional habilitado, com objeto da vistoria/análise, identificação do requerente ou imóvel, conclusão, RT e registro profissional.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "Anotação de Responsabilidade Técnica - ART",
+        "somente ART sem corpo de laudo",
+        "data de validade anual",
+        "data da ART vinculada"
+      ],
+      "signals": [
+        "LAUDO TÉCNICO",
+        "requerente ou edificação vistoriada",
+        "conclusão",
+        "responsável técnico",
+        "CREA"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "LAUDO_TECNICO_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data declarada no encerramento do próprio laudo, imediatamente vinculada ao ato de firmar pelo responsável técnico",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_FIRMA_LAUDO",
+    "example_approved": "LAUDO_TECNICO_13-11-2022.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-035",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-036",
+    "status": "VIGENTE",
+    "document_type": "Comprovante de Inscrição Estadual",
+    "identification": "Comprovante de Inscrição Estadual e de Situação Cadastral emitido pela Secretaria de Estado da Fazenda.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL CNPJ"
+      ],
+      "signals": [
+        "COMPROVANTE DE INSCRIÇÃO ESTADUAL E DE SITUAÇÃO CADASTRAL",
+        "SECRETARIA DE ESTADO DA FAZENDA",
+        "INSCRIÇÃO ESTADUAL",
+        "SITUAÇÃO CADASTRAL",
+        "Emitido em"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "INSCRIÇÃO_ESTADUAL_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data de emissão impressa no rodapé do comprovante estadual",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": "INSCRIÇÃO_ESTADUAL_09-01-2026.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-036",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-037",
+    "status": "VIGENTE",
+    "document_type": "Contrato de Prestação de Serviços GAIA",
+    "identification": "Contrato de prestação de serviços no qual GAIA LICENCIAMENTO E REGULARIZAÇÕES LTDA figura expressamente como CONTRATADA, com contratante, objeto de consultoria/assessoria, valores, obrigações e bloco de assinaturas.",
+    "recognition": {
+      "required_all": [],
+      "required_groups": [],
+      "forbidden_any": [
+        "CONTRATO SOCIAL",
+        "CONTRATO DE LOCAÇÃO",
+        "PROPOSTA COMERCIAL",
+        "PROCURAÇÃO"
+      ],
+      "signals": [
+        "CONTRATO DE PRESTAÇÃO DE SERVIÇOS",
+        "CONTRATANTE",
+        "CONTRATADA",
+        "GAIA LICENCIAMENTO E REGULARIZAÇÕES LTDA",
+        "DO OBJETO",
+        "DOS VALORES",
+        "assinatura comprovada"
+      ]
+    },
+    "auto_match": false,
+    "approved_pattern": "CONTRATO_DE_SERVIÇOS_GAIA_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "data comprovada da assinatura aposta no contrato; data digitada no fecho sem assinatura validada não basta",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_ASSINATURA_COMPROVADA_CONTRATO",
+    "example_approved": "CONTRATO_DE_SERVIÇOS_GAIA_15-12-2025.pdf",
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-037",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-038",
+    "status": "VIGENTE",
+    "document_type": "Documento Básico de Entrada do CNPJ",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "DOCUMENTO BASICO DE ENTRADA DO CNPJ",
+        "PROTOCOLO REDESIM"
+      ],
+      "required_groups": [],
+      "forbidden_any": [
+        "COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL"
+      ],
+      "signals": [
+        "DOCUMENTO BASICO DE ENTRADA DO CNPJ",
+        "PROTOCOLO REDESIM"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "DBE_{PROTOCOLO_REDESIM}.pdf",
+    "variables": [
+      {
+        "name": "PROTOCOLO_REDESIM",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-038",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-039",
+    "status": "VIGENTE",
+    "document_type": "Protocolo de Alvará Sanitário",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "DADOS DO REQUERIMENTO",
+        "SOLICITACAO REVALIDACAO DE ALVARA"
+      ],
+      "required_groups": [
+        [
+          "DIRETORIA DE VIGILANCIA",
+          "VIGILANCIA EM SAUDE"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "DADOS DO REQUERIMENTO",
+        "SOLICITACAO REVALIDACAO DE ALVARA",
+        "DIRETORIA DE VIGILANCIA",
+        "VIGILANCIA EM SAUDE"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "PROTOCOLO_ALVARÁ_SANITÁRIO_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-039",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-040",
+    "status": "VIGENTE",
+    "document_type": "Requerimento Sanitário Administrativo",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "REQUERIMENTO A",
+        "VIGILANCIA SANITARIA MUNICIPAL"
+      ],
+      "required_groups": [],
+      "forbidden_any": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS"
+      ],
+      "signals": [
+        "REQUERIMENTO A",
+        "VIGILANCIA SANITARIA MUNICIPAL"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "REQUERIMENTO_SANITÁRIO_{PROTOCOLO}.pdf",
+    "variables": [
+      {
+        "name": "PROTOCOLO",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-040",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-041",
+    "status": "VIGENTE",
+    "document_type": "Requerimento de Alteração Cadastral PMF assinado",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "REQUERIMENTO_ALTERAÇÃO_CADASTRAL_PMF_{DATA}_assinado.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_DOCUMENTAL_DECLARADA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-041",
+    "human_decision_evidence": null,
+    "notes": "",
+    "signature_state_required": "SIGNED"
+  },
+  {
+    "rule_id": "NOM-042",
+    "status": "VIGENTE",
+    "document_type": "Requerimento de Alteração Cadastral PMF editável",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "REQUERIMENTO DE ALTERACAO DE DADOS CADASTRAIS DA INSCRICAO MUNICIPAL",
+        "DETALHAMENTO DO PEDIDO"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "REQUERIMENTO_ALTERAÇÃO_CADASTRAL_PMF_{DATA}.docx",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".docx",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "DATA_DOCUMENTAL_DECLARADA",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-042",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-043",
+    "status": "VIGENTE",
+    "document_type": "Solicitação Jurídica Sanitária",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "SOLICITACAO JURIDICA",
+        "DADOS PROCESSUAIS"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": [
+        "SOLICITACAO JURIDICA",
+        "DADOS PROCESSUAIS"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "SOLICITAÇÃO_JURÍDICA_SANITÁRIA_{NUMERO}_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      },
+      {
+        "name": "NUMERO",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-043",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-044",
+    "status": "VIGENTE",
+    "document_type": "Boleto de ART CREA-SC",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "CREA SC",
+        "LINHA DIGITAVEL",
+        "NUMERO DO DOCUMENTO"
+      ],
+      "required_groups": [
+        [
+          "ART"
+        ]
+      ],
+      "forbidden_any": [
+        "FUNDO MUNICIPAL DE SAUDE DE FLORIANOPOLIS"
+      ],
+      "signals": [
+        "CREA SC",
+        "LINHA DIGITAVEL",
+        "NUMERO DO DOCUMENTO",
+        "ART"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "BOLETO_ART_{NUMERO_DOCUMENTO}_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "NUMERO_DOCUMENTO",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      },
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "VENCIMENTO",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-044",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-045",
+    "status": "VIGENTE",
+    "document_type": "Boleto de Alvará Sanitário",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "FUNDO MUNICIPAL DE SAUDE DE FLORIANOPOLIS",
+        "RECIBO DO PAGADOR"
+      ],
+      "required_groups": [
+        [
+          "PROTOCOLO"
+        ],
+        [
+          "ALVARA"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "FUNDO MUNICIPAL DE SAUDE DE FLORIANOPOLIS",
+        "RECIBO DO PAGADOR",
+        "PROTOCOLO",
+        "ALVARA"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "BOLETO_ALVARÁ_SANITÁRIO_{PROTOCOLO}_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      },
+      {
+        "name": "PROTOCOLO",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "VENCIMENTO",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-045",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-046",
+    "status": "VIGENTE",
+    "document_type": "Consulta de Viabilidade JUCESC",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "REGIN",
+        "PEDIDO DE VIABILIDADE"
+      ],
+      "required_groups": [
+        [
+          "JUCESC",
+          "JUNTA COMERCIAL DO ESTADO DE SANTA CATARINA"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "REGIN",
+        "PEDIDO DE VIABILIDADE",
+        "JUCESC",
+        "JUNTA COMERCIAL DO ESTADO DE SANTA CATARINA"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "VIABILIDADE_JUCESC_{PROTOCOLO_REDESIM}_{DATA}.pdf",
+    "variables": [
+      {
+        "name": "PROTOCOLO_REDESIM",
+        "format": "TEXTO",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      },
+      {
+        "name": "DATA",
+        "format": "DD-MM-AAAA",
+        "source": "CONTEUDO_DOCUMENTAL_COMPROVADO; NAO_USAR_METADADOS_DO_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": "EMISSAO",
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-046",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-047",
+    "status": "VIGENTE",
+    "document_type": "Ficha de Alteração Cadastral Pessoa Jurídica",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "FICHA DE ALTERACAO CADASTRAL",
+        "PESSOA JURIDICA"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "2-Requerimento_de_Alteracao__PMF_assinado.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-047",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-048",
+    "status": "VIGENTE",
+    "document_type": "Relatório Detalhado de Inscrição em Dívida Ativa PGFN",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "DETALHAMENTO DE INSCRICAO EM DIVIDA ATIVA",
+        "RELATORIO DETALHADO"
+      ],
+      "required_groups": [
+        [
+          "SITUACAO DA INSCRICAO",
+          "NUMERO DA INSCRICAO"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "RELATÓRIO DETALHADO PGFN.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": true,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-048",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-049",
+    "status": "VIGENTE",
+    "document_type": "Carteira de Identidade RG",
+    "identification": null,
+    "recognition": {
+      "required_all": [],
+      "required_groups": [
+        [
+          "INSTITUTO DE IDENTIFICACAO",
+          "INSTITUTO GERAL DE PERICIAS"
+        ]
+      ],
+      "forbidden_any": [
+        "CARTEIRA NACIONAL DE HABILITACAO"
+      ],
+      "signals": [
+        "CARTEIRA DE IDENTIDADE"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "RG",
+    "variables": [],
+    "extension": null,
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-049",
+    "human_decision_evidence": null,
+    "notes": "",
+    "preserve_no_extension": true
+  },
+  {
+    "rule_id": "NOM-050",
+    "status": "VIGENTE",
+    "document_type": "Certificado da Condição de Microempreendedor Individual",
+    "identification": null,
+    "recognition": {
+      "required_all": [],
+      "required_groups": [
+        [
+          "ENQUADRADO NA CONDICAO DE MEI",
+          "MICROEMPREENDEDOR INDIVIDUAL"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "CERTIFICADO DA CONDICAO DE MICROEMPREENDEDOR INDIVIDUAL"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "CCMEI-{CNPJ}.pdf",
+    "variables": [
+      {
+        "name": "CNPJ",
+        "format": "CNPJ",
+        "source": "EVIDENCIA_DOCUMENTAL_EXTRAIDA_DO_CONTEUDO; NAO_USAR_METADADOS_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-050",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-051",
+    "status": "VIGENTE",
+    "document_type": "Recibo de Transmissão da Solicitação REDESIM",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "RECIBO DE TRANSMISSAO DA SOLICITACAO",
+        "PROTOCOLO REDESIM"
+      ],
+      "required_groups": [
+        [
+          "REDESIM"
+        ],
+        [
+          "PEDIDO DE BAIXA",
+          "TIPO DE DOCUMENTO"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "PROTOCOLO_DBE",
+    "variables": [],
+    "extension": null,
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-051",
+    "human_decision_evidence": null,
+    "notes": "",
+    "preserve_no_extension": true
+  },
+  {
+    "rule_id": "NOM-052",
+    "status": "VIGENTE",
+    "document_type": "Recibo de Protocolo de Solicitação PGFN",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "PROCURADORIA GERAL DA FAZENDA NACIONAL",
+        "RECIBO DO PROTOCOLO",
+        "DADOS DO PROTOCOLO"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "PROTOCOLO_DE_SOLICITAÇÃO_PGFN_.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-052",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-053",
+    "status": "VIGENTE",
+    "document_type": "DAS de Parcelamento MEI",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "DOCUMENTO DE ARRECADACAO DO SIMPLES NACIONAL",
+        "DAS DE PARCMEI",
+        "NUMERO DO PARCELAMENTO"
+      ],
+      "required_groups": [],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "DAS PARCELAMENTO MEI {PARCELA_2D}-{ANO_PARCELA}.pdf",
+    "variables": [
+      {
+        "name": "ANO_PARCELA",
+        "format": "AAAA",
+        "source": "EVIDENCIA_DOCUMENTAL_EXTRAIDA_DO_CONTEUDO; NAO_USAR_METADADOS_DRIVE",
+        "required": true
+      },
+      {
+        "name": "PARCELA_2D",
+        "format": "NN",
+        "source": "EVIDENCIA_DOCUMENTAL_EXTRAIDA_DO_CONTEUDO; NAO_USAR_METADADOS_DRIVE",
+        "required": true
+      }
+    ],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": true,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-053",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-054",
+    "status": "VIGENTE",
+    "document_type": "Ficha Cadastral Simplificada JUCESC",
+    "identification": null,
+    "recognition": {
+      "required_all": [
+        "FICHA CADASTRAL SIMPLIFICADA"
+      ],
+      "required_groups": [
+        [
+          "JUNTA COMERCIAL DO ESTADO DE SANTA CATARINA",
+          "JUCESC"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": []
+    },
+    "auto_match": true,
+    "approved_pattern": "FICHA_CADASTRAL_JUCESC",
+    "variables": [],
+    "extension": null,
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-054",
+    "human_decision_evidence": null,
+    "notes": "",
+    "preserve_no_extension": true
+  },
+  {
+    "rule_id": "NOM-055",
+    "status": "VIGENTE",
+    "document_type": "Relatório Consolidado de Dívida Ativa PGFN",
+    "identification": null,
+    "recognition": {
+      "required_all": [],
+      "required_groups": [
+        [
+          "RELATORIO CONSOLIDADO DA DIVIDA",
+          "RELATORIO RESUMO"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "RELATORIO DE INSCRICOES EM DIVIDA ATIVA DA UNIAO E DO FGTS"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "RELATORIO_DIVIDA_ATIVA_PGFN.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": false,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-055",
+    "human_decision_evidence": null,
+    "notes": ""
+  },
+  {
+    "rule_id": "NOM-056",
+    "status": "VIGENTE",
+    "document_type": "Recibo de Parcelamento MEI",
+    "identification": null,
+    "recognition": {
+      "required_all": [],
+      "required_groups": [
+        [
+          "ECAC",
+          "CENTRO VIRTUAL DE ATENDIMENTO"
+        ],
+        [
+          "SALDO DEVEDOR ORIGINAL",
+          "VALOR ATUALIZADO"
+        ]
+      ],
+      "forbidden_any": [],
+      "signals": [
+        "DEBITO COM HISTORICO DE INCLUSAO EM APENAS UM PARCELAMENTO ANTERIOR"
+      ]
+    },
+    "auto_match": true,
+    "approved_pattern": "RECIBO DE PARCELAMENTO MEI.pdf",
+    "variables": [],
+    "extension": ".pdf",
+    "syntax": {
+      "spaces_allowed_in_pattern": true,
+      "case": "AS_IS"
+    },
+    "date_kind": null,
+    "example_approved": null,
+    "supersedes_rule_id": null,
+    "provenance": "corpus_legado:NOM-056",
+    "human_decision_evidence": null,
+    "notes": ""
+  }
+];
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { NOMENCLATURE_RULES: NOMENCLATURE_RULES }; }
