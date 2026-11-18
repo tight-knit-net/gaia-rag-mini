@@ -36,3 +36,13 @@
 
 ## Referências primárias
 LGPD: https://www2.camara.leg.br/legin/fed/lei/2018/lei-13709-14-agosto-2018-787077-normaatualizada-pl.html ; CONARQ Resolução 50/2022: https://www.gov.br/conarq/pt-br/legislacao-arquivistica/resolucoes-do-conarq/resolucao-no-50-de-06-de-maio-de-2022 ; ISO 30401 (resumo público, não norma reproduzida): https://www.iso.org/standard/68683.html ; ANPD: https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-orientativo-sobre-seguranca-da-informacao-para-agentes-de-tratamento-de-pequeno-porte
+
+## VII. Complemento R07 — assimilação e mudança de entendimento (proposto)
+
+1. A memória **não se autoalimenta de toda conversa, OCR ou PDF**. Ao concluir trabalho documental, a IA só sugere uma candidata durável quando houver finalidade, fonte, objeto, contexto, validade e relevância comprovados.
+2. Separar armazenamento de **dossiê de processo** e **conhecimento genérico do escritório**; dados específicos não podem ser generalizados como política. Acesso transversal do proprietário permanece, mas reutilização exige minimização.
+3. Distinguir três aprovações: (a) qualidade e autenticidade da fonte, (b) aprovação do documento/processo no registro formal da R06 e (c) aprovação da memória pelo titular no portal. Uma não implica as demais.
+4. Classificação editorial mínima: registro de caso, procedimento, modelo, norma, precedente, lição aprendida, decisão interna, pendência e simulação. Casos fictícios não são precedentes reais; OCR não revisado não é fato.
+5. Uma fonte mais precisa gera **revisão candidata** com antes/depois, identificação da memória anterior, motivo, comprovação e limites. A R07 de prévia não implementa supersessão/revogação de ponto antigo, e o conhecimento mais recente não se torna automaticamente vigente.
+6. Respostas institucionais devem apresentar a base oficial, a versão/data e a incerteza, discriminando `protocolo`, `despacho` e `deferimento`.
+7. A ferramenta `memory_assimilation_preview` somente compara registros aprovados do mesmo processo e não grava; propostas e clique humano seguem os contratos originais da R06. A ferramenta só estará disponível no conector após integração e implantação específicas.
