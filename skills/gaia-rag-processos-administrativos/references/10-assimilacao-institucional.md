@@ -44,3 +44,28 @@ Saída: disposição editorial, IDs de potenciais duplicatas/revisões no **mesm
 Nunca promover exemplos sintéticos a precedentes reais; não gravar dados pessoais excessivos, segredos, autos completos, suposto deferimento, norma sem checagem de vigência ou hipótese como fato. A liberação da memória exige documento aprovado e revisão humana. Leitura e proposta não equivalem a aprovação, execução documental, deploy ou publicação do conector.
 
 **Fonte canônica:** Drive/processo, não Qdrant. **Controle:** `governanca/POLITICA_MEMORIA.md`. **Plano de evolução:** `docs/institucional/ARQUITETURA_MEMORIA_E_ASSIMILACAO_R07.md` (raiz do repositório).
+
+## Complemento R07 — fechamento da governança (somente após publicação separada)
+Ferramentas da branch candidata, **não presumir disponíveis no runtime R06**:
+- `memory_index_preview`: classificação local e palavras-chave sugeridas, sem envio a Grok/xAI e sem escrita;
+- `memory_list_process(offset=...)`: percorrer todas as páginas; respeitar `next_offset`;
+- `memory_export_process(max_items=100,offset=...)`: exportação verificável de resumos aprovados, com SHA-256 por lote e `truncated`;
+- `memory_process_timeline`: cronologia por aprovação, não cronologia jurídica do processo nem declaração de vigência;
+- `memory_stats`: pontos Qdrant `approved=true` separados das contagens de propostas do ledger R07;
+- `memory_approval_audit`: auditoria do ledger R07, sem alegar importação do ledger legado;
+- `memory_pending_reviews(offset=...)`: somente registros do ledger R07 com estado `pending`;
+- `gaia_skill_read_chunk(path,offset,max_chars)`: leitura progressiva de conteúdo allowlisted com hash.
+
+O portal R07 preserva o botão humano **Salvar memória — Aprovar e gravar**.
+A indexação local só é persistida depois do clique de aprovação, junto da memória
+e do readback. Uma classificação automática é sugestão editorial, não comprovação.
+
+**Migração:** Qdrant guarda os pontos, Git guarda código. Antes de copiar pontos,
+comparar inventário completo dos dois leitores. Se compartilham a mesma coleção,
+a cópia é desnecessária. Propostas pendentes do legado exigem reconciliação e
+comprovação documental separadas. Nunca desligar o legado só por sucesso de CI.
+Guia: `docs/institucional/PLANO_FECHAMENTO_GAPS_E_CUTOVER_R07_2026-11-18.md`.
+
+**Grok/xAI:** nenhum envio externo foi implementado ou autorizado neste estágio.
+Usar o modelo do chat para sugerir candidatas sem armazenar automaticamente;
+integração de API externa fica condicionada à política de privacidade e LGPD.
