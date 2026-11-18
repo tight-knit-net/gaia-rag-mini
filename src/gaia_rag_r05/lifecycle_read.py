@@ -172,7 +172,7 @@ def proposal_statistics(namespace: str, *, process_id: str = ""):
     sql += " GROUP BY status"
     with con:
         rows = con.execute(sql, params).fetchall()
-    counts = {"pending": 0, "approving": 0, "approved": 0}
+    counts = {"pending": 0, "approving": 0, "approved": 0, "discarded": 0}
     for row in rows:
         counts[row["status"]] = row["n"]
     return {"storage_available": True, "proposal_counts": counts,
