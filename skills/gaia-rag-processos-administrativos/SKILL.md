@@ -3,7 +3,7 @@ name: gaia-rag-processos-administrativos
 description: "Consultar, continuar e preparar propostas de memória de processos administrativos do GAIA OFFICE usando a MCP GAIA RAG R06 acessível e autenticada. Use para buscar memória aprovada de um processo identificado, separar fatos e normas, redigir ou revisar peças, e extrair aprendizado após aprovação de documento ou processo. Mantenha processos e clientes distintos; nunca grave no Qdrant sem revisão humana nem confunda skill com autorização do servidor."
 compatibility: "Requer acesso autorizado às ferramentas GAIA RAG MCP para ações reais; sem o conector funciona apenas como guia offline."
 metadata:
-  version: "0.6.1-owner-global-preview"
+  version: "0.7.0-institutional-assimilation-preview"
   owner: "GAIA OFFICE"
   status: "integracao_r06_preview_nao_homologada"
 ---
@@ -20,6 +20,7 @@ Orientar o trabalho do ChatGPT com a **MCP GAIA RAG existente**, sem alterar inf
 |---|---|---|
 | Início/continuidade de processo identificado | `references/01-contexto-e-isolamento.md` | `references/06-continuidade-processual.md` |
 | Recuperar memória, histórico ou fonte | `references/02-recuperacao.md` | `references/07-contratos-mcp-atual.md` |
+| Assimilar documento, OCR ou aprendizado; detectar revisão/duplicata | `references/10-assimilacao-institucional.md` | `references/03-producao-e-proposta.md` |
 | Produzir memória após documento/processo aprovado | `references/03-producao-e-proposta.md` | `references/05-esquema-logico.md` |
 | Redigir requerimento, defesa, recurso ou analisar exigência | `references/06-continuidade-processual.md` | `references/04-governanca-e-evidencia.md` |
 | Dúvida sobre valor da prova, norma, privacidade | `references/04-governanca-e-evidencia.md` | `governanca/POLITICA_MEMORIA.md` |
@@ -36,6 +37,8 @@ A descrição e este arquivo são o ponto de entrada. Arquivos auxiliares são l
 **PROCESSO (produção documental).** Identificar matéria, ente, município/UF, órgão, fase, documento e objetivo. Separar fatos comprovados, alegações, hipóteses, norma a verificar, minuta interna, protocolo e decisão oficial. Validar legislação pela fonte primária e pela competência territorial/temporal; não extrapolar a Lei 9.784/1999 para município sem examinar regramento local. Produzir/revisar peça sem inventar protocolo, prazo, resultado ou dispositivo.
 
 **PRODUCAO (proposta de memória).** Conversa não é memória. Documento deve estar previamente aprovado em registro controlado pelo servidor, identificado por `source_ref`, `document_approval_ref` e `document_sha256`. Preparar candidatos resumidos, com fonte e processo exato; consultar duplicatas e chamar `memory_prepare_after_approval(process_id, title, summary, source_ref, document_approval_ref, document_sha256)` somente quando esse contrato existir no host. A referência do cliente eventualmente armazenada vem do documento aprovado, **não é uma restrição ao proprietário**. Isso cria proposta, nunca memória. O proprietário autenticado faz **clique humano** no portal protegido; somente após gravação e readback confirmar persistência. Nunca inventar aprovação, protocolo ou fonte.
+
+**ASSIMILACAO (R07 em branch, não publicada).** Em fluxos documentais (PDF, OCR, catalogação, contratos, requerimentos, análise administrativa), aplicar o protocolo da `references/10-assimilacao-institucional.md`. Quando o host expuser `memory_assimilation_preview`, confrontar o candidato com memórias aprovadas do processo para diferenciar duplicata, revisão e conhecimento novo, sem gravar nem declarar superação efetiva. Caso a ferramenta não esteja disponível, executar apenas a comparação editorial e declarar essa limitação. A aprendizagem não é automática: depende de documento aprovado, proposta e clique humano real no portal já existente.
 
 **GOVERNANCA.** Classificar natureza da informação, fonte, confirmação, nível de acesso, vigência e versão. Somente orientar; sem mutação de Qdrant, Cloudflare ou MCP.
 
