@@ -117,3 +117,32 @@ A coleção Qdrant Cloud `chatgpt_memoria_aprovada` contém **1 ponto registrado
 - [ ] Teste restrito de reinicialização do conector.
 
 **Declaração: TÚNEL R06 AINDA BLOQUEADO**; nenhum corte DNS nem alteração do ambiente legado.
+
+---
+
+## Preparação operacional adicional: conector R06 automatizado, aguardando segredo (18/11/2026 09:49 UTC)
+
+**Resultado:** stage de infraestrutura executado na Linode via Gaia MCP v.100, com verificação read-only posterior. O túnel **não foi ativado** porque falta token do túnel Cloudflare por canal seguro; o Cloudflare Tunnel ainda **não está atestado healthy**. Não alterar DNS nem PR #4.
+
+### Mudanças efetivamente realizadas em nestground-ai
+
+1. **Novo Compose válido**, em **/opt/gaia-rag-mini/r06-preview/cloudflared.compose.yaml** (root:root, modo 0644), validado com docker compose config --quiet. Define exclusivamente o serviço cloudflared-r06, contêiner **gaia-rag-r06-cloudflared**, imagem local **cloudflare/cloudflared:2026.8.3**, rede Docker externa **gaia-rag-r06-preview-net**, restart **unless-stopped**. Não publica portas, não usa network host nem Docker socket. Executa tunnel --no-autoupdate run --token-file /run/secrets/cloudflare_tunnel_token, montado como **read-only** a partir de **/opt/gaia-rag-mini/secrets/r06-service/cloudflare_tunnel_token**. Bind mount usa create_host_path=false (não gera diretório fictício na falta de token). Imagem executa com UID:GID 65532:65532.
+2. **Novo serviço systemd** em **/etc/systemd/system/gaia-rag-r06-cloudflared.service**, unit de inicialização one-shot docker compose up -d --no-deps cloudflared-r06, Requires/After docker.service, ConditionFileNotEmpty no caminho do token. Não inicia enquanto o arquivo de credencial não existir.
+3. **Novo monitor systemd.path** em **/etc/systemd/system/gaia-rag-r06-cloudflared.path**, habilitado com systemctl enable --now. Observa PathExists do token e dispara o serviço apenas depois do provisionamento. Evidência: **LoadState=loaded, ActiveState=active, SubState=waiting, UnitFileState=enabled**. O serviço continua **inactive/dead** (normal enquanto token ausente).
+4. Units e arquivos configurados sem credenciais em texto ou em variável de ambiente Docker; arquivos de configuração e units no modo root:root 0644. Nenhuma credencial foi emitida, solicitada a APIs sem canal protegido, exposta ao modelo ou armazenada em GitHub.
+
+### Verificação após configuração
+
+- Token esperado **ausente**; contêiner gaia-rag-r06-cloudflared **ainda inexistente** (intencional: não criar contêiner que reinicia em erro sem autenticação).
+- **R06** segue healthy; health body: service=gaia-rag-mini-r06, jwt_configured=true, owners_configured=true, qdrant_configured=false, writes_enabled=false. **R05** permanece running/healthy.
+- **DigitalOcean**: serviço gaia-qdrant-memory-gaia-qdrant-memory-candidate-1 em execução/healthy e contêiner gaia-qdrant-memory-tunnel em execução.
+- **HTTP 401** anônimo em https://memory.tight-knit.net/mcp e https://legacy-rag.tight-knit.net/mcp. Nenhuma alteração de DNS/Access/ingress, serviço DO, ZITADEL, Qdrant, demais contêineres ou PR. Destino CNAME exato e estado API Cloudflare continuam sem revalidação autenticada nesta execução.
+- Tentativa de identificação de conector Cloudflare nativo nesta sessão: indisponível. Também não há autenticação Cloudflare preexistente utilizável no ambiente SSH da Linode ou no Pocket MCP100 (apenas nomes de variáveis testados, sem exibir valores), nem token no arquivo designado. A ferramenta Browser não dispõe de acesso ao contexto de navegador autenticado nesta sessão.
+
+### Única pendência para ativar o conector preparado
+
+O operador autenticado deve **provisionar diretamente** no host, por canal seguro aprovado e sem colocar conteúdo em chat, logs, CLI ou GitHub, o token do túnel remoto existente **e1cad7db-b06e-4adf-8c46-f972bd18db50**, no caminho **/opt/gaia-rag-mini/secrets/r06-service/cloudflare_tunnel_token**, **atomicamente** e com leitura restrita ao UID 65532 do cloudflared. Ao aparecer um arquivo válido, o monitor systemd.path está configurado para iniciar o serviço Docker Compose automaticamente.
+
+**Após isso, o fato de um contêiner subir não equivale à homologação:** confirmar Cloudflare API status healthy, conexões ativas e estáveis, origin interno HTTP 200, Access ingress e audience preservados, retry/boot, status legado healthy e ambos CNAMEs sem alteração. Sem corte do domínio de produção e sem merge PR #4.
+
+**Declaração operacional nesta execução: TÚNEL R06 AINDA BLOQUEADO — conector preparado/autoacionável, mas não iniciado por ausência de credencial de túnel.**
