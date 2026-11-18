@@ -9,7 +9,7 @@ import re
 import uuid
 from typing import Callable
 
-from .authz import AccessDenied, AuthorizedScope
+from .authz import AccessDenied, AuthorizedScope, require_issued_scope
 
 QRequest = Callable[[str, str, dict | None], dict]
 _COLLECTION = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
@@ -25,9 +25,7 @@ class ScopedReads:
 
     @staticmethod
     def _scope(capability: AuthorizedScope) -> tuple[str, str, str]:
-        if not isinstance(capability, AuthorizedScope):
-            raise AccessDenied("ACCESS_DENIED")
-        s = capability.scope
+        s = require_issued_scope(capability)
         return s.namespace, s.tenant_id, s.process_id
 
     @staticmethod
@@ -61,7 +59,7 @@ class ScopedReads:
         if not isinstance(res, dict):
             raise RuntimeError(operation + "_FAILED")
         if res.get("_http_status") == 404:
-            return None
+            raise RuntimeError(operation + "_FAILED")
         if res.get("status") != "ok" or not isinstance(res.get("result"), (dict, list)):
             raise RuntimeError(operation + "_FAILED")
         return res["result"]
@@ -85,7 +83,7 @@ class ScopedReads:
             payload = point.get("payload") if isinstance(point, dict) else None
             if not isinstance(payload, dict) or not self._matches(payload, capability):
                 raise AccessDenied("ACCESS_DENIED")
-            hits.append({"id": point.get("id"), "score": point.get("score"), **payload})
+            hits.append({**payload, "id": point.get("id"), "score": point.get("score")})
         return {"hits": hits}
 
     def by_source(self, capability: AuthorizedScope, source_ref: str, limit: int = 30) -> dict:
@@ -111,21 +109,35 @@ class ScopedReads:
         return {"items": items, "next_offset": result.get("next_page_offset")}
 
     def by_uuid(self, capability: AuthorizedScope, point_id: str) -> dict:
-        # Authorization happens before retrieval; object scope is checked again
-        # BEFORE any payload is returned to the MCP consumer.
+        # Enforce the tenant/process ACL INSIDE Qdrant, not only after a global
+        # GET /points/{id}. Defense in depth: validate every returned payload.
         self._scope(capability)
         try:
             parsed_id = str(uuid.UUID(point_id))
         except (TypeError, ValueError, AttributeError):
             raise ValueError("INVALID_POINT_ID") from None
-        res = self._request("GET", self._base + "/" + parsed_id, None)
-        result = self._result(res, "GET")
-        if result is None:
+        filt = self._filter(capability)
+        filt["must"].append({"has_id": [parsed_id]})
+        res = self._request("POST", self._base + "/scroll", {
+            "filter": filt, "limit": 1,
+            "with_payload": True, "with_vector": False})
+        result = self._result(res, "SCROLL")
+        points = result.get("points") if isinstance(result, dict) else None
+        if not isinstance(points, list) or len(points) > 1:
+            raise RuntimeError("SCROLL_FAILED")
+        if not points:
             return {"found": False}
-        payload = result.get("payload") if isinstance(result, dict) else None
+        point = points[0]
+        payload = point.get("payload") if isinstance(point, dict) else None
         if not isinstance(payload, dict) or not self._matches(payload, capability):
-            return {"found": False}
-        return {"found": True, "item": {**payload, "id": result.get("id")}}
+            raise AccessDenied("ACCESS_DENIED")
+        try:
+            returned_id = str(uuid.UUID(str(point["id"])))
+        except (KeyError, TypeError, ValueError, AttributeError):
+            raise RuntimeError("SCROLL_FAILED") from None
+        if returned_id != parsed_id:
+            raise AccessDenied("ACCESS_DENIED")
+        return {"found": True, "item": {**payload, "id": returned_id}}
 
     def similar(self, capabilities: tuple[AuthorizedScope, ...], query: str,
                 current_process_id: str, limit: int = 8) -> dict:
@@ -138,6 +150,9 @@ class ScopedReads:
             scope = self._scope(cap)
             if scope[:2] != base[:2] or cap.principal != principal:
                 raise AccessDenied("ACCESS_DENIED")
+        all_processes = {cap.scope.process_id for cap in capabilities}
+        if current_process_id not in all_processes:
+            raise AccessDenied("ACCESS_DENIED")
         authorized = {cap.scope.process_id: cap for cap in capabilities
                       if cap.scope.process_id != current_process_id}
         if not authorized:
