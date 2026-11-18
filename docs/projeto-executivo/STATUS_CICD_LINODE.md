@@ -9,7 +9,7 @@
 
 ## PR documental — configurações versionadas para REVISÃO, não operação
 - `r05-skill-static.yml`: validação documental, regressão estática e prova local de ZIP temporário no runner; **sem upload ou publicação de artefatos na configuração atual**. Evidências históricas de 23 testes estáticos, sem host. ZIPs produzidos por execuções anteriores devem ser tratados como artefatos históricos, não como autorização de publicação.
-- CodeRabbit: arquivo `.coderabbit.yaml` removido da branch R05 por solicitação do proprietário. A revogação da GitHub App na conta exige verificação separada; não está confirmada.
+- CodeRabbit: `.coderabbit.yaml` restaurado na branch R05 por nova autorização expressa do proprietário. Revisão automática/manual solicitada; conexão efetiva da GitHub App e parecer precisam de evidência no PR. Nenhuma mudança em GHCR/Linode resulta dessa integração.
 - `rag-ghcr-image.yml`: **sem push automático, com job `if: false`**. Não pode publicar no GHCR mesmo com merge acidental, sem futura alteração revisada.
 - `rag-linode-staging.yml`: **job `if: false`**. Não pode executar preflight/deploy, sem futura alteração revisada.
 - `LINODE_DEPLOY_KEY`: NÃO criar nem configurar agora; nenhum segredo é necessário à revisão documental.
