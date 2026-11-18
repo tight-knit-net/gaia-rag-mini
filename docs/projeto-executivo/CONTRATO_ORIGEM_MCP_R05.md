@@ -22,10 +22,10 @@ O payload observado da gravação atual inclui `process_id`, mas **não exige `t
 ## Código novo desta etapa
 
 - `src/gaia_rag_r05/authz.py`: contrato `Principal`, `Scope`, `Authorizer`. Exige grants que vêm de registro confiável; compara `issuer` e `audience`; sem grant exato, nega.
-- `src/gaia_rag_r05/scoped_reads.py`: adaptador Qdrant **somente leitura**. Busca exige filtros de `namespace`, `approved`, `tenant_id`, `process_id`. Filtra `source_ref` adicionalmente; confere payload de UUID **antes de devolvê-lo ao host**; limita similares a processos previamente autorizados.
-- `tests/test_scoped_reads.py`: 22 testes `unittest` totalmente sintéticos com negação cross-tenant, UUID de outro cliente, fonte, similares, grants ausentes, JWT de `issuer/audience` divergentes e falhas backend.
+- `src/gaia_rag_r05/scoped_reads.py`: adaptador Qdrant **somente leitura**. Busca e listagem exigem filtros de `namespace`, `approved`, `tenant_id`, `process_id`. Filtra `source_ref` adicionalmente; UUID usa scroll filtrado por `has_id` e ACL **antes da recuperação** e revalida o payload antes de devolvê-lo ao host; limita similares a processos previamente autorizados e exige autorização do processo de origem.
+- `tests/test_scoped_reads.py`: 35 testes `unittest` totalmente sintéticos com negação cross-tenant, UUID com ACL na consulta, listagem por processo, capability forjada, fonte, similares, grants ausentes, `issuer/audience` divergentes e falhas backend.
 
-**Atenção:** o adaptador rejeita registros históricos que não tenham `tenant_id` confiável, por desenho. Não o conectar ao runtime real sem definir o mapeamento de clientes e a fonte dos grants. A classe `Principal` somente deve ser construída pelo backend **após** verificação criptográfica de JWT; nunca por dados fornecidos no payload de ferramenta MCP.
+**Atenção:** o mecanismo em memória de emissão de capabilities impede passagem direta de um `AuthorizedScope` criado manualmente, mas não valida assinatura JWT nem resiste a código Python malicioso no mesmo processo. O adaptador rejeita registros históricos que não tenham `tenant_id` confiável, por desenho. Não o conectar ao runtime real sem definir o mapeamento de clientes e a fonte dos grants. A classe `Principal` somente deve ser construída pelo backend **após** verificação criptográfica de JWT; nunca por dados fornecidos no payload de ferramenta MCP.
 
 ## Próxima integração autorizável (sem alterar Qdrant por suposição)
 
