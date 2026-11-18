@@ -116,3 +116,19 @@ A branch `feat/r07-office-knowledge-assimilation` acrescenta, sobre a R06, **uma
 A consulta exige identidade proprietária verificada e respeita o `process_id` exato, sem bloqueio de acesso por cliente. Memória semelhante em outro processo NÃO é candidato de alteração deste caso. Quando um registro anterior não é encontrado numa listagem incompleta, a saída declara incerteza em vez de ausência definitiva. A implementação examina até três páginas de 100 memórias e verifica UUID explicitamente indicado por consulta escopada.
 
 **R06 preservada:** `memory_prepare_after_approval`, proposta, portal de aprovação autenticada, CSRF, gravação e readback não foram substituídos. Nenhuma ferramenta aprova o conteúdo pelo ChatGPT; a R07 não contém update/revoke. Até merge, CI e deploy específicos, este contrato não pode ser presumido disponível no conector publicado.
+
+
+## Adendo R07 candidate — métodos novos somente em código isolado
+Este adendo **não altera o contrato publicado R06**, apenas registra a candidata:
+`memory_process_timeline`, `memory_export_process`, `memory_approval_audit`,
+`memory_stats`, `memory_index_preview`, `gaia_skill_read_chunk`, além dos
+argumentos de paginação `offset` em `memory_list_process` e
+`memory_pending_reviews`. O método R07 `memory_assimilation_preview` continua
+somente leitura. O fluxo `memory_prepare_after_approval` e o botão HTTPS humano
+continuam sendo as únicas portas de proposta e aprovação; nenhuma tool
+de escrita Qdrant arbitrária é autorizada.
+
+Os relatórios de auditoria, estatística e fila da candidata cobrem somente o
+SQLite R07, não o SQLite legado, até reconciliação. Um SQLite ausente deve
+ser informado como indisponível, nunca como zero propostas. Exportações
+truncadas exigem continuação pelo cursor.
