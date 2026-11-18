@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 from typing import Iterable, Mapping
+from weakref import WeakSet
 
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9_.:-]{1,150}$")
 _SUBJECT = re.compile(r"^[A-Za-z0-9_.:@+-]{1,200}$")
@@ -48,12 +49,26 @@ class Scope:
             raise AccessDenied("ACCESS_DENIED")
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False, weakref_slot=True)
 class AuthorizedScope:
-    """Capability issued by Authorizer; never construct from tool arguments."""
+    """Opaque, identity-based capability issued by Authorizer.
+
+    Calling the public constructor alone does not grant access. Only objects
+    recorded by Authorizer in this process are accepted by ScopedReads.
+    """
 
     principal: Principal
     scope: Scope
+
+
+_ISSUED_SCOPES: WeakSet[AuthorizedScope] = WeakSet()
+
+
+def require_issued_scope(capability: object) -> Scope:
+    """Reject hand-crafted capability objects before any backend read."""
+    if not isinstance(capability, AuthorizedScope) or capability not in _ISSUED_SCOPES:
+        raise AccessDenied("ACCESS_DENIED")
+    return capability.scope
 
 
 class Authorizer:
@@ -73,6 +88,12 @@ class Authorizer:
                 raise ValueError("INVALID_ACL_ENTRY")
             self._grants[subject] = entries
 
+    @staticmethod
+    def _issue(principal: Principal, scope: Scope) -> AuthorizedScope:
+        capability = AuthorizedScope(principal, scope)
+        _ISSUED_SCOPES.add(capability)
+        return capability
+
     def require(self, principal: Principal | None, requested: Scope) -> AuthorizedScope:
         if not isinstance(principal, Principal) or not isinstance(requested, Scope):
             raise AccessDenied("ACCESS_DENIED")
@@ -80,7 +101,7 @@ class Authorizer:
                 or principal.verified_audience != self._audience
                 or requested not in self._grants.get(principal.subject, frozenset())):
             raise AccessDenied("ACCESS_DENIED")
-        return AuthorizedScope(principal, requested)
+        return self._issue(principal, requested)
 
     def allowed_for_tenant(self, principal: Principal | None, namespace: str,
                            tenant_id: str) -> tuple[AuthorizedScope, ...]:
@@ -93,4 +114,4 @@ class Authorizer:
                          key=lambda s: s.process_id)
         if not matches or len(matches) > 32:
             raise AccessDenied("ACCESS_DENIED")
-        return tuple(AuthorizedScope(principal, s) for s in matches)
+        return tuple(self._issue(principal, s) for s in matches)
