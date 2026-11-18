@@ -19,6 +19,7 @@ Revisão: 2026-11-18 | Branch: feat/r07-office-knowledge-assimilation | Base: fe
 | skills/gaia-rag-processos-administrativos/SKILL.md | Inclusão de gatilhos de assimilação e uso da prévia | atualizado na R07 |
 | skills/gaia-rag-processos-administrativos/governanca/POLITICA_MEMORIA.md | Complemento editorial R07 | atualizado na R07 |
 | skills/gaia-rag-processos-administrativos/references/07-contratos-mcp-atual.md | Declaração do novo contrato R07 em branch | atualizado na R07 |
+| skills/gaia-rag-processos-administrativos/tests/test_regressao_r05.py | Atualização das expectativas da skill: 10 módulos e versão R07 | atualizado na R07; regressão preservada |
 
 ## Arquivos novos fora desta pasta
 | Caminho | Finalidade | Estado |
@@ -29,6 +30,7 @@ Revisão: 2026-11-18 | Branch: feat/r07-office-knowledge-assimilation | Base: fe
 
 ## Rastreabilidade e contratos de publicação
 - Origem: código e skill reais inspecionados na branch R06, PR #4 draft; nenhum arquivo da main foi sobrescrito.
+- Outras branches isoladas verificadas no mesmo repositório: feat/ocr-documental-isolado e feat/catalogacao-triagem-isolada; nenhuma foi editada pela R07.
 - A branch R07 é stack dependente da R06, com PR draft separada a ser revisada **contra a R06**.
 - Não se migrou, reprovou, apagou, editou ou gravou memória da base real; nenhum PDF de cliente foi incorporado.
 - Qualquer novo arquivo exige atualização deste mapa antes da finalização do mesmo lote.
