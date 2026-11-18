@@ -4,6 +4,10 @@
 
 Este pacote é uma skill no padrão Agent Skills: único `SKILL.md` com YAML e módulos `references/` abertos sob demanda, `agents/openai.yaml` opcional e testes. **Não foi instalado** nem há plugin publicado por este pacote. Um ZIP de skill standalone não é por si só um plugin distribuído para todas as superfícies do ChatGPT; nesse cenário é necessário empacotamento e associação com o MCP conforme a documentação vigente.
 
+## R06 prévia no servidor Linode
+
+A imagem R06 empacota a pasta canônica da skill em `/app/skills/gaia-rag-processos-administrativos/`, disponibiliza `gaia_skill_catalog` e `gaia_skill_read` com allowlist e três recursos MCP `skill://...`. Isso comprova **distribuição de conteúdo no servidor**, não instalação no catálogo ChatGPT/Work nem ativação automática. A descoberta real depende de uma conexão ao host com credenciais e negociações suportadas; não anunciar que a extensão beta `skills/list/get` foi implementada. O pacote só fica utilizável por cliente configurado com conexão MCP e concessões reais.
+
 ## No Work
 
 1. Importar/abrir a pasta `gaia-rag-processos-administrativos` no ambiente de criação de skills disponível.
