@@ -71,11 +71,9 @@ def main():
                           key,algorithm="RS256",headers={"kid":"R06-TEST"})
     with TemporaryDirectory() as tmp:
         root=Path(tmp)
-        grants=root/"grants.json"
+        owners=root/"owners.json"
         docs=root/"documents.json"
-        grants.write_text(json.dumps({"subjects":{
-            A:[{"namespace":NS,"tenant_id":TA,"process_id":PA}],
-            B:[{"namespace":NS,"tenant_id":TB,"process_id":PB}]}}))
+        owners.write_text(json.dumps({"subjects":[A]}))
         docs.write_text(json.dumps({"approved_documents":[{
            "namespace":NS,"tenant_id":TA,"process_id":PA,
            "source_ref":SOURCE,"approval_ref":APPROVAL,
@@ -83,7 +81,7 @@ def main():
         os.environ.update({
             "CF_ACCESS_TEAM_DOMAIN":ISS,
             "CF_ACCESS_AUD":AUD,
-            "GAIA_RAG_GRANTS_FILE":str(grants),
+            "GAIA_RAG_OWNER_SUBJECTS_FILE":str(owners),
             "GAIA_RAG_APPROVED_DOCS_FILE":str(docs),
             "GAIA_RAG_REVIEW_DB":str(root/"review.sqlite3"),
             "GAIA_RAG_REVIEW_BASE_URL":"https://gaia-demo.example.invalid",
@@ -110,13 +108,13 @@ def main():
                         try:data=json.loads(raw)
                         except (ValueError,TypeError):data={"error":raw}
                     return data,output.get("isError"),r
-                scope={"namespace":NS,"tenant_id":TA,"process_id":PA}
-                bscope={"namespace":NS,"tenant_id":TB,"process_id":PB}
+                scope={"namespace":NS,"process_id":PA}
+                bscope={"namespace":NS,"process_id":PB}
                 tool_list=call("tools/list")
                 tools={t["name"] for t in tool_list.json()["result"]["tools"]}
                 required={"memory_process_start","memory_prepare_after_approval",
                           "memory_proposal_preview","memory_pending_reviews",
-                          "gaia_skill_catalog","gaia_skill_read"}
+                          "gaia_skill_catalog","gaia_skill_read","memory_search_all"}
                 check("R06-01_TOOLS_PRESENT",required<=tools,",".join(sorted(required)))
                 catalog,err,_=tool("gaia_skill_catalog",{})
                 check("R06-02_SKILL_MANIFEST",not err and len(catalog["files"])>=10,str(len(catalog.get("files",[]))))
@@ -134,8 +132,8 @@ def main():
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
                          "source_ref":SOURCE,"document_approval_ref":APPROVAL,
                          "document_sha256":SHA,**scope}
-                other,err,_=tool("memory_prepare_after_approval",{**prepare,"tenant_id":TB,"process_id":PB})
-                check("R06-05_OTHER_CLIENT_CANNOT_PROPOSE",err is True)
+                other,err,_=tool("memory_prepare_after_approval",{**prepare,"process_id":PB},identity=B)
+                check("R06-05_NONOWNER_CANNOT_PROPOSE",err is True)
                 docs.write_text('{"approved_documents":[]}')
                 notapproved,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-06_NO_DOCUMENT_APPROVAL_DENIED",err is True)
@@ -171,14 +169,43 @@ def main():
                 check("R06-17_REPLAY_IDEMPOTENT",replay.status_code==200 and count()==1)
                 obtained,err,_=tool("memory_list_process",scope)
                 check("R06-18_READBACK_IN_NEW_TOOL_SESSION",not err and len(obtained["items"])==1 and obtained["items"][0]["tenant_id"]==TA)
-                other,err,_=tool("memory_list_process",bscope,identity=B)
-                check("R06-19_SECOND_TENANT_IS_EMPTY",not err and other["items"]==[])
+                other,err,_=tool("memory_list_process",bscope,identity=A)
+                check("R06-19_OTHER_CLIENT_PROCESS_EMPTY_INITIAL",not err and other["items"]==[])
                 illicit,err,_=tool("memory_list_process",scope,identity=B)
-                check("R06-20_OTHER_TENANT_CANNOT_READ_A",err is True)
+                check("R06-20_NONOWNER_CANNOT_READ_A",err is True)
                 preview,err,_=tool("memory_proposal_preview",{**scope,"proposal_id":ident})
                 check("R06-21_APPROVAL_STATUS_AUDIT",not err and preview["status"]=="approved")
                 newproposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-22_PREPARE_AFTER_APPROVED_RETURNS_SAME",not err and newproposal["status"]=="approved" and count()==1)
+                # Same GAIA owner must see approved memory from a different client.
+                id_b="22222222-2222-4222-8222-222222222222"
+                payload_b={"namespace":NS,"tenant_id":TB,"process_id":PB,
+                           "approved":True,"title":"DEMO B","text":"Cliente B: decisao ficticia",
+                           "source_ref":"DEMO-B-SOURCE"}
+                q("PUT",POINTS+"?wait=true",{"points":[{"id":id_b,"payload":payload_b,"vector":[0.9,0.1,0,0]}]})
+                result_b,err,_=tool("memory_list_process",bscope,identity=A)
+                check("R06-23_OWNER_CAN_ACCESS_OTHER_CLIENT",not err and len(result_b["items"])==1
+                      and result_b["items"][0]["tenant_id"]==TB)
+                lookup_b,err,_=tool("memory_get",{"point_id":id_b,**bscope},identity=A)
+                check("R06-24_OWNER_GET_CROSS_CLIENT_UUID",not err and lookup_b["found"] is True)
+                source_b,err,_=tool("memory_find_by_source",{"source_ref":"DEMO-B-SOURCE",**bscope},identity=A)
+                check("R06-25_OWNER_GET_CROSS_CLIENT_SOURCE",not err and len(source_b["items"])==1)
+                analogy,err,_=tool("memory_similar_cases",{"description":"DEMO","namespace":NS,"process_id":PA},identity=A)
+                check("R06-26_OWNER_SIMILAR_ACROSS_CLIENTS",not err and any(x["process_id"]==PB for x in analogy["similar"]))
+                global_hits,err,_=tool("memory_search_all",{"query":"DEMO","namespace":NS,"limit":10},identity=A)
+                check("R06-27_OWNER_GLOBAL_SEARCH",not err and
+                      any(x["process_id"]==PB for x in global_hits["hits"]))
+                # Legacy records with no tenant_id must be readable by owner.
+                legacy_id="33333333-3333-4333-8333-333333333333"
+                q("PUT",POINTS+"?wait=true",{"points":[{"id":legacy_id,"vector":[0.7,0.3,0,0],
+                     "payload":{"namespace":NS,"process_id":"DEMO-LEGACY",
+                                "approved":True,"text":"Memoria antiga sem cliente",
+                                "source_ref":"DEMO-LEGACY"}}]})
+                legacy,err,_=tool("memory_list_process",{"namespace":NS,"process_id":"DEMO-LEGACY"},identity=A)
+                check("R06-28_OWNER_READS_LEGACY_NO_TENANT",not err and len(legacy["items"])==1)
+                outsider,err,_=tool("memory_search_all",{"query":"DEMO","namespace":NS},identity=B)
+                check("R06-29_OUTSIDER_CANNOT_GLOBAL_SEARCH",err is True)
+                check("R06-30_RECORDS_STORED_BY_LAB_ONLY",count()==3,str(count()))
                 print("GAIA_R06_TESTS="+str(checks),flush=True)
         finally:
             server._qrequest=old
