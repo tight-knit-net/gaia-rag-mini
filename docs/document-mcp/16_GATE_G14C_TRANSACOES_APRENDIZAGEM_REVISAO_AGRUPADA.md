@@ -79,3 +79,19 @@ Arquivo `tests/test_g14c_disposable.py`, executado pela CI do ramo. **Contagem a
 ## 6. Evidências a adicionar após CI
 
 Este documento deve receber um checkpoint após confirmar o HEAD, a PR, o diff, a contagem da nova suíte, a regressão, a CI herdada e o horário do commit. **Sem esse checkpoint, não declarar homologação do gate.**
+
+## 7. Checkpoint real após CI e readback (G14-C)
+
+**Aferição do relatório:** 2026-11-18T20:57:17-03:00 (America/Sao_Paulo), relógio local do ChatGPT. **Publicação do commit de código**: 2026-11-18T23:56:24Z = 20:56:24 em America/Sao_Paulo, metadados GitHub.
+
+**Commit de código ensaiado:** `2a04cf357fd6633cebb9af4b8ff4d25a834fc5f8`, ainda na PR #7 Draft e somente na branch `feat/gaia-document-mcp-isolado`.
+
+- **C1 + C2:** [CI Document MCP, run 44424935702](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44424935702) **PASSOU** — 49 contratos v2 + 13 OCR/NOM + 39 correlação + 39 aprendizagem G14-B + **46 G14-C** = **186/186 testes sintéticos aprovados**. O workflow confirmou também o bloqueio dos jobs herdados de publicação.
+- **CI herdada R05/R07:** [run 44424944990](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44424944990), **PASSOU** para o mesmo SHA; CI/smoke em runner efêmero não é homologação de serviço real.
+- **C3 + C4:** cenários de idempotência sob duas conexões, CAS, queda antes do commit, reabertura SQLite, `UNKNOWN_SYNTHETIC`, captura e deduplicação por processo, origem modificada e rejeição de lotes obsoletos **PASSARAM** na nova suíte. Nenhum `approved=true` real, Qdrant point ou revisão humana autenticada foi produzido.
+- **C5:** comparação base `95c899f2d51a19c25c8f033852efcfe818047715` → `2a04cf357fd6633cebb9af4b8ff4d25a834fc5f8` retornou **cinco arquivos**: `g14c_disposable.py`, `test_g14c_disposable.py`, CI própria, relatório 16 e índice. `DocumentSource`, `DocumentEvent`, R07, R06, main e releases não foram modificados.
+- **C6:** **BLOQUEADO** para integração com R06/R07, dados reais, armazenamento de produção, backup real, serviços externos, merge/deploy e persistência no Qdrant. Aprovação da PR e CI verde não são autorização de corte.
+
+**Limitação importante:** a classe `DisposableGate` aceita um `TemporaryDirectory` como parâmetro e grava apenas uma base local de teste; a exigência textual `DEMO:` reduz o risco de ingestão acidental, mas **não verifica semanticamente a ausência de dados pessoais**. O acesso de operador é uma fixture de comparação, não autenticação. Reabrir conexão não equivale a recuperação após perda de host. A experiência de revisão agrupada **ainda não dispõe de interface/botão autenticado real**, portanto `prepare_proposals` jamais deve ser interpretado como aprovação.
+
+**Decisão:** **GO de laboratório sintético C0–C5**; **NO-GO de operação C6**. Próximo gate recomendado: G14-D de revisão técnica, interface de revisão de lotes e contratos de autenticação, com solicitação expressa e sem conectar infraestrutura real por padrão.
