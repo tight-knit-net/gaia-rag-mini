@@ -505,6 +505,23 @@ _SKILL_FILES = (
 )
 
 
+def _safe_installed_skill_bytes(rel: str) -> bytes:
+    """Only registered, non-symlinked skill files inside the installed package."""
+    if not isinstance(rel, str) or rel not in _SKILL_FILES:
+        raise AccessDenied("SKILL_PATH_DENIED")
+    root = _skill_root()
+    if not root.is_dir() or root.is_symlink():
+        raise AccessDenied("SKILL_NOT_INSTALLED")
+    target = root
+    for part in Path(rel).parts:
+        target = target / part
+        if target.is_symlink():
+            raise AccessDenied("SKILL_PATH_NOT_TRUSTED")
+    if not target.is_file():
+        raise AccessDenied("SKILL_NOT_INSTALLED")
+    return target.read_bytes()
+
+
 @mcp.tool()
 def gaia_skill_route(mission: str, process_id: str,
                      namespace: str = "chatgpt") -> dict:
@@ -531,15 +548,14 @@ def gaia_skill_route_read(mission: str, process_id: str, path: str,
 
 @mcp.tool()
 def gaia_skill_catalog() -> dict:
-    """Discover installed, versioned skill files; loading is still host-driven."""
+    """Discover installed skills only for the verified GAIA owner."""
     import hashlib
-    root = _skill_root()
-    result = []
-    for rel in _SKILL_FILES:
-        f = root / rel
-        if not f.is_file():
-            raise AccessDenied("SKILL_NOT_INSTALLED")
-        result.append({"path": rel, "sha256": hashlib.sha256(f.read_bytes()).hexdigest()})
+    _require("chatgpt", "all-processes")
+    result = [
+        {"path": rel, "sha256": hashlib.sha256(
+            _safe_installed_skill_bytes(rel)).hexdigest()}
+        for rel in _SKILL_FILES
+    ]
     return {"name": "gaia-rag-processos-administrativos",
             "activation": "host_must_explicitly_load",
             "files": result}
@@ -547,53 +563,48 @@ def gaia_skill_catalog() -> dict:
 
 @mcp.tool()
 def gaia_skill_read(path: str) -> dict:
-    """Read an allowlisted skill file progressively; no filesystem traversal."""
-    if path not in _SKILL_FILES:
-        raise AccessDenied("SKILL_PATH_DENIED")
-    target = _skill_root() / path
-    if not target.is_file() or target.is_symlink():
-        raise AccessDenied("SKILL_NOT_INSTALLED")
-    return {"path": path, "content": target.read_text(encoding="utf-8")}
-
-
+    """Owner-only read of one allowlisted installed skill file."""
+    _require("chatgpt", "all-processes")
+    return {"path": path, "content": _safe_installed_skill_bytes(path).decode("utf-8")}
 
 
 @mcp.tool()
 def gaia_skill_read_chunk(path: str, offset: int = 0, max_chars: int = 2400) -> dict:
-    """Small immutable skill chunk for MCP hosts with response-size limitations."""
+    """Owner-only bounded chunks, hash computed from the same byte snapshot."""
     import hashlib
-    if path not in _SKILL_FILES:
-        raise AccessDenied("SKILL_PATH_DENIED")
-    if type(offset) is not int or offset < 0 or offset > 1000000:
+    _require("chatgpt", "all-processes")
+    if type(offset) is not int or not 0 <= offset <= 1_000_000:
         raise ValueError("INVALID_OFFSET")
     if type(max_chars) is not int or not 100 <= max_chars <= 3000:
         raise ValueError("INVALID_MAX_CHARS")
-    f = _skill_root() / path
-    if not f.is_file() or f.is_symlink():
-        raise AccessDenied("SKILL_NOT_INSTALLED")
-    raw = f.read_text(encoding="utf-8")
-    if offset > len(raw):
+    raw = _safe_installed_skill_bytes(path)
+    contents = raw.decode("utf-8")
+    if offset > len(contents):
         raise ValueError("OFFSET_OUT_OF_RANGE")
-    chunk = raw[offset:offset + max_chars]
+    chunk = contents[offset:offset + max_chars]
+    next_offset = offset + len(chunk)
     return {"path": path, "offset": offset, "content": chunk,
-            "total_chars": len(raw), "sha256": hashlib.sha256(f.read_bytes()).hexdigest(),
-            "next_offset": offset + len(chunk) if offset + len(chunk) < len(raw) else None}
+            "total_chars": len(contents), "sha256": hashlib.sha256(raw).hexdigest(),
+            "next_offset": next_offset if next_offset < len(contents) else None}
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/SKILL.md")
 def gaia_skill_resource_root() -> str:
-    """Fetch canonical skill entry when MCP resources are supported by the host."""
-    return (_skill_root() / "SKILL.md").read_text(encoding="utf-8")
+    """Owner-only MCP resource, not a public skill activation."""
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("SKILL.md").decode("utf-8")
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/references/02-recuperacao.md")
 def gaia_skill_resource_retrieval() -> str:
-    return (_skill_root() / "references/02-recuperacao.md").read_text(encoding="utf-8")
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("references/02-recuperacao.md").decode("utf-8")
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/references/03-producao-e-proposta.md")
 def gaia_skill_resource_proposal() -> str:
-    return (_skill_root() / "references/03-producao-e-proposta.md").read_text(encoding="utf-8")
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("references/03-producao-e-proposta.md").decode("utf-8")
 
 
 async def healthz(req: Request) -> JSONResponse:
