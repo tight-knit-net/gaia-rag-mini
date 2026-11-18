@@ -98,7 +98,7 @@ jobs:
           from pathlib import Path
           health = json.loads(Path('/tmp/gaia-r05-health.json').read_text())
           assert health['alive'] is True
-          assert health['mode'] == 'staging-read-only'
+          assert health['mode'] == 'staging-controlled'
           assert health['writes_enabled'] is False
           assert health['qdrant_configured'] is False
           print('Isolated runtime health verified; no production credentials.')
@@ -137,3 +137,37 @@ jobs:
       - name: Stop ephemeral container
         if: always()
         run: docker rm -f gaia-rag-mini-ci 2>/dev/null || true
+
+  r06_lifecycle_synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build local R06 image (no publishing, no real secrets)
+        run: docker build -t gaia-rag-mini:r06-ci .
+      - name: Start isolated Qdrant and test two-stage human approval
+        run: |
+          set -Eeuo pipefail
+          docker network create --internal gaia-rag-r06-ci-net
+          cleanup() {
+            docker rm -f gaia-rag-r06-demo-qdrant 2>/dev/null || true
+            docker network rm gaia-rag-r06-ci-net 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          docker run -d --name gaia-rag-r06-demo-qdrant \
+            --network gaia-rag-r06-ci-net \
+            --tmpfs /qdrant/storage:rw,size=128m \
+            --tmpfs /qdrant/snapshots:rw,size=64m \
+            --cpus 1 --memory 512m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            -e QDRANT__TELEMETRY_DISABLED=true \
+            qdrant/qdrant:v1.15.5
+          docker run --rm --network gaia-rag-r06-ci-net \
+            --read-only --tmpfs /tmp:rw,mode=1777,size=64m \
+            --cpus 1 --memory 768m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            -v "$PWD/tests/r06_live_review_e2e.py:/app/r06_test.py:ro" \
+            --entrypoint python gaia-rag-mini:r06-ci /app/r06_test.py
+          echo "R06 real synthetic MCP review -> Qdrant -> readback PASS"

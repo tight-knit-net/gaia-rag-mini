@@ -4,6 +4,14 @@
 
 A pessoa aprova previamente o DOCUMENTO ou PROCESSO. Só então a skill pode usar `memory_prepare_after_approval` para uma proposta, que **não grava**. A decisão de salvar a memória é nova e independente, feita no portal protegido com Cloudflare Access e clique humano. A aprovação de conversa genérica, sem peça ou processo aprovado, não basta para afirmar que o gatilho do serviço foi cumprido.
 
+## R06: aprovação e escrita sem restrições por cliente
+
+A autorização da R06 identifica o proprietário do GAIA, não o cliente do processo. Documento aprovado previamente no registro do servidor possui `source_ref`, `document_approval_ref`, `document_sha256`, `namespace` e `process_id`. O `tenant_id` no documento é metadado de origem e não limita o acesso ao proprietário.
+
+`memory_prepare_after_approval(process_id, title, summary, source_ref, document_approval_ref, document_sha256, namespace?)` verifica a aprovação e gera proposta idempotente, sem escrita Qdrant. O proprietário acessa a `review_url` verdadeira e faz clique humano em sessão autenticada. A memória só é declarada persistida após confirmação de gravação e readback. Sem registro documental e sem revisão humana, não há gravação.
+
+**Atenção:** a seção abaixo sobre `kind`, `source_type` e argumentos legados refere-se à MCP antiga da DigitalOcean; não utilizar na R06.
+
 ## Seleção: o que merece memória
 
 Guardar síntese enxuta de: ato confirmado, contexto necessário para continuidade, decisão interna efetivamente adotada, exigência formal, providência pendente, fundamento oficial verificado, lição decorrente de resultado real e referência do documento final. Não guardar o chat bruto, raciocínio exploratório, palpites, dados pessoais desnecessários, senhas, segredos, duplicatas ou texto integral dos autos.

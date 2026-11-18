@@ -59,6 +59,7 @@ class AuthorizedScope:
 
     principal: Principal
     scope: Scope
+    access_mode: str = "process"
 
 
 _ISSUED_SCOPES: WeakSet[AuthorizedScope] = WeakSet()
@@ -89,8 +90,8 @@ class Authorizer:
             self._grants[subject] = entries
 
     @staticmethod
-    def _issue(principal: Principal, scope: Scope) -> AuthorizedScope:
-        capability = AuthorizedScope(principal, scope)
+    def _issue(principal: Principal, scope: Scope, *, access_mode: str = "process") -> AuthorizedScope:
+        capability = AuthorizedScope(principal, scope, access_mode=access_mode)
         _ISSUED_SCOPES.add(capability)
         return capability
 
@@ -115,3 +116,30 @@ class Authorizer:
         if not matches or len(matches) > 32:
             raise AccessDenied("ACCESS_DENIED")
         return tuple(self._issue(principal, s) for s in matches)
+
+
+class OwnerAuthorizer(Authorizer):
+    """Authenticated GAIA owner can read every approved process across clients.
+
+    Scope is a process locator, NOT a per-client permission. Owner identity still
+    requires verified Cloudflare Access JWT and explicit server-owned allowlist.
+    """
+
+    def __init__(self, trusted_owners: Iterable[str], *,
+                 expected_issuer: str, expected_audience: str) -> None:
+        super().__init__({}, expected_issuer=expected_issuer, expected_audience=expected_audience)
+        owners = tuple(trusted_owners)
+        if not owners or len(owners) > 64 or any(
+                not isinstance(v, str) or not _SUBJECT.fullmatch(v)
+                or v != v.lower() for v in owners):
+            raise ValueError("INVALID_OWNER_REGISTRY")
+        self._owners = frozenset(owners)
+
+    def require(self, principal: Principal | None, requested: Scope) -> AuthorizedScope:
+        if (not isinstance(principal, Principal) or not isinstance(requested, Scope)
+                or principal.verified_issuer != self._issuer
+                or principal.verified_audience != self._audience
+                or principal.subject not in self._owners
+                or requested.tenant_id != "owner-all"):
+            raise AccessDenied("ACCESS_DENIED")
+        return self._issue(principal, requested, access_mode="owner")

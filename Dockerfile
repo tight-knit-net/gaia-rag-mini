@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && useradd --uid 10001 --create-home --shell /usr/sbin/nologin gaia
 COPY src/ ./src/
 COPY app/ ./app/
+COPY skills/gaia-rag-processos-administrativos/ ./skills/gaia-rag-processos-administrativos/
 USER 10001:10001
 EXPOSE 8000
 HEALTHCHECK --interval=20s --timeout=3s --start-period=30s --retries=3 \

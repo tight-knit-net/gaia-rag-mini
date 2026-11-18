@@ -20,7 +20,7 @@ venv/
 **/__pycache__/
 **/.pytest_cache/
 docs/
-skills/
+# Include only canonical skill files for R06 runtime; no credentials
 
 # GitHub Actions deploy key — never commit
 LINODE_DEPLOY_KEY*

@@ -1,4 +1,37 @@
-# 07 — Contrato GAIA RAG disponível em 17/11/2026 (AS-IS)
+# 07 — Contrato MCP R06 (prévia na Linode)
+
+A fonte de verdade para este contrato é a lista `tools/list` e os recursos retornados pela imagem R06. **Não confundir com a MCP R05/legada da DigitalOcean.** O ambiente R06 ainda não utiliza credenciais, usuários ou dados reais de clientes e a skill não está homologada para ativação automática em ChatGPT/Work.
+
+## Ferramentas expostas pela R06 — acesso unificado do proprietário
+
+**Os projetos do ChatGPT são espaços de organização, NÃO divisões de autorização.** O usuário autenticado como proprietário do GAIA tem acesso a todos os processos, documentos aprovados e memórias aprovadas. Não existe mais `tenant_id` como parâmetro obrigatório ou permissão por cliente. `process_id` é identificador de caso; `tenant_id`, caso presente no Qdrant, é exclusivamente metadado documental. Se houver mais de um processo com o mesmo identificador canônico, identificar explicitamente a ambiguidade antes de combinar fatos.
+
+| Ferramenta R06 | Entrada principal | Efeito |
+|---|---|---|
+| `memory_status`, `memory_policy` | sem parâmetros | Estado e política de proprietário autenticado |
+| `memory_process_start` | process_id, namespace? | Recupera abertura e histórico exato |
+| `memory_list_process` | process_id, namespace?, limit? | Memórias aprovadas deste processo, de qualquer cliente |
+| `memory_search` | query, process_id, namespace?, limit? | Pesquisa dentro do processo |
+| `memory_search_all` | query, namespace?, limit? | Pesquisa SEM filtro de cliente/processo na base aprovada, inclusive pontos antigos sem tenant |
+| `memory_get` | point_id, process_id, namespace? | Leitura por UUID no processo informado |
+| `memory_find_by_source` | source_ref, process_id, namespace?, limit? | Fontes do processo |
+| `memory_similar_cases` | description, process_id, namespace?, limit? | Casos semelhantes entre TODOS os clientes, exceto processo atual |
+| `memory_prepare_after_approval` | process_id, title, summary, source_ref, document_approval_ref, document_sha256, namespace? | Somente proposta, após validar documento no registro do servidor |
+| `memory_proposal_preview` | proposal_id, process_id, namespace? | Inspeciona proposta do processo |
+| `memory_pending_reviews` | process_id, namespace?, limit? | Lista propostas do processo |
+| `gaia_skill_catalog`, `gaia_skill_read` | caminho da allowlist | Entrega conteúdo da skill sem ativação automática no ChatGPT |
+
+**14 ferramentas MCP**; três recursos `skill://gaia-rag-processos-administrativos/...` via `resources/list` e `resources/read`. O servidor requer JWT verificado e email incluído no registro `GAIA_RAG_OWNER_SUBJECTS_FILE`. Não é acesso público ou anônimo.
+
+A aprovação documental vem de uma fonte controlada pelo servidor. O campo `tenant_id` da proposta vem da fonte aprovada ou fica explicitamente como `unassigned`; não decide quem pode consultar. O clique humano no portal é etapa distinta da aprovação do documento e da preparação da proposta. A escrita só é confirmada após readback, sem retry automático em caso ambíguo.
+
+## Segurança e indisponibilidade
+
+O servidor verifica assinatura JWT CF Access e issuer/audience, consulta uma lista de proprietários controlada pelo servidor a cada chamada e exige processo exato nas operações processuais. Sem `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `GAIA_RAG_OWNER_SUBJECTS_FILE`, `QDRANT_URL`, `QDRANT_API_KEY`, `GAIA_RAG_APPROVED_DOCS_FILE`, URL real de revisão e chave CSRF, **o fluxo não está operante**. Não preencher esses valores com amostras DEMO no staging oficial. `GAIA_RAG_ENABLE_REVIEW` fica desligado até homologação controlada.
+
+## Documentação histórica da MCP legada — apenas comparação
+
+## Contrato legado observado em 17/11/2026 (DigitalOcean)
 
 A skill **não implementa** as rotas da proposta R02 (`gaia_memoria_salvar`, `gaia_skill_catalogo`, `gaia_contexto_processo`, `gaia_documento_buscar` etc.). Elas NÃO foram observadas nesta MCP atual. Revalidar a lista quando instalar.
 

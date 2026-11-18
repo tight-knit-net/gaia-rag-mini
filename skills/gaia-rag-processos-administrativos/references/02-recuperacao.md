@@ -1,5 +1,11 @@
 # 02 — Recuperação de memória (somente leitura)
 
+## Contrato da R06: memória GAIA unificada
+
+O proprietário autenticado tem acesso a memórias aprovadas de todos os clientes, em todos os projetos do ChatGPT. `tenant_id` é metadado de origem e não é trava de permissão. Para um caso, usar o `process_id` exato em `memory_process_start`, `memory_list_process` e `memory_search`. Para localizar processo desconhecido ou aprendizado de outro cliente, usar `memory_search_all` ou `memory_similar_cases`, dentro da base aprovada. Não misturar documentos de processos com identificadores diferentes, nem tratar semelhança temática como igualdade de processo.
+
+A identidade do GAIA ainda é verificada no servidor por JWT Access e pela lista explícita de proprietários. Sem isso, consulta negada. Ver o contrato efetivo em [07](07-contratos-mcp-atual.md). A seção histórica abaixo descreve versões anteriores da MCP, não a R06.
+
 ## Fluxo por finalidade
 
 | Objetivo | Ferramenta atual | Regra |
