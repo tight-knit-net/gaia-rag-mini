@@ -355,6 +355,13 @@ async def review_get(req: Request):
                 + html_escape(page["source_ref"]) + "</p><p>Processo: "
                 + html_escape(page["process_id"]) + "</p><p>Estado: "
                 + html_escape(page["status"]) + "</p>")
+        indexed = lifecycle_read.index_candidate_preview(
+            process_id=page["process_id"], title=page["title"],
+            summary=page["summary"], source_ref=page["source_ref"])
+        body += ("<p>Indexação sugerida (não oficial): "
+                 + html_escape(indexed["suggested_kind"]) + " / "
+                 + html_escape(", ".join(indexed["suggested_tags"]))
+                 + "</p><p>Somente o botão humano abaixo autoriza salvar.</p>")
         if not disabled:
             body += ('<form method="POST" action="/review/' + html_escape(page["id"]) + '/approve">'
                      '<input type="hidden" name="csrf" value="' + html_escape(page["csrf"]) + '">'
