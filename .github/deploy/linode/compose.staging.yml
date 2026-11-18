@@ -30,6 +30,11 @@ services:
 networks:
   default:
     name: gaia-rag-mini-staging-net
+    # 172.17.0.0/16 is intercepted by Cloudflare WARP on nestground-ai.
+    # Use the dedicated local bridge subnet already verified by host HTTP tests.
+    ipam:
+      config:
+        - subnet: 172.19.41.0/24
 volumes:
   gaia_rag_review_state:
     name: gaia-rag-mini-staging-state
