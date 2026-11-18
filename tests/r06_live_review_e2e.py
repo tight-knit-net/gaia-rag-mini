@@ -106,7 +106,9 @@ def main():
                     j=r.json(); output=j.get("result",{})
                     data=output.get("structuredContent")
                     if data is None and output.get("content"):
-                        data=json.loads(output["content"][0]["text"])
+                        raw=output["content"][0]["text"]
+                        try:data=json.loads(raw)
+                        except (ValueError,TypeError):data={"error":raw}
                     return data,output.get("isError"),r
                 scope={"namespace":NS,"tenant_id":TA,"process_id":PA}
                 bscope={"namespace":NS,"tenant_id":TB,"process_id":PB}
