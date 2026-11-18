@@ -1,0 +1,40 @@
+# CodeRabbit V2 — GAIA RAG Mini R05 (PR documental, sem autorização de deploy)
+version: 2
+language: pt-BR
+reviews:
+  profile: assertive
+  high_level_summary: true
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: true
+    auto_incremental_review: true
+  path_instructions:
+    - path: ".github/**"
+      instructions: |
+        Verificar GitHub Actions com permissões mínimas, injeção via inputs,
+        dependências de terceiros e segredos. Obrigatório preservar
+        os jobs GHCR e Linode com if: false, sem build/push, merge
+        automático ou deployment até autorização separada do proprietário.
+    - path: "skills/**"
+      instructions: |
+        Avaliar contratos reais das ferramentas e a distinção entre busca,
+        proposta e persistência. Conferir BR-01: validar process_id depois
+        de receber memory_get/memory_find_by_source NÃO protege contra
+        vazamento ao host; exigir autorização no backend antes da resposta.
+        Não afirmar que testes estáticos provam isolamento operacional.
+    - path: "docs/projeto-executivo/**"
+      instructions: |
+        Revisar o projeto executivo R05 e o parecer documental registrado.
+        Priorizar BR-01 (ACL server-side), BR-02 (Skills over MCP beta e
+        capabilities reais), BR-03 (plugin/dependência MCP comprovados) e
+        BR-04 (GHCR/Linode bloqueados). Distinguir riscos, hipóteses,
+        evidências observadas e homologação. Apontar contradições concretas
+        por arquivo/linha e classificar severidade.
+    - path: "src/**"
+      instructions: |
+        Caso código venha a ser autorizado futuramente, exigir identidade
+        confiável via Cloudflare Access, segregação de tenants por processo
+        em todas as consultas Qdrant e clique humano antes de persistência.
+# A revisão do CodeRabbit é consultiva. Não autoriza código novo, autofix,
+# merge, release, GHCR, Linode, Cloudflare ou escrita de memória.
