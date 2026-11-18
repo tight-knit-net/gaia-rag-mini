@@ -1,5 +1,5 @@
 # Backlog de implementação R05 — ESPECIFICAÇÃO, NÃO EXECUÇÃO
-**Estado:** pronto para revisão técnica, tarefas de código bloqueadas até DG-01..DG-06. `RF-*` e `RNF-*` referem-se ao projeto executivo.
+**Estado:** documentação auditada; novo código depende de autorização de escopo DG-04/DG-06 e testes dos controles aplicáveis. `RF-*` e `RNF-*` referem-se ao projeto executivo.
 
 ## Etapa A — descoberta técnica da origem (read-only até autorização)
 | ID | Dependência | Entrega verificável | Gate |
@@ -32,10 +32,10 @@
 | BK-18 | BK-17 | decisão de corte de produção com autorização explícita; não executar automaticamente |
 
 ## Definição de pronto para cada item de código
-A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integração com fixtures não reais, resultado CI, revisão técnica independente, análise de segurança e atualização de documentação. Alterações de Qdrant, Cloudflare Access, DNS e coleção são fora de escopo sem ADR separada e autorização.
+A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integração com fixtures não reais, resultado CI, revisão técnica rastreável, análise de segurança e atualização de documentação. Alterações de Qdrant, Cloudflare Access, DNS e coleção são fora de escopo sem ADR separada e autorização.
 
 ## Dependências externas que NÃO podem ser presumidas
-- CodeRabbit retirado do projeto por decisão do proprietário; a revisão técnica independente continua obrigatória, sem dependência de bot.
+- CodeRabbit excluído do projeto por decisão do proprietário. A revisão documental enxuta está registrada; não há dependência de bot nem exigência de auditor externo.
 - Host aceita Skills over MCP: não demonstrado.
 - Embedding model e ACL multi-tenant: ainda não inspecionados.
 - Projeto GitHub e fonte operacional: repositório começou sem runtime completo; portar código requer comparação e aprovação.
@@ -44,8 +44,8 @@ A entrega de código deve ter contrato rastreado a RF/RNF, teste unitário/integ
 ## Itens adicionais identificados na revisão
 | ID | Dependência | Entrega objetiva, somente em fase autorizada |
 |---|---|---|
-| BK-19 | BK-03 e aprovação DG-06 | Ajustar orientação da skill que hoje prevê validação pós-consulta; nunca usar retorno de dados como substituto da autorização de backend |
+| BK-19 | BK-03 e aprovação DG-06 | Orientação R05 corrigida para negar consulta sem ACL comprovada; implementar/verificar autorização efetiva no backend em fase autorizada |
 | BK-20 | BK-02, BK-08 e host aprovado | Negociação da extensão beta Skills com `server/discover`, `skills/list`, `skills/get`, `resources/read` e hashes de recursos |
 | BK-21 | BK-20 sem suporte de host | Empacotamento alternativo com `plugin.json` e dependência MCP real, sem endpoint inventado |
-| BK-22 | BK-03, BK-11 | Verificação independente de supply chain, actions de terceiros, fluxo de token de GHCR e capacidade de rollback, preservando freeze |
+| BK-22 | BK-03, BK-11 | Verificação técnica da supply chain, actions, token de GHCR e rollback antes de ativar publicação; preservar freeze |
 
