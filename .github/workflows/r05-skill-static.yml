@@ -26,6 +26,7 @@ jobs:
           python - <<'PY'
           import pathlib, yaml
           for name in (
+              ".coderabbit.yaml",
               ".github/workflows/r05-skill-static.yml",
               ".github/workflows/rag-ghcr-image.yml",
               ".github/workflows/rag-linode-staging.yml",
