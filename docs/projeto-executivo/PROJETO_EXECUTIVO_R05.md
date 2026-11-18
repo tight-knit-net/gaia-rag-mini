@@ -71,6 +71,20 @@ Plano da skill: `arquivos R05 versionados -> [Skills over MCP ou plugin, conform
 
 **Ameaças que precisam de teste real:** acesso cruzado por UUID, bypass via fonte, similaridade sem tenant, replay de proposta, ausência de identidade Access, segredos em logs, tentativa de prompt injection em memória recuperada, propostas expiradas, concorrência e gravação duplicada.
 
+
+## 6.1 Achados da revisão técnica e bloqueadores ainda não resolvidos
+A revisão detectou a antiga instrução em `SKILL.md` de verificar `process_id` **após** a recuperação por `memory_get`/`memory_find_by_source`. **A orientação da skill R05 foi corrigida nesta branch** para não chamar esses métodos com dados multi-cliente sem comprovação de autorização no backend. **BR-01 (CRÍTICO para uso real):** ainda comprovar ACL server-side por identidade, `tenant_id` e `process_id` para todas as ferramentas; até lá, não usar essas rotas sem escopo seguro comprovado.
+
+**BR-02 (ALTO):** verificar negociação da extensão beta Skills over MCP (capabilities `server/discover`, `skills/list`, `skills/get`, `resources/read` e `resources/directory/read` apenas quando anunciado); confirmar revisão-base e manifestos de recursos. O host ainda não demonstrou consumir a extensão. Conferir ADR-0001 revisada.
+
+**BR-03 (ALTO):** `agents/openai.yaml` não traz dependência MCP real e não existe plugin validado. Qualquer pacote futuro deve declarar dependência efetiva e testar autorização/conexão; não inventar URL nem marcar como instalado.
+
+**BR-04 (ALTO):** os pipelines GHCR/Linode estão congelados na branch; os scripts de deployment, chave de acesso, pull do registro privado, isolamento e rollback ainda não passaram auditoria end-to-end. O sucesso da CI estática não elimina o risco.
+
+Esses achados são **revisão documental assistida**, não homologação do runtime nem auditoria externa certificada. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
+
+**Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
+
 ## 7. Estado do ambiente e caminho de desenvolvimento
 A pasta Linode `/opt/gaia-rag-mini` e usuário de deploy restrito foram preparados anteriormente, **sem iniciar o container GAIA RAG**. O SSH foi validado localmente; ligação GitHub Actions → Linode **não foi demonstrada**. Há quatro containers NestGround preservados. Não há aprovação para publicar imagem ou habilitar `RAG_STAGING_APPROVED=1`.
 
@@ -107,17 +121,3 @@ O código novo **não pode começar** enquanto faltar qualquer item obrigatório
 
 ## 10. Declaração de encerramento documental
 O conteúdo executivo acima especifica o objetivo, o ambiente conhecido, o alvo, os requisitos, a arquitetura, os controles, a sequência de trabalho, os testes a realizar e as condições de aceite. **Revisão documental enxuta registrada; controles de runtime ainda não validados**. O registro de auditoria fica em `AUDITORIA_TECNICA_ENXUTA_R05_2026-11-17.md`; achados futuros exigem avaliação conforme sua evidência. Nenhuma ação de escrita do runtime ou publicação fica implícita.
-
-## 6.1 Achados da revisão técnica e bloqueadores ainda não resolvidos
-A revisão detectou a antiga instrução em `SKILL.md` de verificar `process_id` **após** a recuperação por `memory_get`/`memory_find_by_source`. **A orientação da skill R05 foi corrigida nesta branch** para não chamar esses métodos com dados multi-cliente sem comprovação de autorização no backend. **BR-01 (CRÍTICO para uso real):** ainda comprovar ACL server-side por identidade, `tenant_id` e `process_id` para todas as ferramentas; até lá, não usar essas rotas sem escopo seguro comprovado.
-
-**BR-02 (ALTO):** verificar negociação da extensão beta Skills over MCP (capabilities `server/discover`, `skills/list`, `skills/get`, `resources/read` e `resources/directory/read` apenas quando anunciado); confirmar revisão-base e manifestos de recursos. O host ainda não demonstrou consumir a extensão. Conferir ADR-0001 revisada.
-
-**BR-03 (ALTO):** `agents/openai.yaml` não traz dependência MCP real e não existe plugin validado. Qualquer pacote futuro deve declarar dependência efetiva e testar autorização/conexão; não inventar URL nem marcar como instalado.
-
-**BR-04 (ALTO):** os pipelines GHCR/Linode estão congelados na branch; os scripts de deployment, chave de acesso, pull do registro privado, isolamento e rollback ainda não passaram auditoria end-to-end. O sucesso da CI estática não elimina o risco.
-
-Esses achados são **revisão documental assistida**, não homologação do runtime nem auditoria externa certificada. O Fireflies foi consultado para atas e decisões relativas ao GAIA RAG, mas não retornou reuniões acessíveis. Sem novas evidências, preservar as decisões já documentadas e não supor aceite de reuniões.
-
-**Decisão executiva resultante:** documentação estruturada e revisada, porém **APROVAÇÃO PARA DESENVOLVER = NÃO CONCEDIDA** e **APROVAÇÃO PARA PUBLICAR = NÃO CONCEDIDA**. O fechamento de BR-01 a BR-04 exige evidências específicas e aceite do responsável, sem alteração de Qdrant/Cloudflare/produção por inferência.
-
