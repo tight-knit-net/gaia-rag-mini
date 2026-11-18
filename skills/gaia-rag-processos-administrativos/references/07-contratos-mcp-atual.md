@@ -2,29 +2,32 @@
 
 A fonte de verdade para este contrato é a lista `tools/list` e os recursos retornados pela imagem R06. **Não confundir com a MCP R05/legada da DigitalOcean.** O ambiente R06 ainda não utiliza credenciais, usuários ou dados reais de clientes e a skill não está homologada para ativação automática em ChatGPT/Work.
 
-## Ferramentas expostas pela R06
+## Ferramentas expostas pela R06 — acesso unificado do proprietário
 
-| Ferramenta | Entrada principal | Efeito |
+**Os projetos do ChatGPT são espaços de organização, NÃO divisões de autorização.** O usuário autenticado como proprietário do GAIA tem acesso a todos os processos, documentos aprovados e memórias aprovadas. Não existe mais `tenant_id` como parâmetro obrigatório ou permissão por cliente. `process_id` é identificador de caso; `tenant_id`, caso presente no Qdrant, é exclusivamente metadado documental. Se houver mais de um processo com o mesmo identificador canônico, identificar explicitamente a ambiguidade antes de combinar fatos.
+
+| Ferramenta R06 | Entrada principal | Efeito |
 |---|---|---|
-| `memory_status`, `memory_policy` | sem parâmetros | Estado e política; não comprovam disponibilidade de dados |
-| `memory_process_start` | namespace, tenant_id, process_id, description? | Contexto autorizado, sem escrita |
-| `memory_list_process` | namespace, tenant_id, process_id, limit? | Scroll de memórias aprovadas, ACL backend |
-| `memory_search` | query, namespace, tenant_id, process_id, limit? | Busca semântica autorizada |
-| `memory_get` | point_id, namespace, tenant_id, process_id | UUID com filtro ACL antes do readback |
-| `memory_find_by_source` | source_ref, namespace, tenant_id, process_id, limit? | Fonte com ACL no backend |
-| `memory_similar_cases` | description, namespace, tenant_id, process_id, limit? | Só processos que o sujeito possui permissão, dentro do mesmo tenant |
-| `memory_prepare_after_approval` | namespace, tenant_id, process_id, title, summary, source_ref, document_approval_ref, document_sha256 | Apenas prepara proposta após aprovação documental confirmada em registro server-owned |
-| `memory_proposal_preview` | namespace, tenant_id, process_id, proposal_id | Inspeciona proposta permitida |
-| `memory_pending_reviews` | namespace, tenant_id, process_id, limit? | Consulta propostas permitidas |
-| `gaia_skill_catalog`, `gaia_skill_read` | path permitido para leitura | Descoberta e conteúdo progressivo da skill; não instala automaticamente no host |
+| `memory_status`, `memory_policy` | sem parâmetros | Estado e política de proprietário autenticado |
+| `memory_process_start` | process_id, namespace? | Recupera abertura e histórico exato |
+| `memory_list_process` | process_id, namespace?, limit? | Memórias aprovadas deste processo, de qualquer cliente |
+| `memory_search` | query, process_id, namespace?, limit? | Pesquisa dentro do processo |
+| `memory_search_all` | query, namespace?, limit? | Pesquisa SEM filtro de cliente/processo na base aprovada, inclusive pontos antigos sem tenant |
+| `memory_get` | point_id, process_id, namespace? | Leitura por UUID no processo informado |
+| `memory_find_by_source` | source_ref, process_id, namespace?, limit? | Fontes do processo |
+| `memory_similar_cases` | description, process_id, namespace?, limit? | Casos semelhantes entre TODOS os clientes, exceto processo atual |
+| `memory_prepare_after_approval` | process_id, title, summary, source_ref, document_approval_ref, document_sha256, namespace? | Somente proposta, após validar documento no registro do servidor |
+| `memory_proposal_preview` | proposal_id, process_id, namespace? | Inspeciona proposta do processo |
+| `memory_pending_reviews` | process_id, namespace?, limit? | Lista propostas do processo |
+| `gaia_skill_catalog`, `gaia_skill_read` | caminho da allowlist | Entrega conteúdo da skill sem ativação automática no ChatGPT |
 
-A imagem registra **13 ferramentas**. Três recursos são servidos por MCP `resources/list`/`resources/read`: `skill://gaia-rag-processos-administrativos/SKILL.md`, `references/02-recuperacao.md` e `references/03-producao-e-proposta.md`. Não se declara suporte à extensão beta `skills/list/get` sem implementação e negociação efetiva.
+**14 ferramentas MCP**; três recursos `skill://gaia-rag-processos-administrativos/...` via `resources/list` e `resources/read`. O servidor requer JWT verificado e email incluído no registro `GAIA_RAG_OWNER_SUBJECTS_FILE`. Não é acesso público ou anônimo.
 
-**A aprovação no portal não é ferramenta MCP.** Após o registro de documento aprovado e a preparação, a `review_url` aponta a uma página HTTPS; apenas um POST de formulário humano autenticado, com proteção contra CSRF/origem, chama a escrita. O Qdrant é consultado após gravação; a memória só é confirmada com readback. Propostas em erro de escrita/readback ficam em estado de conciliação, sem repetição automática.
+A aprovação documental vem de uma fonte controlada pelo servidor. O campo `tenant_id` da proposta vem da fonte aprovada ou fica explicitamente como `unassigned`; não decide quem pode consultar. O clique humano no portal é etapa distinta da aprovação do documento e da preparação da proposta. A escrita só é confirmada após readback, sem retry automático em caso ambíguo.
 
 ## Segurança e indisponibilidade
 
-O servidor verifica assinatura JWT CF Access e issuer/audience, consulta grants de origem controlada pelo servidor a cada chamada e exige tenant/processo. Sem `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `GAIA_RAG_GRANTS_FILE`, `QDRANT_URL`, `QDRANT_API_KEY`, `GAIA_RAG_APPROVED_DOCS_FILE`, URL real de revisão e chave CSRF, **o fluxo não está operante**. Não preencher esses valores com amostras DEMO no staging oficial. `GAIA_RAG_ENABLE_REVIEW` fica desligado até homologação controlada.
+O servidor verifica assinatura JWT CF Access e issuer/audience, consulta uma lista de proprietários controlada pelo servidor a cada chamada e exige processo exato nas operações processuais. Sem `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `GAIA_RAG_OWNER_SUBJECTS_FILE`, `QDRANT_URL`, `QDRANT_API_KEY`, `GAIA_RAG_APPROVED_DOCS_FILE`, URL real de revisão e chave CSRF, **o fluxo não está operante**. Não preencher esses valores com amostras DEMO no staging oficial. `GAIA_RAG_ENABLE_REVIEW` fica desligado até homologação controlada.
 
 ## Documentação histórica da MCP legada — apenas comparação
 
