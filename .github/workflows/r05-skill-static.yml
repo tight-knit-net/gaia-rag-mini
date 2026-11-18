@@ -68,3 +68,49 @@ jobs:
           assert not upload_steps, "No ZIP upload step permitted in this phase"
           print("OK: publication and deploy gates remain blocked")
           PY
+
+  staging_image_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build private local image only (no registry publishing)
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t gaia-rag-mini:r05-ci .
+      - name: Start staging MCP with no production secrets
+        if: hashFiles('Dockerfile') != ''
+        run: |
+          set -Eeuo pipefail
+          docker run -d --name gaia-rag-mini-ci --read-only \
+            --tmpfs /tmp:size=64m,mode=1777 --cap-drop ALL \
+            --security-opt no-new-privileges --pids-limit 256 \
+            --cpus 1 --memory 1024m -p 127.0.0.1:18082:8000 \
+            gaia-rag-mini:r05-ci
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:18082/healthz > /tmp/gaia-r05-health.json; then break; fi
+            sleep 2
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          health = json.loads(Path('/tmp/gaia-r05-health.json').read_text())
+          assert health['alive'] is True
+          assert health['mode'] == 'staging-read-only'
+          assert health['writes_enabled'] is False
+          assert health['qdrant_configured'] is False
+          print('Isolated runtime health verified; no production credentials.')
+          PY
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+            http://127.0.0.1:18082/mcp)
+          test "$code" = 401 || { echo "Auth must deny; got HTTP $code"; exit 1; }
+          echo "Unauthorized MCP access correctly rejected (HTTP 401)"
+      - name: Print isolated logs on failure
+        if: failure()
+        run: docker logs gaia-rag-mini-ci --tail 100 || true
+      - name: Stop ephemeral container
+        if: always()
+        run: docker rm -f gaia-rag-mini-ci 2>/dev/null || true
