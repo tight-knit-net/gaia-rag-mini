@@ -53,3 +53,47 @@ O painel `https://cloud.qdrant.io/` exige login; ainda não há comprovação de
 6. Escrita Qdrant, registro documental, revisão humana persistente e aprovação seguem **desativados**; uma chave de leitura R06 não habilita o fluxo de gravação.
 
 **Estado final desta execução:** infraestrutura de leitura preparada e testada sem credenciais; `TUNNEL HEALTHY`, `QDRANT R06 NOT CONFIGURED`, `JWT REAL / MCP TOOLS AUTHENTICATED NOT HOMOLOGATED`, `DNS NOT CUT OVER`. Nenhum segredo publicado; R05, DO, ZITADEL e outros serviços preservados.
+
+
+---
+
+## Execução real da ativação Qdrant R06 — 18/11/2026 (após provisionamento local pelo operador)
+
+**Resultado: QDRANT REAL CONFIGURADO NA R06 — VALIDADO POR LEITURA. DNS NÃO TRANSFERIDO; autenticação JWT real ainda pendente.**
+
+### A. Evidências de credencial e preflight
+
+O operador provisionou a **Database API Key** pelo LISH/SSH diretamente no servidor `nestground-ai`, sem inserir o segredo no ChatGPT. Conferência GAIA MCP v.100:
+
+- Arquivo: `/opt/gaia-rag-mini/secrets/r06-service/qdrant_api_key`, **existente**, proprietário `10001:10001`, modo `0400`, tamanho 177 bytes (nenhum valor de segredo exibido).
+- `sudo /usr/local/sbin/gaia-r06-qdrant-readonly-preflight` => **exit 0**, `QDRANT_R06_READ_PREFLIGHT_PASS`.
+- `GET collection` HTTP 200, 384 dimensões, Cosine; `count exact` HTTP 200, **14 pontos**; contagem filtrada `namespace=chatgpt AND approved=true` HTTP 200, **14**; consulta textual via `intfloat/multilingual-e5-small` HTTP 200, **2 hits** (limite 2). Não houve escrita no Qdrant.
+
+### B. Canary isolada, leitura real e controle de acesso por proprietário em nível de código
+
+Criado Compose candidato de teste `qdrant-canary.compose.yaml` com o mesmo binário R06, usuário não privilegiado `10001:10001`, leitura RO da pasta de credenciais, rede `gaia-rag-r06-preview-net` e porta **somente localhost 18083**. Contêiner temporário `gaia-rag-mini-r06-qdrant-canary`:
+
+- `/healthz` HTTP 200 com `qdrant_configured=true`, `writes_enabled=false`, `approval_registry_configured=false`, `jwt_configured=true`, `owners_configured=true`.
+- Chave legível dentro do contêiner pelo usuário da aplicação, **sem exibir seu conteúdo**.
+- `POST /mcp` anônimo com `tools/list` => HTTP **401**.
+- Teste de integração **sem HTTP/JWT**, construindo `Principal` e `AuthorizedScope` da identidade owner esperada, executado dentro da canary: `ScopedReads.search_all_owner` => **8 hits**, todos `approved=true`, `namespace=chatgpt`; `ScopedReads.list_process` para dois `process_id` distintos => resultados positivos, todos com `process_id` correto; principal não autorizado => `AccessDenied`. Contagem histórica => **10 processos** distintos. **Isso não prova OAuth/JWT assinado real.**
+
+### C. Substituição controlada do contêiner principal
+
+Com preflight e canary aprovados, executado script atômico com rotina de rollback em caso de erro:
+1. Contêiner anterior `gaia-rag-mini-r06-preview` foi parado e preservado, renomeado para `gaia-rag-mini-r06-preqdrant-rollback-20261118` (**Exited**, não apagado).
+2. Criado novo `gaia-rag-mini-r06-preview` a partir da **mesma imagem** `gaia-rag-mini:r06-owner-auth-ready`, via `/opt/gaia-rag-mini/r06-preview/qdrant-readonly.compose.yaml` validado e projeto Compose `gaia-rag-r06-qdrant`. Mantidos rede original, `127.0.0.1:18082`, UID 10001, rootfs RO, cap_drop ALL, `no-new-privileges`, tmpfs, `restart unless-stopped` e volume RO.
+3. Introduzidas apenas as variáveis não secretas `QDRANT_URL` e `QDRANT_API_KEY_FILE=/run/gaia/qdrant_api_key`, com leitura do arquivo protegido.
+4. Confirmado `/healthz` HTTP **200** e `qdrant_configured=true`, `jwt_configured=true`, `owners_configured=true`, `writes_enabled=false`, `approval_registry_configured=false`. Novo contêiner **Docker healthy**.
+5. Teste de leitura executado **dentro da R06 principal**: `ScopedReads.search_all_owner` => **8 hits**, todos aprovados, `R06_MAIN_QDRANT_READ_PASS`.
+6. `POST /mcp` `tools/list` sem JWT e com JWT malformado => ambos HTTP **401**.
+7. Teste de rede Docker `gaia-rag-mini-r06-preview:8000/healthz` => HTTP **200**, `qdrant_configured=true`; `gaia-rag-r06-cloudflared` manteve-se em execução. Canary temporária foi parada e removida após a aprovação. Backup do contêiner anterior permanece disponível para rollback.
+8. Cloudflare API revalidou túnel Linode **healthy/4 conexões**, túnel DO **healthy/4 conexões**; ambos CNAMEs `memory.tight-knit.net` e `legacy-rag.tight-knit.net` ainda apontam para `bcd5026a-0b75-42e3-9d35-0dacfac89b3c.cfargotunnel.com`. **NENHUMA troca DNS, DO/R05/ZITADEL/Qdrant alterados.**
+
+### D. Próximo Gate de homologação: OAuth/JWT real e MCP de ponta a ponta
+
+**Não confundir autenticidade de configuração com sessão efetiva**: `jwt_configured=true` e negação anônima/invalid JWT **não provam JWT Cloudflare Access real validado**, sucesso OAuth+DCR, `tools/list` de um proprietário autenticado ou leitura MCP sob sessão real.
+
+Pendente: sessão legítima do proprietário via Cloudflare Access e prova de `tools/list`, `memory_status`, `memory_search_all`, `memory_list_process`, *negativa não owner*, HTTP público pelo caminho do túnel Linode com Access. Preservar sem exposição tokens JWT. **Não fazer corte DNS antes de completar este Gate** (ou plano de corte controlado com rollback e validação autenticada equivalente). `writes_enabled=false` e `approval_registry_configured=false` permanecem de propósito.
+
+**Estado auditável final: R06 QDRANT CONNECTED / LIVE READ PASS; TUNNEL HEALTHY; LEGACY HEALTHY; JWT E2E NOT YET HOMOLOGATED; DNS OLD; PR DRAFT.**
