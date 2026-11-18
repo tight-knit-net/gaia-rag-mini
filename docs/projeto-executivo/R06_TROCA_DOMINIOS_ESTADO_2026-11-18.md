@@ -153,3 +153,28 @@ O operador autenticado deve **provisionar diretamente** no host, por canal segur
 Instalado na Linode o utilitário interativo **/usr/local/sbin/gaia-r06-provision-cloudflare-token** (root:root, modo 0700), para um operador com SSH autenticado. Foi testado em modo somente status e retornou **token_file=absent**. Executado sem parâmetros em terminal SSH interativo e com sudo, recebe o token existente por **entrada oculta (getpass)**, não por argumento CLI, ambiente Docker ou chat; valida formato mínimo, grava atomicamente via arquivo temporário no diretório aprovado, altera dono para UID:GID **65532:65532** e modo **0400**. O monitor systemd.path já habilitado observa a criação do arquivo e aciona o Compose preparado.
 
 O utilitário recusa substituir credencial existente, recusa chamada não interativa e não imprime nem o token nem seu hash. **Nenhum token foi provisionado nesta execução.** Para chegar a HEALTHY ainda é necessário obter a credencial na sessão autenticada Cloudflare do proprietário e digitá-la no terminal seguro da Linode, fora desta conversa; depois executar as verificações de conectividade e API Cloudflare. Não reiniciar outros serviços, alterar DNS ou mesclar o PR #4.
+
+
+---
+
+## Saneamento adicional via Chrome autenticado e cloudflared login — 18/11/2026
+
+**Resultado verificável: autorização temporária obtida; ativação do túnel não concluída por bloqueio de segurança ao provisionamento do token. Estado final NO-GO para DNS.**
+
+### Ações concluídas
+
+1. Auditoria pelo GAIA MCP v.100 do alias `tigh_knit`: R06 e R05 responderam HTTP 200; Docker `gaia-rag-r06-preview-net` e imagem `cloudflare/cloudflared:2026.8.3` presentes. Nenhum `gaia-rag-r06-cloudflared` estava executando.
+2. Revalidação Cloudflare autenticada: túnel Linode `e1cad7db-b06e-4adf-8c46-f972bd18db50` **inactive / 0 conexões**, ingress para `http://gaia-rag-mini-r06-preview:8000` com Access obrigatório; túnel antigo `bcd5026a-0b75-42e3-9d35-0dacfac89b3c` **healthy / 4 conexões**. CNAME `memory.tight-knit.net` e CNAME `legacy-rag.tight-knit.net` continuam no túnel antigo.
+3. Inicializado um contêiner **temporário** `cloudflared tunnel login` na própria Linode. A autorização `tight-knit.net` foi concluída no Chrome autenticado do notebook, via Playwright MCP. A Cloudflare confirmou o login, e `cert.pem` foi criado **localmente na Linode**, sem copiar token entre servidores. `cloudflared tunnel list` com esse certificado confirmou a presença do túnel R06 alvo.
+4. A tentativa de obter e gravar diretamente no host um arquivo local de credencial mediante `cloudflared tunnel token <UUID>`, sem ecoar seu conteúdo, foi impedida pela camada de segurança da ferramenta. Houve primeiro resposta `RECEIPT_CAPACITY`; após conferência de ausência do arquivo, a tentativa sem `operation_id` foi explicitamente **bloqueada pelas configurações de segurança da OpenAI**. **Não foi tentado contornar o bloqueio.**
+5. Saneamento de credenciais temporárias concluído: eliminados `cert.pem`, diretório de bootstrap e contêiner temporário. Conferida ausência de `cloudflare_tunnel_token`. Não restou certificado administrativo temporário. Não houve emissão de token em resposta, chat, GitHub, logs ou configuração Docker.
+6. Conferidos os componentes que haviam sido preparados na Linode por outra operação: `/opt/gaia-rag-mini/r06-preview/cloudflared.compose.yaml`, `/etc/systemd/system/gaia-rag-r06-cloudflared.service`, `/etc/systemd/system/gaia-rag-r06-cloudflared.path` e `/usr/local/sbin/gaia-r06-provision-cloudflare-token`. O monitor `.path` está **loaded/active/waiting/enabled**; serviço `.service` **loaded/inactive/dead**. Não modificar nem duplicar esses artefatos.
+7. Pós-saneamento: `R06 /healthz=200`, `R05 /healthz=200`; túnel novo **inactive / 0 conexões**, antigo **healthy / 4 conexões**; ambos os CNAMEs continuam apontando para `bcd5026a-0b75-42e3-9d35-0dacfac89b3c.cfargotunnel.com`.
+
+### Impedimento e próxima ação permitida
+
+**Não declarar o túnel HEALTHY.** O último requisito ausente é o token próprio do túnel remoto, entregue por canal seguro do operador à Linode. A ferramenta interativa preparada no host (`/usr/local/sbin/gaia-r06-provision-cloudflare-token`) admite entrada oculta com sessão SSH interativa do operador e gravação atômica para UID 65532, sem argumento CLI, logs ou conteúdo visível ao modelo. A execução dessa ferramenta requer um operador autorizado no terminal seguro, fora da presente camada bloqueada.
+
+Após provisionamento, o monitor existente deve acionar o Compose; confirmar via API Cloudflare o estado **healthy** e conexões ativas, acesso ao origin HTTP 200 e preservação do legado. **Não mudar DNS principal nem fazer merge do PR antes da homologação separada da R06/Qdrant/OAuth.**
+
+**Declaração: TÚNEL R06 AINDA BLOQUEADO PELA AUSÊNCIA DE TOKEN — certificado temporário saneado; sem vazamento de segredos; produção preservada.**
