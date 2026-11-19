@@ -379,6 +379,11 @@ jobs:
           docker run --rm --network none --read-only --cap-drop ALL \
             --entrypoint dpkg-query gaia-rag-mini:r07-s9-os \
             -W '-f=${Package}\t${Version}\t${Architecture}\n' > "$RUNNER_TEMP/r07-dpkg.tsv"
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --entrypoint dpkg-query gaia-rag-mini:r07-s9-os \
+            -W '-f=${Version}\n' zlib1g | \
+            grep -Fx '1:1.3.dfsg+really1.3.1-1+deb13u1'
+          echo 'S9.1 security-patched zlib1g version verified in ephemeral image.' >> "$GITHUB_STEP_SUMMARY"
           python scripts/r07_s9_os_audit.py --dpkg-list "$RUNNER_TEMP/r07-dpkg.tsv" \
             --sbom-out "$RUNNER_TEMP/r07-os-packages.cdx.json"
           test -s "$RUNNER_TEMP/r07-os-packages.cdx.json"
