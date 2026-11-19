@@ -13,11 +13,10 @@ PACKAGES = "\n".join(
 
 def scan(findings=None):
     return {
-        "ArtifactType": "container_image",
-        "Results": [
-            {"Target": "gaia-r07-demo (debian 12)", "Class": "os-pkgs",
-             "Type": "debian", "Vulnerabilities": findings or []}
-        ],
+        "descriptor": {"name": "grype"},
+        "source": {"type": "image"},
+        "distro": {"name": "debian", "version": "12"},
+        "matches": findings or [],
     }
 
 
@@ -43,14 +42,16 @@ class OSScanTests(unittest.TestCase):
             installed_os_inventory(PACKAGES + "\ndemo-pkg-01\t1.1-1\tamd64")
 
     def test_empty_and_non_container_reports_rejected(self):
-        for payload in ({}, {"ArtifactType": "repository", "Results": []}):
+        for payload in ({}, {"descriptor": {"name": "grype"}, "source": {"type": "repository"}, "matches": []}):
             with self.assertRaises(ValueError):
                 inspect_os_scan(payload)
 
     def test_report_without_actual_os_results_rejected(self):
         with self.assertRaisesRegex(ValueError, "OS_SCAN_NO_OS_COVERAGE"):
-            inspect_os_scan({"ArtifactType": "container_image",
-                             "Results": [{"Class": "lang-pkgs"}]})
+            inspect_os_scan({"descriptor": {"name": "grype"},
+                             "source": {"type": "image"},
+                             "distro": {"name": "ubuntu"},
+                             "matches": []})
 
     def test_zero_os_vulnerabilities_is_eligible_only_for_ci(self):
         result = inspect_os_scan(scan())
@@ -58,9 +59,10 @@ class OSScanTests(unittest.TestCase):
         self.assertFalse(result["production_homologated"])
 
     def test_high_os_vulnerability_causes_no_go(self):
-        findings = [{"VulnerabilityID": "DEMO-CVE-2026-999",
-                     "Severity": "HIGH", "PkgName": "libc6",
-                     "InstalledVersion": "demo", "FixedVersion": "fixed"}]
+        findings = [{"vulnerability": {"id": "DEMO-CVE-2026-999",
+                                        "severity": "High"},
+                     "artifact": {"type": "deb", "name": "libc6",
+                                  "version": "demo"}}]
         result = inspect_os_scan(scan(findings))
         self.assertFalse(result["ready_for_supply_chain_gate"])
         self.assertEqual(result["os_blocking_findings"], 1)
