@@ -201,6 +201,25 @@ def review_view(identifier: str, actor: str, authorize) -> dict:
                 "expires_at":row["expires_at"],"process_id":row["process_id"],
                 "csrf":csrf_token(row["id"],actor) if row["status"]=="pending" and row["expires_at"]>=_now() else None}
 
+def _verify_approved_point(row, confirmed: dict) -> dict:
+    """Require fresh positive readback of the same approved point and provenance."""
+    if not isinstance(confirmed, dict) or confirmed.get("found") is not True:
+        raise RuntimeError("APPROVED_POINT_READBACK_UNCONFIRMED")
+    item = confirmed.get("item")
+    if not isinstance(item, dict) or any((
+        item.get("approved") is not True,
+        item.get("namespace") != row["namespace"],
+        item.get("process_id") != row["process_id"],
+        item.get("source_ref") != row["source_ref"],
+        item.get("document_approval_ref") != row["document_approval_ref"],
+        item.get("document_sha256") != row["document_sha256"],
+        item.get("text") != row["summary"],
+        item.get("id") != row["point_id"],
+    )):
+        raise RuntimeError("APPROVED_POINT_READBACK_UNCONFIRMED")
+    return item
+
+
 def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read_point) -> dict:
     # Browser-mediated: only caller that verified Access JWT and explicit CSRF POST can call.
     with closing(_connect()) as conn, conn:
@@ -208,7 +227,11 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
         row = _checked_row(conn,identifier,actor,authorize)
         verify_csrf(row["id"],actor,csrf)
         if row["status"]=="approved":
+            # An old SQLite approval is not proof that its point still exists.
+            # Release the transaction before the potentially slow Qdrant read.
+            cap = authorize(row["namespace"], row["tenant_id"], row["process_id"])
             conn.commit()
+            _verify_approved_point(row, read_point(cap, row["point_id"]))
             return {"stored":True,"point_id":row["point_id"],"replayed":True}
         if row["status"]!="pending" or row["expires_at"]<_now():
             raise AccessDenied("REVIEW_NOT_PENDING")
@@ -240,10 +263,8 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
     }
     write_point(row["point_id"],payload)
     confirmed=read_point(cap,row["point_id"])
-    item=confirmed.get("item",{}) if isinstance(confirmed,dict) else {}
-    if (confirmed.get("found") is not True or item.get("document_sha256")!=row["document_sha256"]
-            or item.get("text")!=row["summary"]
-            or item.get("index_method")!="r07_deterministic_v1"
+    item=_verify_approved_point(row,confirmed)
+    if (item.get("index_method")!="r07_deterministic_v1"
             or item.get("index_keywords_suggested")!=indexing["suggested_tags"]):
         raise RuntimeError("READBACK_UNCONFIRMED")
     with closing(_connect()) as conn, conn:
