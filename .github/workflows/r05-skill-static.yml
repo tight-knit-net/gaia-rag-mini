@@ -344,7 +344,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_r07_s8_snapshot_contract.py' -v
 
   r07_s9_hash_bootstrap:
-    name: R07 S9 wheel hash acquisition (public PyPI, temporary runner)
+    name: R07 S9 wheel hash verification (public PyPI, temporary runner)
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
@@ -355,7 +355,55 @@ jobs:
         with:
           python-version: '3.12'
       - name: Download pinned public linux-amd64 wheels, generate/check hash manifest
-        run: python scripts/r07_s9_wheel_lock.py --bootstrap
+        run: python scripts/r07_s9_wheel_lock.py --verify
+
+  r07_s9_os_scan:
+    name: R07 S9 Debian OS SBOM and Grype public vulnerability audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test Debian package BOM and scanner result fail-closed handling
+        run: python -m unittest discover -s tests -p 'test_r07_s9_os_audit.py' -v
+      - name: Build the candidate Docker image only on an ephemeral runner
+        run: docker build --tag gaia-rag-mini:r07-s9-os .
+      - name: Generate CycloneDX OS manifest from actual installed packages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --entrypoint dpkg-query gaia-rag-mini:r07-s9-os \
+            -W '-f=${Package}\t${Version}\t${Architecture}\n' > "$RUNNER_TEMP/r07-dpkg.tsv"
+          python scripts/r07_s9_os_audit.py --dpkg-list "$RUNNER_TEMP/r07-dpkg.tsv" \
+            --sbom-out "$RUNNER_TEMP/r07-os-packages.cdx.json"
+          test -s "$RUNNER_TEMP/r07-os-packages.cdx.json"
+          printf 'S9 OS SBOM SHA256: %s\n' \
+            "$(sha256sum "$RUNNER_TEMP/r07-os-packages.cdx.json" | cut -d' ' -f1)" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Audit Debian OS CVEs using isolated Grype version v0.122.0
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker save -o "$RUNNER_TEMP/r07-s9-image.tar" gaia-rag-mini:r07-s9-os
+          docker pull anchore/grype:v0.122.0
+          docker run --rm --network bridge --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GRYPE_DB_CACHE_DIR=/scan/grype-db \
+            --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+            --volume "$RUNNER_TEMP:/scan:rw" anchore/grype:v0.122.0 \
+            docker-archive:/scan/r07-s9-image.tar --output json \
+            > "$RUNNER_TEMP/r07-grype-os.json"
+          test -s "$RUNNER_TEMP/r07-grype-os.json"
+          python scripts/r07_s9_os_audit.py \
+            --dpkg-list "$RUNNER_TEMP/r07-dpkg.tsv" \
+            --grype-json "$RUNNER_TEMP/r07-grype-os.json"
+          printf 'S9 Debian package Grype scan: no HIGH/CRITICAL/UNKNOWN OS findings.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
 
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
@@ -371,6 +419,8 @@ jobs:
       - r07_s7_sqlite_recovery
       - r07_s8_supplychain
       - r07_s8_review_and_snapshot
+      - r07_s9_hash_bootstrap
+      - r07_s9_os_scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
