@@ -292,6 +292,9 @@ jobs:
           python scripts/r07_s8_supplychain.py \
             --lock requirements.lock \
             --verify-sbom "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --verify-sbom docs/institucional/R07_SBOM_PYTHON_LOCK_S8.cdx.json
           test -s "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
           printf 'S8 lock-based CycloneDX SBOM SHA256: %s\n' \
             "$(sha256sum "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json" | cut -d' ' -f1)" \
@@ -300,7 +303,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          python -m pip install --disable-pip-version-check 'pip-audit>=2.9,<3'
+          python -m pip install --disable-pip-version-check 'pip-audit==2.10.1'
           audit_status=0
           pip-audit --requirement requirements.lock --no-deps --disable-pip \
             --format json --output "$RUNNER_TEMP/gaia-r07-advisories.json" \
