@@ -390,12 +390,15 @@ jobs:
         run: |
           set -Eeuo pipefail
           docker save -o "$RUNNER_TEMP/r07-s9-image.tar" gaia-rag-mini:r07-s9-os
-          docker pull anchore/grype:v0.122.0
+          chmod a+r "$RUNNER_TEMP/r07-s9-image.tar"
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
           docker run --rm --network bridge --read-only \
+            --tmpfs /tmp:rw,mode=1777,size=512m \
             --cap-drop ALL --security-opt no-new-privileges:true \
-            --env GRYPE_DB_CACHE_DIR=/scan/grype-db \
+            --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
             --env GRYPE_CHECK_FOR_APP_UPDATE=false \
-            --volume "$RUNNER_TEMP:/scan:rw" anchore/grype:v0.122.0 \
+            --volume "$RUNNER_TEMP/r07-s9-image.tar:/scan/r07-s9-image.tar:ro" \
+            anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
             docker-archive:/scan/r07-s9-image.tar --output json \
             > "$RUNNER_TEMP/r07-grype-os.json"
           test -s "$RUNNER_TEMP/r07-grype-os.json"
