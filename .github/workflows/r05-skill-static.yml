@@ -413,6 +413,70 @@ jobs:
           printf 'S9 Debian package Grype scan: no HIGH/CRITICAL/UNKNOWN OS findings.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 
+  r07_s9_1_base_comparison:
+    name: R07 S9.1 supported Python 3.12 base comparison (${{ matrix.variant }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [slim-bookworm, slim-trixie]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test fail-closed CVE comparison without live services
+        run: python -m unittest discover -s tests -p 'test_r07_s9_1_compare_os.py' -v
+      - name: Resolve official supported Python image tag to immutable digest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull "python:3.12-${{ matrix.variant }}"
+          immutable="$(docker image inspect --format '{{ index .RepoDigests 0 }}' "python:3.12-${{ matrix.variant }}")"
+          [[ "$immutable" =~ ^python@sha256:[a-f0-9]{64}$ ]] || { echo 'INVALID_BASE_DIGEST'; exit 1; }
+          echo "IMAGE_REF=$immutable" >> "$GITHUB_ENV"
+          echo "S9.1 base reference: $immutable" >> "$GITHUB_STEP_SUMMARY"
+          { printf 'FROM %s\n' "$immutable"; tail -n +2 Dockerfile; } \
+            > "$RUNNER_TEMP/Dockerfile.s91"
+      - name: Build complete R07 candidate only on disposable GitHub runner
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker build -f "$RUNNER_TEMP/Dockerfile.s91" \
+            -t "gaia-rag-mini:s91-${{ matrix.variant }}" .
+          docker image inspect --format '{{.Os}}/{{.Architecture}}' \
+            "gaia-rag-mini:s91-${{ matrix.variant }}" | grep -Fx linux/amd64
+          docker save -o "$RUNNER_TEMP/s91-image.tar" \
+            "gaia-rag-mini:s91-${{ matrix.variant }}"
+          chmod a+r "$RUNNER_TEMP/s91-image.tar"
+          mkdir -p "$RUNNER_TEMP/s91-db" "$RUNNER_TEMP/s91-work"
+          chmod 1777 "$RUNNER_TEMP/s91-db" "$RUNNER_TEMP/s91-work"
+      - name: Full public Debian CVE comparison using pinned Grype
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          docker run --rm --network bridge --read-only \
+            --tmpfs /tmp:rw,mode=1777,size=128m \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+            --env TMPDIR=/tmp/grype-work \
+            --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+            --volume "$RUNNER_TEMP/s91-db:/tmp/grype-db:rw" \
+            --volume "$RUNNER_TEMP/s91-work:/tmp/grype-work:rw" \
+            --volume "$RUNNER_TEMP/s91-image.tar:/scan/s91-image.tar:ro" \
+            anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+            docker-archive:/scan/s91-image.tar --output json \
+            > "$RUNNER_TEMP/s91-grype.json"
+          test -s "$RUNNER_TEMP/s91-grype.json"
+          python scripts/r07_s9_1_compare_os.py --report "$RUNNER_TEMP/s91-grype.json" \
+            --image "$IMAGE_REF" --variant "${{ matrix.variant }}"
+          echo "Comparison only: HIGH/CRITICAL/UNKNOWN findings still block original S9 OS job." \
+            >> "$GITHUB_STEP_SUMMARY"
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -429,6 +493,7 @@ jobs:
       - r07_s8_review_and_snapshot
       - r07_s9_hash_bootstrap
       - r07_s9_os_scan
+      - r07_s9_1_base_comparison
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
