@@ -92,3 +92,19 @@ A CI herdada da base R07 pode avaliar um merge virtual distinto do código HEAD 
 **Rollback do G14-F:** reverter apenas módulo `g14f_contracts.py`, `test_g14f_contracts.py`, mudanças na CI própria, relatório 19 e índice, mediante checagem de HEAD e sem tocar em R06/R07. Nenhum restore externo necessário, porque nenhum dado operacional foi escrito.
 
 **Publicação documental:** `docs/document-mcp/19_G14F_REVISAO_INDEPENDENTE_EVENTOS_LOTES_READBACK.md`. Fonte canônica de estado após publicação: commit GitHub + readback da PR, não este texto sozinho.
+
+## 8. Checkpoint de CI e verificação pós-publicação — aditivo v1.0.1
+
+**Aferição:** 2026-11-18T22:34:27-03:00, `America/Sao_Paulo`, origem: ferramenta de hora local do ChatGPT. Esta fotografia pode mudar quando o job herdado concluir; nenhuma execução em segundo plano é alegada.
+
+**Publicação e isolamento:** commit documental `9f4f34956178dfacb32f9c4a318d8a4f7b5754e5`; [PR #7 Draft](https://github.com/tight-knit-net/gaia-rag-mini/pull/7) sem merge, base `feat/r07-office-knowledge-assimilation`, branch correta reconfirmada. Diff G14-E `95c6a60...` → G14-F `9f4f34956178dfacb32f9c4a318d8a4f7b5754e5`: **5 arquivos exclusivos da frente Document MCP** (módulo `g14f_contracts.py`, 32 testes, CI isolada, relatório 19 e README). Readback confirmou relatório e índice.
+
+**Teste no commit documental final:** [run 44437777216](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44437777216) `success` no mesmo HEAD. A suíte própria soma 49 + 13 + 39 + 39 + 46 + 32 + 32 = **250/250 testes sintéticos**, sem execução de serviço real.
+
+**Nova observação fora do escopo G14-F — S9 sistema operacional:** [run herdado 44437275263](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44437275263) no commit técnico `100f13a00b4e6cf5d1812e29212190a614f50576` teve S7 e S8 **success** (lock/SBOM), mas job **R07 S9 Debian OS SBOM and Grype public vulnerability audit** **failure**, job `135269199099`, com `os_blocking_findings=78` conforme saída do scanner e `ready_for_supply_chain_gate=false`. Foram 87 pacotes OS examinados na imagem do ensaio, com múltiplas ocorrências reportadas como HIGH; são achados do feed público no runner, ainda sem triagem de aplicabilidade por proprietário da imagem. **Não é falha comprovada dos contratos Document MCP**; permanece um **NO-GO de supply chain herdada** até investigação autorizada pelo responsável da R07.
+
+**Run herdado no HEAD final:** [44437777284](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44437777284) estava `in_progress` na aferição; S7/S8 `success` e S9 ainda `in_progress`. Consultar status conclusivo antes de declarar gate de CI herdada aprovado. Uma nova publicação documental inicia outro run, cujo estado deve ser aferido separadamente.
+
+**Risco residual prioritário:** além dos quatro P1 já pendentes de integração, o replay com `expected_revision` alterado e a origem da evidência ainda exigem novos negativos. Não reclassificar como RESOLVIDO com base nos 250 testes de contratos fictícios.
+
+**Decisão mantida:** **GO para revisão e ensaios independentes G14-F; NO-GO para merge, deploy, migração, acesso real a clientes, R06/R07/Qdrant e homologação de cadeia de suprimentos.** Não corrigir S9, S7 ou S8 nesta branch sem gate e autorização do orquestrador.
