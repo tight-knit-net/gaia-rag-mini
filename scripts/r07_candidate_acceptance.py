@@ -48,6 +48,9 @@ REQUIRED_TESTS = (
     "tests/test_r07_host_contract.py",
     "tests/test_r07_s6_security.py",
     "tests/test_r07_s7_recovery.py",
+    "tests/test_r07_s8_supplychain.py",
+    "tests/test_r07_s8_snapshot_contract.py",
+    "tests/test_r07_s8_review_integrity.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -148,6 +151,8 @@ def evaluate(root: Path) -> dict:
             "  r07_s6_security:",
             "  r07_s7_package:",
             "  r07_s7_sqlite_recovery:",
+            "  r07_s8_supplychain:",
+            "  r07_s8_review_and_snapshot:",
         )
     )
     checks["no_image_publication"] = (
@@ -184,6 +189,23 @@ def evaluate(root: Path) -> dict:
     checks["s7_recovery_test_and_preflight_present"] = (
         (root / "tests/test_r07_s7_recovery.py").is_file()
         and (root / "scripts/r07_s7_package_preflight.py").is_file()
+    )
+    from r07_s8_supplychain import create_sbom, validate_sbom
+    locked_bytes = (root / "requirements.lock").read_bytes()
+    checks["s8_deterministic_sbom_from_lock"] = (
+        validate_sbom(create_sbom(locked_bytes), locked_bytes)["python_components"] == 29
+    )
+    checks["s8_review_replay_readback_preserved"] = (
+        "def _verify_approved_point(" in review
+        and "read_point(cap, row[\"point_id\"])" in review
+        and "APPROVED_POINT_READBACK_UNCONFIRMED" in review
+    )
+    checks["s8_public_advisory_and_snapshot_gate_present"] = all(
+        (root / path).is_file() for path in (
+            "src/gaia_rag_r05/native_snapshot_plan.py",
+            "scripts/r07_s8_supplychain.py",
+            "tests/test_r07_s8_snapshot_contract.py",
+        )
     )
     checks["test_files_present"] = all((root / path).is_file() for path in REQUIRED_TESTS)
     checks["governance_docs_present"] = all((root / path).is_file() for path in REQUIRED_DOCS)
