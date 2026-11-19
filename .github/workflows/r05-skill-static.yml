@@ -490,6 +490,73 @@ jobs:
           echo "Comparison only: HIGH/CRITICAL/UNKNOWN findings still block original S9 OS job." \
             >> "$GITHUB_STEP_SUMMARY"
 
+  r07_s9_2_stable_upgrade:
+    name: R07 S9.2 official Debian stable/security update trial (no promotion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify stable-only trial policy and fail-closed comparison tests
+        run: python -m unittest discover -s tests -p 'test_r07_s92_stable_update.py' -v
+      - name: Create disposable upgrade trial without modifying tracked Dockerfile
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s92_stable_update.py --dockerfile Dockerfile \
+            --write-trial "$RUNNER_TEMP/Dockerfile.r07-s92"
+          grep -Fq 'apt-get upgrade -y --no-install-recommends' \
+            "$RUNNER_TEMP/Dockerfile.r07-s92"
+          grep -Fq -- '--require-hashes --only-binary=:all:' \
+            "$RUNNER_TEMP/Dockerfile.r07-s92"
+          docker build -t gaia-rag-mini:r07-s92-original .
+          docker build -f "$RUNNER_TEMP/Dockerfile.r07-s92" \
+            -t gaia-rag-mini:r07-s92-trial .
+          for tag in original trial; do
+            image="gaia-rag-mini:r07-s92-$tag"
+            docker image inspect --format '{{.Os}}/{{.Architecture}}' "$image" \
+              | grep -Fx linux/amd64
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --entrypoint dpkg-query "$image" \
+              -W '-f=${Package}\t${Version}\t${Architecture}\n' \
+              > "$RUNNER_TEMP/r07-s92-$tag-dpkg.tsv"
+            docker save -o "$RUNNER_TEMP/r07-s92-$tag.tar" "$image"
+            chmod a+r "$RUNNER_TEMP/r07-s92-$tag.tar"
+          done
+          mkdir -p "$RUNNER_TEMP/r07-s92-db" "$RUNNER_TEMP/r07-s92-work"
+          chmod 1777 "$RUNNER_TEMP/r07-s92-db" "$RUNNER_TEMP/r07-s92-work"
+      - name: Run original and stable-only trial Grype scans using public advisory DB
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          for tag in original trial; do
+            docker run --rm --network bridge --read-only \
+              --tmpfs /tmp:rw,mode=1777,size=128m \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+              --env TMPDIR=/tmp/grype-work \
+              --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+              --volume "$RUNNER_TEMP/r07-s92-db:/tmp/grype-db:rw" \
+              --volume "$RUNNER_TEMP/r07-s92-work:/tmp/grype-work:rw" \
+              --volume "$RUNNER_TEMP/r07-s92-$tag.tar:/scan/image.tar:ro" \
+              anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+              docker-archive:/scan/image.tar --output json \
+              > "$RUNNER_TEMP/r07-s92-$tag-grype.json"
+            test -s "$RUNNER_TEMP/r07-s92-$tag-grype.json"
+          done
+          python scripts/r07_s92_stable_update.py \
+            --before-scan "$RUNNER_TEMP/r07-s92-original-grype.json" \
+            --after-scan "$RUNNER_TEMP/r07-s92-trial-grype.json" \
+            --before-dpkg "$RUNNER_TEMP/r07-s92-original-dpkg.tsv" \
+            --after-dpkg "$RUNNER_TEMP/r07-s92-trial-dpkg.tsv"
+          echo 'S9.2 comparison ONLY; original R07 OS Grype blocking gate remains mandatory.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -507,6 +574,7 @@ jobs:
       - r07_s9_hash_bootstrap
       - r07_s9_os_scan
       - r07_s9_1_base_comparison
+      - r07_s9_2_stable_upgrade
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
