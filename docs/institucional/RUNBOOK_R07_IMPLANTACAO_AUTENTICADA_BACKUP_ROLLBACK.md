@@ -82,3 +82,15 @@
 **S8 — Revisão independente final da candidata e matriz de prontidão para homologação externa, somente leitura / CI.** Auditar contratos MCP, código de revisão, pacote, dependências, artefatos de CI, recuperação, lacunas residuais (wheel hashes, varredura de vulnerabilidades, snapshot nativo), risco de bloqueios reais e planejamento do host. Produzir checklist GO/NO-GO. **Não executar** deploy, Cloudflare, Qdrant real, migração ou desativação. O próximo gate não está disparado por este runbook.
 
 **Estado:** proposta técnica pronta para futura revisão humana; operação real não iniciada.
+
+## Adendo S8 — validação de supply chain e prioridade de snapshot (18/11/2026)
+
+- **SBOM Python**: `R07_SBOM_PYTHON_LOCK_S8.cdx.json`, CycloneDX 1.6, 29 componentes a partir de `requirements.lock`; o CI o regenera e compara com o arquivo armazenado. Não abrange biblioteca nativa de SO, binários nem as wheels reais por hash.
+- **Auditoria de vulnerabilidades**: `pip-audit==2.10.1` consulta advisories públicos para as 29 versões fixadas. Em 18/11/2026, a consulta CI retornou zero vulnerabilidades conhecidas; isso é fotografia temporal da base PyPI, não garantia de ausência de riscos ou cobertura de SO.
+- **Hashes de wheels**: ainda não estão em `requirements.lock`; sem `pip install --require-hashes`, pinagem é por versão, não bytes. S9 precisa obter hashes apropriados, prender artefatos e demonstrar rebuild isolado.
+- **Qdrant snapshot nativo**: fonte oficial https://qdrant.tech/documentation/snapshots/ ; criar em `POST /collections/{collection}/snapshots` e restaurar para nome **inexistente** via upload com `priority=snapshot`; a prioridade padrão `replica` pode deixar uma coleção nova sem pontos (conforme documentação Qdrant). Endpoint upload pode **sobrescrever** coleção existente. Nunca testá-lo em coleção de produção/legado sem autorização específica.
+- **Protocolo fail-closed em R07**: `native_snapshot_plan.preflight` exige coleção de destino distinta e ausente, checksum SHA-256 verificado, manifest completo, backup do ledger e contagens idênticas de pontos aprovados. Testes S8 são **apenas sintéticos**, e o contrato nunca considera o host homologado nem autoriza migração.
+- **Replay de aprovação**: nova rotina `_verify_approved_point` reconsulta Qdrant mesmo se o ledger SQLite já indicar `approved`; confere ID, status, namespace, processo, source_ref, documento e texto. Se faltar ponto/ocorrer divergência, não declarar `stored=True`. O clique humano original com CSRF continua obrigatório.
+- **Fontes API**: https://api.qdrant.tech/api-reference/snapshots/create-snapshot e https://api.qdrant.tech/api-reference/snapshots/recover-from-uploaded-snapshot . As URLs são fonte de especificação, não ações executadas.
+
+**S8 foi um gate de CI/auditoria sem snapshot Qdrant nativo executado.** A futura decisão de host, backup real, migração e corte não está autorizada.
