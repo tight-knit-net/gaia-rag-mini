@@ -69,3 +69,18 @@ A documentação original de R07 e os relatórios G4 não devem ser reescritos r
 - `docs/institucional/R07_S7_RELATORIO_PRONTIDAO_EMPACOTAMENTO_2026-11-18.md`: relatório S7 com 10/10 jobs no código, limites e decisão NO-GO operacional.
 
 **Limitação:** os caminhos históricos de publicação e compose existentes são apenas referências congeladas, não implantação autorizada. A integração no host real, backup nativo Qdrant, wheel hashes/CVE e migração legada seguem pendentes. Nenhuma operação no TestLab antigo foi executada.
+
+## Complemento S8 — supply chain, readback e snapshot nativo planejado (18/11/2026)
+
+- `src/gaia_rag_r05/review.py`: replay de memória aprovada exige readback Qdrant atual, íntegro e contextualizado; não retorna `stored=true` apenas pela linha SQLite.
+- `tests/test_r07_s8_review_integrity.py`: 6 testes de readback/idempotência/negação sem efeito real.
+- `scripts/r07_s8_supplychain.py`: SBOM CycloneDX determinístico derivado do lock; verificação fail-closed de scanner público das 29 versões.
+- `tests/test_r07_s8_supplychain.py`: 8 testes de integridade do BOM, cobertura completa do audit e falha ante vulnerabilidade conhecida.
+- `docs/institucional/R07_SBOM_PYTHON_LOCK_S8.cdx.json`: CycloneDX 1.6 versionado com 29 dependências Python, não inclui pacotes do SO nem hashes das wheels.
+- `src/gaia_rag_r05/native_snapshot_plan.py` e `tests/test_r07_s8_snapshot_contract.py`: 8 provas sintéticas da decisão de snapshot, destino ausente, SHA, prioridade `snapshot`, inventário e ledger independente.
+- `.github/workflows/r05-skill-static.yml`: novos jobs `r07_s8_supplychain`, `r07_s8_review_and_snapshot` antes do aceite.
+- `scripts/r07_candidate_acceptance.py`: valida SBOM versionado, contratos de revisão e gates S8.
+- `docs/institucional/R07_S8_AUDITORIA_FINAL_SEGURANCA_SUPPLYCHAIN_2026-11-18.md`: relatório do gate, CI 12/12, gaps e próximo S9.
+- `docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md`: adendo de regras de restauração Qdrant, limites da auditoria pública e medidas S9.
+
+**Situação:** S8 aprovado tecnicamente em CI; wheel hashes, CVEs dos pacotes de SO, backup nativo em Qdrant descartável e carregamento do host real ainda pendentes de gates separados. Nada foi implantado.
