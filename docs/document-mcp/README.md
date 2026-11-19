@@ -25,6 +25,7 @@
 20. [20 — G14-G: replay versionado, evidência DEMO observada e paginação SQLite](20_G14G_REPLAY_EVIDENCIA_PAGINACAO_SINTETICA.md)
 21. [21 — G14-H: auditoria independente da paginação e compatibilidade contratual OCR R02](21_G14H_AUDITORIA_PAGINACAO_EVENTOS_OCR_R02.md)
 22. [22 — G14-I: interoperabilidade OCR R02, fila e lease sintéticos e revisão agrupada](22_G14I_FILA_LEASE_EVENTOS_OCR_R02_REVISAO_SINTETICA.md)
+23. [23 — G14-J: reconciliação UNKNOWN, provas sintéticas e bloqueio de CI](23_G14J_RECONCILIACAO_UNKNOWN_PROVAS_CI_BLOQUEADA.md)
 
 **Precedência:** decisões documentais R06/R07, política de memória e fontes canônicas do Google Drive > interfaces propostas aqui. Documentação oficial de fornecedores para capabilities; documentação do GitHub para estado do código; observações operacionais devem citar ambiente e instante. Não considerar documentação futura como funcionalidade publicada.
 
