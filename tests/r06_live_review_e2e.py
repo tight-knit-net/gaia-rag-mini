@@ -396,6 +396,48 @@ def main():
                 outsider,err,_=tool("memory_search_all",{"query":"DEMO","namespace":NS},identity=B)
                 check("R06-29_OUTSIDER_CANNOT_GLOBAL_SEARCH",err is True)
                 check("R06-30_RECORDS_STORED_BY_LAB_ONLY",count()==3,str(count()))
+                # S7: LOGICAL Qdrant export/restore on a disposable Qdrant,
+                # never a native snapshot or a production migration.
+                # Clone *only* DEMO records to a separate shadow collection.
+                shadow = "gaia_r07_s7_shadow_restore_demo"
+                original = q("POST", POINTS+"/scroll", {
+                    "limit": 100, "with_payload": True, "with_vector": True,
+                })["result"]
+                source_points = original["points"]
+                check("R07-S7-QDRANT-LOGICAL-BACKUP",
+                      len(source_points)==3 and
+                      original.get("next_page_offset") is None and
+                      all(isinstance(p.get("vector"), list)
+                          and len(p["vector"])==4 for p in source_points))
+                def records_digest(points):
+                    compact = [{"id": str(p["id"]), "payload": p["payload"]}
+                               for p in points]
+                    return hashlib.sha256(json.dumps(
+                        sorted(compact, key=lambda p:p["id"]),
+                        sort_keys=True, ensure_ascii=False,
+                        separators=(",", ":")).encode()).hexdigest()
+                source_digest = records_digest(source_points)
+                check("R07-S7-QDRANT-LOGICAL-EXPORT-NO-SCOPE-LOSS",
+                      all(x["payload"]["namespace"]==NS and
+                          x["payload"].get("approved") is True
+                          for x in source_points))
+                q("PUT",f"/collections/{shadow}",{
+                    "vectors":{"size":4,"distance":"Cosine"}})
+                q("PUT",f"/collections/{shadow}/points?wait=true",{
+                    "points":[{"id":p["id"],"vector":p["vector"],
+                               "payload":p["payload"]} for p in source_points]})
+                restored = q("POST",f"/collections/{shadow}/points/scroll",{
+                    "limit":100,"with_payload":True,"with_vector":False})["result"]
+                check("R07-S7-QDRANT-RESTORE-PARITY",
+                      len(restored["points"])==3 and
+                      records_digest(restored["points"])==source_digest)
+                q("DELETE",f"/collections/{shadow}")
+                check("R07-S7-QDRANT-ROLLBACK-SOURCE-UNCHANGED",
+                      count()==3 and
+                      records_digest(q("POST",POINTS+"/scroll",{
+                          "limit":100,"with_payload":True,
+                          "with_vector":False})["result"]["points"])==source_digest)
+
                 print("GAIA_R06_TESTS="+str(checks),flush=True)
         finally:
             server._qrequest=old
