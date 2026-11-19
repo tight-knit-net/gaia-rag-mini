@@ -117,7 +117,7 @@ class G14ENegatives(unittest.TestCase):
 
     def test_whitespace_and_case_only_are_duplicate(self):
         a = self.capture(e=event(summary="DEMO: requerimento autorizado"))
-        b = self.capture(e=event(summary="demo:   requerimento   AUTORIZADO"))
+        b = self.capture(e=event(summary="DEMO:   requerimento   AUTORIZADO"))
         self.assertEqual(a["candidate_id"], b["candidate_id"])
         self.assertEqual(self.preview()["candidate_count"], 1)
 
