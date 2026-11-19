@@ -1,0 +1,55 @@
+name: GAIA RAG Mini - Linode deployment disabled until approval
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "preflight only or deploy a reviewed GHCR image digest"
+        type: choice
+        options: [preflight, deploy]
+        default: preflight
+        required: true
+      image_digest:
+        description: "sha256:64hex from GHCR build; required only for deploy"
+        type: string
+        default: ""
+        required: false
+permissions:
+  contents: read
+  packages: read
+jobs:
+  staging:
+    if: ${{ false }} # Explicit no-publish/no-deploy freeze; requires future reviewed change.
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: gaia-rag-staging
+    env:
+      GHCR_TOKEN: ${{ github.token }}
+      DEPLOY_PRIVATE_KEY: ${{ secrets.LINODE_DEPLOY_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Establish pinned SSH identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -n "$DEPLOY_PRIVATE_KEY" || { echo "::error::Secret LINODE_DEPLOY_KEY not configured"; exit 1; }
+          test -s .github/deploy/linode/known_hosts
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > "$RUNNER_TEMP/gaia-rag-key"
+          chmod 600 "$RUNNER_TEMP/gaia-rag-key"
+      - name: Host preflight (no container writes)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes             -o UserKnownHostsFile=.github/deploy/linode/known_hosts             -i "$RUNNER_TEMP/gaia-rag-key" gaia-rag-deploy@172.235.134.117 probe
+      - name: Deploy explicitly selected reviewed digest to isolated staging
+        if: inputs.mode == 'deploy'
+        shell: bash
+        env:
+          REQUESTED_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$REQUESTED_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "::error::Invalid image digest"; exit 2; }
+          printf '%s\n' "$GHCR_TOKEN" | ssh -T -o BatchMode=yes -o IdentitiesOnly=yes             -o StrictHostKeyChecking=yes             -o UserKnownHostsFile=.github/deploy/linode/known_hosts             -i "$RUNNER_TEMP/gaia-rag-key" gaia-rag-deploy@172.235.134.117             "deploy $REQUESTED_DIGEST $GITHUB_ACTOR"
+      - name: Remove ephemeral SSH identity
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/gaia-rag-key"

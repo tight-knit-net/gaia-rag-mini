@@ -1,0 +1,68 @@
+name: R05 skill static validation
+on:
+  pull_request:
+  push:
+    branches:
+      - docs/r05-gaia-rag-homologacao
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install YAML parser
+        run: python -m pip install 'PyYAML>=6,<7'
+      - name: Validate skill structure
+        run: python skills/gaia-rag-processos-administrativos/scripts/validate_skill.py
+      - name: Static regression (no host, no network)
+        run: python skills/gaia-rag-processos-administrativos/tests/test_regressao_r05.py
+      - name: Validate CI and Linode deployment manifests
+        run: |
+          python - <<'PY'
+          import pathlib, yaml
+          for name in (
+              ".github/workflows/r05-skill-static.yml",
+              ".github/workflows/rag-ghcr-image.yml",
+              ".github/workflows/rag-linode-staging.yml",
+              ".github/deploy/linode/compose.staging.yml",
+          ):
+              data = yaml.safe_load(pathlib.Path(name).read_text())
+              assert isinstance(data, dict), name
+              print("YAML OK:", name)
+          PY
+          bash -n .github/deploy/linode/gaia-rag-mini-deploy.sh
+          bash -n .github/deploy/linode/ssh-gate.sh
+          test -s .github/deploy/linode/known_hosts
+          echo "Shell/known_hosts OK"
+      - name: Validate archive locally without uploading artifacts
+        run: |
+          set -Eeuo pipefail
+          zip -rq "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip" skills/gaia-rag-processos-administrativos
+          unzip -tq "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
+          sha256sum "$RUNNER_TEMP/gaia-rag-processos-administrativos-r05.zip"
+          echo "Archive validated in ephemeral runner only; not uploaded or published."
+      - name: Assert GHCR and Linode deployment freeze
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          image = Path(".github/workflows/rag-ghcr-image.yml").read_text()
+          deploy = Path(".github/workflows/rag-linode-staging.yml").read_text()
+          ci = Path(".github/workflows/r05-skill-static.yml").read_text()
+          disabled = "if: $" + "{{ false }}"
+          assert disabled in image, "GHCR workflow must remain disabled"
+          assert disabled in deploy, "Linode workflow must remain disabled"
+          assert "on:\n  push:" not in image, "GHCR push trigger must stay absent"
+          review_ci = __import__("yaml").safe_load(ci)
+          upload_steps = [
+              step for job in review_ci["jobs"].values()
+              for step in job.get("steps", [])
+              if str(step.get("uses", "")).startswith("actions/upload" + "-artifact@")
+          ]
+          assert not upload_steps, "No ZIP upload step permitted in this phase"
+          print("OK: publication and deploy gates remain blocked")
+          PY

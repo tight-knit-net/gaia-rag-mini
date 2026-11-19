@@ -1,0 +1,35 @@
+# Gaia RAG Mini — staging, isolated from existing NestGround workloads
+name: gaia-rag-mini-staging
+services:
+  gaia-rag-mini:
+    image: ${RAG_IMAGE:?Docker image digest is required}
+    container_name: gaia-rag-mini-staging
+    restart: unless-stopped
+    init: true
+    env_file:
+      - /opt/gaia-rag-mini/secrets/runtime.env
+    ports:
+      - "127.0.0.1:18081:8000"
+    volumes:
+      - gaia_rag_review_state:/state
+    cpus: "1.0"
+    mem_limit: 1024m
+    pids_limit: 256
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  default:
+    name: gaia-rag-mini-staging-net
+volumes:
+  gaia_rag_review_state:
+    name: gaia-rag-mini-staging-state
