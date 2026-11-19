@@ -64,10 +64,10 @@ class MinimizationContractTests(unittest.TestCase):
 
     def test_auto_removed_unobserved_package_is_identified(self):
         modified="\n".join(line for line in PKGS.splitlines()
-                           if not line.startswith("demo-30\t"))+"\n"
+                           if not line.startswith("demo-29\t"))+"\n"
         data=compare(PKGS,modified,scan([finding("DEMO-CVE-A")]),
                      scan([]),probe(),probe())
-        self.assertEqual(data["removed_os_packages"][0]["name"],"demo-30")
+        self.assertEqual(data["removed_os_packages"][0]["name"],"demo-29")
         self.assertEqual(data["resolved_blockers"],["DEMO-CVE-A"])
         self.assertFalse(data["publish_approved"])
 
