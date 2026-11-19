@@ -106,3 +106,13 @@ A documentação original de R07 e os relatórios G4 não devem ser reescritos r
 - `docs/institucional/R07_S92_RELATORIO_REMEDIACAO_DEBIAN_ESTAVEL_2026-11-18.md`: relatório S9.2 com 87/87 pacotes, 0 atualizações estáveis novas, 23/23 CVEs e 77/77 ocorrências HIGH mantidas, NO-GO, horas aferidas e próximo gate S9.3.
 - Nenhuma mudança S9.2 no Dockerfile rastreado (patch zlib do S9.1 permanece). O `requirements.lock` das 29 wheels, Skilldrum, contratos MCP, revisão humana e snapshot Qdrant sintético foram preservados.
 - **NO-GO operacional** até solução comprovada de CVEs HIGH/CRITICAL/UNKNOWN; sem merge, deploy, migração, produção, TestLab ou desligamento legado.
+
+## S9.3 — minimização conservadora por APT (19/11/2026)
+
+- `scripts/r07_s93_minimization.py`: geração de Dockerfile exclusivamente **temporário em CI**, comparação da lista integral de pacotes Debian e de resultados Grype, sondagem de imports/ELF e classificação **O = observado / N = não observado, não dispensável**.
+- `tests/test_r07_s93_minimization.py`: 10 testes negativos/sintéticos de base fixada, lock por SHA256, dependências observadas, scanner completo e ausência de aprovação automática.
+- `tests/r07_s93_http_smoke.py`: saúde e quatro negativas HTTP em trial isolada (5/5), sem rede externa, sem segredos ou memória real.
+- `.github/workflows/r05-skill-static.yml`: job `r07_s93_minimization` dependência do aceite, com build temporário, `pip check`, comparação por Grype e provas HTTP; o scanner OS original permanece fail-closed.
+- `docs/institucional/R07_S93_MATRIZ_DEPENDENCIAS_RUNTIME_2026-11-19.md`: inventário das 87 versões Debian e 8 bibliotecas ligadas aos módulos Python testados; 79 outras não observadas **não devem ser removidas sem prova**.
+- `docs/institucional/R07_S93_RELATORIO_MINIMIZACAO_RUNTIME_2026-11-19.md`: relatório S9.3 v1.0.0; 87→87 pacotes, 0 removidos, 23 CVEs HIGH/77 ocorrências, CI 16 PASS/1 FAIL/1 SKIPPED, NO-GO.
+- **Não houve alteração no Dockerfile principal ou `requirements.lock`.** Sem merge, deploy, publicação, migração ou corte do legado. Próximo gate S9.4 documental/CI para estudar empacotamento multi-stage suportado, sem waiver de CVEs.
