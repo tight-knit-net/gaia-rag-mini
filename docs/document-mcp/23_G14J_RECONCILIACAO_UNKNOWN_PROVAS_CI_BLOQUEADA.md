@@ -1,6 +1,6 @@
 # Gate G14-J — reconciliação da finalização UNKNOWN em SQLite descartável
 
-**Versão documental:** 1.0.0 — execução de implementação sintética com **VALIDAÇÃO BLOQUEADA**; não é homologação operacional.  
+**Versão documental:** 1.0.1 — execução de implementação sintética com **VALIDAÇÃO BLOQUEADA**; não é homologação operacional.  
 **Emissão aferida:** `2026-11-19T01:17:34-03:00`, fuso `America/Sao_Paulo`. Fonte do relógio: widget local de tempo do ChatGPT.  
 **Disparo aferido G14-J:** `2026-11-19T01:07:57-03:00`, mesma fonte.  
 **Último gate G14-I:** commit documental `e83c791630e2e0682a161fcd2e9d5ef6d6363e3d` em `2026-11-19T03:30:57Z` = **19/11/2026 às 00:30:57 BRT** (metadados GitHub).  
@@ -124,11 +124,11 @@
 | J2 | Testes negativos e concorrência (35 casos) | 🟡 **ESCRITOS, EXECUÇÃO BLOQUEADA** |
 | J3 | CI do G14-J com logs de unittest | 🔴 **FALHOU ANTES DAS ETAPAS** |
 | J4 | Regressões v2 no HEAD do G14-J | 🟡 **PENDENTE**, baseline histórico não comprova HEAD novo |
-| J5 | Relatório MD, índice e readback GitHub | 🟡 **PENDENTE ATÉ PUBLICAÇÃO**, verificar depois |
+| J5 | Relatório MD, índice e readback GitHub | 🟢 **PASSOU no checkpoint documental**, readback confirmado |
 | J6 | Cadeia de suprimentos herdada | 🔴 **FALHOU SEM LOGS**, além de riscos S9 anteriores |
 | J7 | E2E OCR/R06/Qdrant/produção | 🔴 **NO-GO** |
 
-**Contagem aprovada nesta emissão inicial:** 1/8 = **12,5% de critérios concluídos**. Se J5 for confirmado no readback do relatório, será 2/8 = **25%**. Esse percentual não representa prontidão global; os testes G14-J permanecem 0% com execução comprovada.
+**Contagem após publicação documental e readback:** **2/8 = 25%** dos critérios concluídos (J0 e J5). O desenvolvimento está processado, mas sem aceite da execução; J3 e J6 falharam sem etapas, J2/J4 pendentes e J7 NO-GO. Esse percentual não representa prontidão global; os testes G14-J permanecem **0/35 = 0% com execução comprovada**.
 
 **Rollback autorizado conceitualmente (não executado):** reverter somente commit G14-J e documentação correspondente mediante prévia reconferência de HEAD, mantendo G14-I, R07, R06 e demais frentes. SQLite `TemporaryDirectory` não persiste em serviço real, portanto não requer restauração externa.
 
@@ -137,3 +137,14 @@
 **G14-JR (retomada controlada, NÃO EXECUTADO):** verificar formalmente a disponibilidade/configuração de GitHub Actions, com responsável pela infraestrutura se necessário; executar o próprio workflow da branch novamente, sem enfraquecer testes/segurança; se o runner voltar, corrigir quaisquer falhas reais **apenas na branch autorizada** e refazer 388/388 com logs. Depois, revisar corrida de gravação de recibo, cobertura de falhas entre transações e integridade da prévia de lote. Não iniciar G14-K, integração real ou merge antes do GO probatório.
 
 **Encerramento de implementação:** código e testes publicados **não equivalem a teste aprovado**. Registre `VALIDACAO_PENDENTE_CI` e `NO-GO` até CI/run ID, console log, readback e aceite humano.
+
+## 7. Checkpoint de publicação e CI no HEAD — aditivo v1.0.1
+
+**Aferição:** `2026-11-19T01:19:34-03:00`, America/Sao_Paulo, relógio local do ChatGPT.  
+**Primeira publicação documental:** commit `4faf10594dd3030c15ab449dd84e9c4ce445c771` às `2026-11-19T04:19:02Z` (19/11 às 01:19:02 BRT), conforme metadados GitHub.
+
+**Readback confirmado:** HEAD da branch e da PR #7 em `4faf10594dd3030c15ab449dd84e9c4ce445c771`, PR Draft não mesclada, base `feat/r07-office-knowledge-assimilation`; relatório Markdown em `docs/document-mcp/23_G14J_RECONCILIACAO_UNKNOWN_PROVAS_CI_BLOQUEADA.md` (blob `5c56f832e2c6caa813c65513e7c6ff9fbab4d418`), contendo matriz de **35 casos sem execução comprovada**, indicador 0/35, marca `CI_BLOQUEADA_SEM_EXECUCAO_VERIFICAVEL` e decisão NO-GO; índice README com item 23. Diff entre G14-I `e83c791630e2e0682a161fcd2e9d5ef6d6363e3d` e `4faf10594dd3030c15ab449dd84e9c4ce445c771`: **2 commits, 5 arquivos**, exclusivos da frente Document MCP, sem modificações em schemas v2.
+
+**CI documental no próprio SHA:** [push run 44457482146](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44457482146) e [PR run 44457488952](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44457488952), ambos `failure`; jobs `synthetic-contracts` com `steps=[]`, portanto **nenhum unittest executado de forma verificável**. [CI herdada 44457488967](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44457488967) `failure`. Não foi autorizado modificar a R07 ou a configuração de runners.
+
+**Conclusão:** **G14-J implementação publicada, mas NO-GO probatório e operacional.** Os 353 testes aprovados no gate G14-I são apenas baseline histórica. Para GO técnico G14-J são necessários logs íntegros com todos os casos executados, reconciliação do histórico e testes regressivos, no **SHA exato**. A publicação deste aditivo gera outro SHA que exige readback separado.
