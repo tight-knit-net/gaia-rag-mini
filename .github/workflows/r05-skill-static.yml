@@ -227,6 +227,48 @@ jobs:
       - name: Verify owner access, CSRF, discard state and migration fail-closed
         run: python -m unittest discover -s tests -p 'test_r07_s6_security.py' -v
 
+
+  r07_s7_package:
+    name: R07 S7 pinned package and runtime attestation (no publish)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinning, state mounts, identity and disabled deploy
+        run: python scripts/r07_s7_package_preflight.py
+      - name: Build only on ephemeral GitHub-hosted runner
+        run: docker build --tag gaia-rag-mini:r07-s7-pinned .
+      - name: Verify installed packages and non-root container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(docker image inspect --format '{{.Config.User}}' gaia-rag-mini:r07-s7-pinned)" = "10001:10001"
+          docker run --rm --network none --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cpus 1 --memory 768m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --mount "type=bind,src=$PWD/scripts/r07_s7_package_preflight.py,dst=/tmp/r07_s7_package_preflight.py,readonly" \
+            --entrypoint python gaia-rag-mini:r07-s7-pinned \
+            /tmp/r07_s7_package_preflight.py --inside-runtime --root /app
+          printf 'R07_S7_PINNED_RUNTIME_PASS\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'requirements.lock SHA256: %s\n' "$(sha256sum requirements.lock | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s7_sqlite_recovery:
+    name: R07 S7 SQLite WAL backup and isolated restore (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test SQLite online backup integrity and no-overwrite rollback
+        run: python -m unittest discover -s tests -p 'test_r07_s7_recovery.py' -v
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -237,6 +279,8 @@ jobs:
       - r07_skill_router_synthetic
       - r07_host_contract_synthetic
       - r07_s6_security
+      - r07_s7_package
+      - r07_s7_sqlite_recovery
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
