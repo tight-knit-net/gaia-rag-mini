@@ -56,3 +56,16 @@ Os artefatos históricos do TestLab permanecem para auditoria, mas não integram
 - `docs/institucional/R07_GATE_CI_SEM_TESTLAB_2026-11-18.md`: relatório do novo gate e das limitações, quando publicado.
 - `scripts/r07_testlab_preflight.py`: ferramenta preservada apenas como código histórico; **não executar no antigo TestLab** nesta frente.
 A documentação original de R07 e os relatórios G4 não devem ser reescritos retroativamente; este complemento registra a decisão posterior de não usar o antigo ambiente.
+
+## Complemento S7 — preparação portátil, sem deploy (18/11/2026)
+
+- `requirements.lock`: 29 versões Python fixadas conforme CI; o Dockerfile agora fixa base digest e instala do lock.
+- `scripts/r07_s7_package_preflight.py`: auditoria estática de base, runtime, segredos, deploy congelado, estado SQLite e integridade das dependências.
+- `tests/test_r07_s7_recovery.py`: 5 testes sintéticos de backup SQLite WAL, integridade, restauração em arquivo isolado e rollback sem sobrescrever origem.
+- `tests/r06_live_review_e2e.py`: 4 provas adicionais de exportação lógica Qdrant, restauração na coleção shadow, sem perda de metadata e rollback conservando a origem; **não** equivale a snapshot nativo nem a migração real.
+- `.github/workflows/r05-skill-static.yml`: jobs `r07_s7_package` e `r07_s7_sqlite_recovery`, ambos pré-requisitos do aceite R07.
+- `scripts/r07_candidate_acceptance.py`: pacote S7 e testes sintéticos viraram critérios obrigatórios para CI candidate.
+- `docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md`: runbook de próxima homologação, exclusivamente documental.
+- `docs/institucional/R07_S7_RELATORIO_PRONTIDAO_EMPACOTAMENTO_2026-11-18.md`: relatório S7 com 10/10 jobs no código, limites e decisão NO-GO operacional.
+
+**Limitação:** os caminhos históricos de publicação e compose existentes são apenas referências congeladas, não implantação autorizada. A integração no host real, backup nativo Qdrant, wheel hashes/CVE e migração legada seguem pendentes. Nenhuma operação no TestLab antigo foi executada.
