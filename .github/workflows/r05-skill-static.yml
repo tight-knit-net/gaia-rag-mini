@@ -608,6 +608,28 @@ jobs:
             docker save -o "$RUNNER_TEMP/r07-s93-$tag.tar" "$image"
             chmod a+r "$RUNNER_TEMP/r07-s93-$tag.tar"
           done
+      - name: Run isolated trial HTTP authorization smoke (no external network)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          name="gaia-r07-s93-http-$GITHUB_RUN_ID"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          docker run -d --name "$name" \
+            --network none --read-only \
+            --tmpfs /tmp:rw,nosuid,noexec,size=64m \
+            --cpus 1 --memory 768m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GAIA_RAG_ENABLE_REVIEW=0 \
+            --volume "$PWD/tests:/app/audit-tests:ro" \
+            gaia-rag-mini:r07-s93-trial > /dev/null
+          docker exec "$name" python /app/audit-tests/r07_s93_http_smoke.py
+          test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$name")" = none
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$name")" = true
+          test -z "$(docker port "$name" 2>/dev/null || true)"
+          echo 'S9.3 trial HTTP: health + four anonymous-deny checks PASS (5/5).' \
+            >> "$GITHUB_STEP_SUMMARY"
+          docker rm -f "$name" > /dev/null
+          trap - EXIT
       - name: Scan FULL original and minimized image without waiver or package filtering
         shell: bash
         run: |
