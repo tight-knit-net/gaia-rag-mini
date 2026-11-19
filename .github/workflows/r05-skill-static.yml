@@ -269,6 +269,77 @@ jobs:
       - name: Test SQLite online backup integrity and no-overwrite rollback
         run: python -m unittest discover -s tests -p 'test_r07_s7_recovery.py' -v
 
+  r07_s8_supplychain:
+    name: R07 S8 CycloneDX SBOM and public Python advisory audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit-test deterministic BOM and fail-closed advisory coverage
+        run: python -m unittest discover -s tests -p 'test_r07_s8_supplychain.py' -v
+      - name: Generate CycloneDX SBOM from pinned Python dependency lock
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --sbom-out "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --verify-sbom "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          test -s "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          printf 'S8 lock-based CycloneDX SBOM SHA256: %s\n' \
+            "$(sha256sum "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json" | cut -d' ' -f1)" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Audit ONLY public pinned package names and versions via PyPI advisories
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m pip install --disable-pip-version-check 'pip-audit>=2.9,<3'
+          audit_status=0
+          pip-audit --requirement requirements.lock --no-deps --disable-pip \
+            --format json --output "$RUNNER_TEMP/gaia-r07-advisories.json" \
+            || audit_status=$?
+          if test -s "$RUNNER_TEMP/gaia-r07-advisories.json"; then
+            python scripts/r07_s8_supplychain.py \
+              --lock requirements.lock \
+              --verify-sbom "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json" \
+              --audit-report "$RUNNER_TEMP/gaia-r07-advisories.json" \
+              || audit_status=1
+          else
+            echo 'NO-GO: PyPI advisory report unavailable; cannot claim clean scan.'
+            audit_status=1
+          fi
+          if test "$audit_status" -ne 0; then
+            echo 'NO-GO: known vulnerability, incomplete advisory coverage, or scan failure.'
+            exit 1
+          fi
+          printf 'S8 public PyPI advisory scan: 29/29 pinned dependencies, zero findings.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s8_review_and_snapshot:
+    name: R07 S8 replay readback and native snapshot decision (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Simulate review replay and fail-closed Qdrant native snapshot plans
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m unittest discover -s tests -p 'test_r07_s8_review_integrity.py' -v
+          python -m unittest discover -s tests -p 'test_r07_s8_snapshot_contract.py' -v
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -281,6 +352,8 @@ jobs:
       - r07_s6_security
       - r07_s7_package
       - r07_s7_sqlite_recovery
+      - r07_s8_supplychain
+      - r07_s8_review_and_snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
