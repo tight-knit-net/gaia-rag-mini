@@ -17,6 +17,7 @@ on:
       - "tests/test_g14f_contracts.py"
       - "tests/test_g14g_isolated.py"
       - "tests/test_g14h_audit.py"
+      - "tests/test_g14i_event_lab.py"
       - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
   pull_request:
     paths:
@@ -33,6 +34,7 @@ on:
       - "tests/test_g14f_contracts.py"
       - "tests/test_g14g_isolated.py"
       - "tests/test_g14h_audit.py"
+      - "tests/test_g14i_event_lab.py"
       - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
   workflow_dispatch:
 
@@ -50,7 +52,7 @@ jobs:
           python-version: "3.12"
       - name: Contract syntax and JSON schemas
         run: |
-          python -m compileall -q gaia_document_mcp tests/test_document_mcp.py tests/test_hybrid_mcp.py tests/test_correlation_gate.py tests/test_owner_process_learning.py tests/test_g14c_disposable.py tests/test_g14e_safety.py tests/test_g14f_contracts.py tests/test_g14g_isolated.py tests/test_g14h_audit.py
+          python -m compileall -q gaia_document_mcp tests/test_document_mcp.py tests/test_hybrid_mcp.py tests/test_correlation_gate.py tests/test_owner_process_learning.py tests/test_g14c_disposable.py tests/test_g14e_safety.py tests/test_g14f_contracts.py tests/test_g14g_isolated.py tests/test_g14h_audit.py tests/test_g14i_event_lab.py
           python - <<'PY'
           import json
           from pathlib import Path
@@ -71,6 +73,7 @@ jobs:
           python -m unittest discover -s tests -p test_g14f_contracts.py -v
           python -m unittest discover -s tests -p test_g14g_isolated.py -v
           python -m unittest discover -s tests -p test_g14h_audit.py -v
+          python -m unittest discover -s tests -p test_g14i_event_lab.py -v
       - name: Validate single disabled jobs in inherited publication workflows
         run: |
           python - <<'PY'
