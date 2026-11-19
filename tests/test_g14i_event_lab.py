@@ -332,7 +332,7 @@ class G14IEventQueueTests(unittest.TestCase):
         c=self.claim()
         self.finish(c)
         second="DEMO_TASK_00000002"
-        self.submit(task=second)
+        self.submit(task=second,now=2)
         next_claim=self.claim(tick=3)
         new_event=event(self.p,summary="DEMO: despacho de processo administrativo")
         self.finish(next_claim,tick=4,ev=new_event,task=second)
