@@ -97,3 +97,12 @@ A documentação original de R07 e os relatórios G4 não devem ser reescritos r
 - `docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md`: gate de bloqueio S9 e próximo S9.1 de remediação planejado.
 
 **NÃO PROVER AMBIENTE REAL E NÃO DESLIGAR LEGADO:** a CI do S9 não está verde devido aos achados de segurança do SO. Este bloqueio é deliberado; não desabilitar scanner para forçar aceitação.
+
+## Complemento S9.2 — atualização Debian estável sem promoção
+
+- `scripts/r07_s92_stable_update.py` e `tests/test_r07_s92_stable_update.py`: 9 regressões sintéticas de imagens digest-fixadas, lock SHA256, políticas fail-closed e inventário Grype completo; sem leitura/escrita de serviços.
+- `.github/workflows/r05-skill-static.yml`: job `r07_s9_2_stable_upgrade` de comparação **somente em runner GitHub**, entre imagem principal Trixie e variante atualizada apenas por Debian stable/security; integrado ao `needs` de aceite, sem substituir scanner bloqueante.
+- `docs/institucional/R07_S92_MATRIZ_RESIDUAL_CVES_2026-11-18.md`: 23 CVEs HIGH distintas, status oficial Debian por identificador.
+- `docs/institucional/R07_S92_RELATORIO_REMEDIACAO_DEBIAN_ESTAVEL_2026-11-18.md`: relatório S9.2 com 87/87 pacotes, 0 atualizações estáveis novas, 23/23 CVEs e 77/77 ocorrências HIGH mantidas, NO-GO, horas aferidas e próximo gate S9.3.
+- Nenhuma mudança S9.2 no Dockerfile rastreado (patch zlib do S9.1 permanece). O `requirements.lock` das 29 wheels, Skilldrum, contratos MCP, revisão humana e snapshot Qdrant sintético foram preservados.
+- **NO-GO operacional** até solução comprovada de CVEs HIGH/CRITICAL/UNKNOWN; sem merge, deploy, migração, produção, TestLab ou desligamento legado.
