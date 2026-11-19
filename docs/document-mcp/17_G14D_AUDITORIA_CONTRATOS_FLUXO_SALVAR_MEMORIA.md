@@ -127,3 +127,28 @@ Respeitar o contexto do usuário: há **um único operador**, não clientes aces
 - [g14c_disposable.py L20–404](https://github.com/tight-knit-net/gaia-rag-mini/blob/4e18c016e4ad144edd866751bb6c0fc07e8513d3/gaia_document_mcp/g14c_disposable.py#L20-L404); [process_learning.py L44–221](https://github.com/tight-knit-net/gaia-rag-mini/blob/4e18c016e4ad144edd866751bb6c0fc07e8513d3/gaia_document_mcp/process_learning.py#L44-L221); [owner_concurrency.py L25–147](https://github.com/tight-knit-net/gaia-rag-mini/blob/4e18c016e4ad144edd866751bb6c0fc07e8513d3/gaia_document_mcp/owner_concurrency.py#L25-L147).
 - [review.py L109–255](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/src/gaia_rag_r05/review.py#L109-L255); [institutional_memory.py L54–163](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/src/gaia_rag_r05/institutional_memory.py#L54-L163); [R07_S6_AUDITORIA_SEGURANCA_COMPATIBILIDADE_2026-11-18.md L14–58](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/docs/institucional/R07_S6_AUDITORIA_SEGURANCA_COMPATIBILIDADE_2026-11-18.md#L14-L58); [R07_S7_RELATORIO_PRONTIDAO_EMPACOTAMENTO_2026-11-18.md L14–35](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/docs/institucional/R07_S7_RELATORIO_PRONTIDAO_EMPACOTAMENTO_2026-11-18.md#L14-L35).
 - [Decisão R06: memória unificada com operador autenticado](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/docs/projeto-executivo/R06_MEMORIA_UNIFICADA_SEM_TRAVA_CLIENTE_2026-11-18.md); [runbook R07 autenticado](https://github.com/tight-knit-net/gaia-rag-mini/blob/d40fa0d68f1636f68ac76a32db4a8b354ebf60d3/docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md).
+
+## 8. Checkpoint de fechamento documental — aditivo v1.0.1
+
+**Aferição:** 2026-11-18T21:59:06-03:00, `America/Sao_Paulo`, origem: relógio local da ferramenta de tempo do ChatGPT.  
+**Publicação da versão inicial do documento:** commit `05ed5c6523f62c04c45e3ccfac1c2bfc6cc292a3`, GitHub `2026-11-19T00:58:01Z` (18/11/2026 às 21:58:01, BRT). O SHA do commit que acrescenta este checkpoint será referência independente.
+
+**D0 — HEAD/PR:** [PR #7](https://github.com/tight-knit-net/gaia-rag-mini/pull/7) conferida `Draft`, sem merge, base `feat/r07-office-knowledge-assimilation`, head `05ed5c6523f62c04c45e3ccfac1c2bfc6cc292a3` antes do aditivo. **PASSOU**.
+
+**D1 — auditoria:** 12 achados (9 P1, 3 P2), com linhas/links por fonte e classificação documental; inspeção estática, nenhum cenário adversarial novo executado. **PASSOU COMO AUDITORIA**, com **NO-GO OPERACIONAL** até saneamento.
+
+**D2 — revisão R06/R07:** conferidos `review.prepare`, `review.approve` e readback por proposta, além de `institutional_memory.preview`; **não existe prova de endpoint/portal de revisão agrupada autenticada** neste gate. **PENDENTE DE CONTRATO E GATE DO RESPONSÁVEL R06/R07**.
+
+**D3 — plano:** 15 casos novos propostos (D-T01–D-T15), **0/15 executados**, sem somar casos planejados à CI anterior. **DOCUMENTADO**.
+
+**D4 — isolamento documental:** readback da versão inicial confirmou relatório novo com 12 achados e 15 testes e índice atualizado; comparação com `4e18c016e4ad144edd866751bb6c0fc07e8513d3` identificou **somente 2 arquivos MD** alterados. **PASSOU**.
+
+**CI no commit documental inicial:** [GAIA Document MCP run 44433235301](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44433235301) **success**; logs: 49 + 13 + 39 + 39 + 46 = **186/186 testes sintéticos anteriores**. [CI herdada R05/R07 run 44433235295](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44433235295) **success** no mesmo SHA. Não houve novo teste de integração com provedores reais.
+
+**D5:** nenhuma implementação/correção no G14-D. **NÃO EXECUTADO, POR ESCOPO**.
+
+**D6:** Cloudflare Access real, aprovação agrupada efetiva, Qdrant, migração e botão no host real **NÃO TESTADOS**. **NO-GO**.
+
+**Parecer de encerramento:** **GO para relatório G14-D e planejamento do G14-E de saneamento P1**, exclusivamente no ramo documental. **NO-GO para ativação, integração R06/R07, merge/deploy ou gravação Qdrant.**
+
+**Rollback:** reverter somente a documentação G14-D no ramo autorizado após checagem de HEAD; os componentes de execução e os registros externos permanecem intocados.
