@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import json
 import os
 from pathlib import Path
 
@@ -56,6 +57,7 @@ REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
     "docs/institucional/PLANO_FECHAMENTO_GAPS_E_CUTOVER_R07_2026-11-18.md",
     "skills/gaia-rag-processos-administrativos/references/10-assimilacao-institucional.md",
+    "docs/institucional/R07_SBOM_PYTHON_LOCK_S8.cdx.json",
 )
 
 
@@ -192,8 +194,12 @@ def evaluate(root: Path) -> dict:
     )
     from r07_s8_supplychain import create_sbom, validate_sbom
     locked_bytes = (root / "requirements.lock").read_bytes()
+    published_sbom = json.loads(
+        (root / "docs/institucional/R07_SBOM_PYTHON_LOCK_S8.cdx.json").read_text(encoding="utf-8")
+    )
     checks["s8_deterministic_sbom_from_lock"] = (
         validate_sbom(create_sbom(locked_bytes), locked_bytes)["python_components"] == 29
+        and validate_sbom(published_sbom, locked_bytes)["python_components"] == 29
     )
     checks["s8_review_replay_readback_preserved"] = (
         "def _verify_approved_point(" in review
