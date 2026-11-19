@@ -47,7 +47,7 @@ class OSScanTests(unittest.TestCase):
                 inspect_os_scan(payload)
 
     def test_report_without_actual_os_results_rejected(self):
-        with self.assertRaisesRegex(ValueError, "OS_SCAN_NO_OS_COVERAGE"):
+        with self.assertRaisesRegex(ValueError, "OS_SCAN_WRONG_ARTIFACT_OR_SCANNER"):
             inspect_os_scan({"descriptor": {"name": "grype"},
                              "source": {"type": "image"},
                              "distro": {"name": "ubuntu"},
