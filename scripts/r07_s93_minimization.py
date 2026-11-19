@@ -136,6 +136,10 @@ def compare(
 
 def probe_runtime() -> dict:
     """Run *inside* isolated built candidate, no cloud/network/secret."""
+    # The probe is launched from a read-only bind mount outside WORKDIR.
+    # Explicitly add the app root before imports (not a runtime bypass).
+    sys.path.insert(0, "/app")
+    sys.path.insert(0, "/app/src")
     imports = {}
     for name in REQUIRED_IMPORTS:
         module = importlib.import_module(name)
