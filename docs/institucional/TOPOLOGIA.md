@@ -84,3 +84,16 @@ A documentação original de R07 e os relatórios G4 não devem ser reescritos r
 - `docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md`: adendo de regras de restauração Qdrant, limites da auditoria pública e medidas S9.
 
 **Situação:** S8 aprovado tecnicamente em CI; wheel hashes, CVEs dos pacotes de SO, backup nativo em Qdrant descartável e carregamento do host real ainda pendentes de gates separados. Nada foi implantado.
+
+## S9 — Hashes de wheels e risco OS Debian (18/11/2026)
+
+- `requirements.lock` contém 29 hashes SHA256 de wheels Linux AMD64/CPython 3.12; `Dockerfile` instala exclusivamente por hash.
+- `scripts/r07_s9_wheel_lock.py` e `tests/test_r07_s9_hashlock.py`: geração/bootstrap e revalidação das wheels no GitHub Actions.
+- `tests/r06_live_review_e2e.py`: oito verificações de snapshot nativo em Qdrant DEMO descartável, prioridade `snapshot`, restore em coleção nova, checksum/paridade e rollback.
+- `scripts/r07_s9_os_audit.py` e `tests/test_r07_s9_os_audit.py`: inventário de 87 pacotes Debian/CycloneDX e scan Grype fail-closed.
+- `.github/workflows/r05-skill-static.yml`: jobs `r07_s9_hash_bootstrap` e `r07_s9_os_scan`, dependências do aceite do candidato.
+- `scripts/r07_candidate_acceptance.py`: contrato de hashes, Qdrant e scanner OS obrigatório.
+- `docs/institucional/R07_S9_INTEGRIDADE_WHEELS_SNAPSHOT_NATIVO_OS_SCAN_2026-11-18.md`: relatório com NO-GO, 24 CVEs HIGH distintas, 78 combinações CVE×pacote; CI `44436559758` (12 PASS / 1 FAIL / 1 SKIPPED).
+- `docs/institucional/RUNBOOK_R07_IMPLANTACAO_AUTENTICADA_BACKUP_ROLLBACK.md`: gate de bloqueio S9 e próximo S9.1 de remediação planejado.
+
+**NÃO PROVER AMBIENTE REAL E NÃO DESLIGAR LEGADO:** a CI do S9 não está verde devido aos achados de segurança do SO. Este bloqueio é deliberado; não desabilitar scanner para forçar aceitação.
