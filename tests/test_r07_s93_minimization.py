@@ -61,6 +61,11 @@ class MinimizationContractTests(unittest.TestCase):
         self.assertEqual(data["trial_unique_blockers"],1)
         self.assertEqual(data["removed_os_packages"],[])
         self.assertFalse(data["publish_approved"])
+        self.assertEqual(len(data["dependency_matrix"]),30)
+        self.assertEqual(data["runtime_observed_debian_package_count"],1)
+        self.assertEqual(data["other_debian_package_count"],29)
+        self.assertEqual(data["dependency_matrix"][1]["evidence"],
+                         "OBSERVED_IN_ELF_LINKAGE")
 
     def test_auto_removed_unobserved_package_is_identified(self):
         modified="\n".join(line for line in PKGS.splitlines()
