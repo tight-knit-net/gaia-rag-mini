@@ -155,10 +155,18 @@ class G14ENegatives(unittest.TestCase):
         with self.assertRaisesRegex(ContractViolation,"NEW_EVIDENCE_REQUIRED"):
             self.capture()
 
-    def test_new_event_fingerprint_reopens_same_file(self):
+    def test_attempt_id_alone_does_not_count_as_new_evidence(self):
         self.capture()
         self.review_all("needs_more_evidence")
-        r = self.capture(e=event(operation_id="DEMO_OPERATION_002"))
+        with self.assertRaisesRegex(ContractViolation,"NEW_EVIDENCE_REQUIRED"):
+            self.capture(e=event(operation_id="DEMO_OPERATION_002"))
+
+    def test_new_source_version_can_be_recorded_as_new_evidence_fixture(self):
+        self.capture()
+        self.review_all("needs_more_evidence")
+        updated=event()
+        new_source=replace(updated.source,source_version="DEMO_V2")
+        r=self.capture(e=replace(updated,source=new_source))
         self.assertEqual(r["candidate_revision"],2)
 
     def test_history_survives_connection_reopen(self):

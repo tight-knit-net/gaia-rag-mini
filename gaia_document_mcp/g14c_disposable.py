@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     summary TEXT NOT NULL,
     source_refs_json TEXT NOT NULL,
     event_keys_json TEXT NOT NULL,
+    evidence_markers_json TEXT NOT NULL DEFAULT '[]',
     review_status TEXT NOT NULL,
     batch_id TEXT,
     candidate_revision INTEGER NOT NULL DEFAULT 1,
@@ -91,8 +92,18 @@ def _candidate_snapshot(row) -> str:
         row["candidate_revision"],
         sorted(json.loads(row["source_refs_json"])),
         sorted(json.loads(row["event_keys_json"])),
+        sorted(json.loads(row["evidence_markers_json"])),
         "g14e-synthetic-policy.v1",
     ], ensure_ascii=False, separators=(",", ":")))
+
+
+def _source_evidence_marker(event: DocumentEvent) -> str:
+    """Changes in attempt ID alone are not a new source/evidence version."""
+    return _sha(json.dumps([
+        event.source.source_ref, event.source.source_version,
+        event.source.sha256_original, event.evidence_digest(),
+        event.derived_sha256,
+    ], separators=(",", ":")))
 
 
 def _register_process(db, process: AdministrativeProcess) -> None:
@@ -358,6 +369,7 @@ class DisposableGate:
             raise ContractViolation("SYNTHETIC_SUMMARY_REQUIRED")
         topic_digest = _sha(_canonical_summary(summary))
         candidate_id = _sha(process.process_key + ":" + topic_digest)
+        evidence_marker = _source_evidence_marker(event)
         with self._tx() as db:
             _register_process(db, process)
             found = db.execute(
@@ -368,11 +380,12 @@ class DisposableGate:
                 db.execute(
                     "INSERT INTO candidates "
                     "(candidate_id,process_key,process_id,topic_digest,summary,"
-                    "source_refs_json,event_keys_json,review_status,batch_id) "
-                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    "source_refs_json,event_keys_json,evidence_markers_json,"
+                    "review_status,batch_id) VALUES (?,?,?,?,?,?,?,?,?,?)",
                     (candidate_id, process.process_key, process.process_id,
                      topic_digest, summary, json.dumps([event.source.source_ref]),
-                     json.dumps([event.fingerprint()]), "PENDING_HUMAN_REVIEW", None),
+                     json.dumps([event.fingerprint()]),json.dumps([evidence_marker]),
+                     "PENDING_HUMAN_REVIEW", None),
                 )
                 db.execute(
                     "INSERT INTO candidate_history "
@@ -394,21 +407,24 @@ class DisposableGate:
                     raise ContractViolation("REVIEWED_CANDIDATE_CANNOT_CHANGE")
                 srcs = json.loads(found["source_refs_json"])
                 keys = json.loads(found["event_keys_json"])
+                markers = json.loads(found["evidence_markers_json"])
                 event_key = event.fingerprint()
-                new_evidence = (event.source.source_ref not in srcs
-                                or event_key not in keys)
+                new_evidence = evidence_marker not in markers
                 if old_status == "MORE_EVIDENCE_NEEDED_SYNTHETIC" and not new_evidence:
                     raise ContractViolation("NEW_EVIDENCE_REQUIRED")
                 if event.source.source_ref not in srcs:
                     srcs.append(event.source.source_ref)
                 if event_key not in keys:
                     keys.append(event_key)
+                if evidence_marker not in markers:
+                    markers.append(evidence_marker)
                 revision = found["candidate_revision"] + (1 if new_evidence else 0)
                 db.execute(
                     "UPDATE candidates SET source_refs_json=?, event_keys_json=?,"
-                    "review_status='PENDING_HUMAN_REVIEW',batch_id=NULL,"
-                    "candidate_revision=? WHERE candidate_id=?",
-                    (json.dumps(srcs), json.dumps(keys), revision, candidate_id),
+                    "evidence_markers_json=?,review_status='PENDING_HUMAN_REVIEW',"
+                    "batch_id=NULL,candidate_revision=? WHERE candidate_id=?",
+                    (json.dumps(srcs), json.dumps(keys),json.dumps(markers),
+                     revision, candidate_id),
                 )
                 if new_evidence:
                     db.execute(
