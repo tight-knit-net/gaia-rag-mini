@@ -50,7 +50,7 @@ def inspect(root: Path) -> dict:
     checks = {
         "base_image_digest_pinned": f"FROM {BASE}" in docker,
         "dependency_install_version_locked": (
-            "pip install --no-cache-dir -r requirements.lock" in docker
+            "pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.lock" in docker
             and "python -m pip check" in docker
         ),
         "nonroot_runtime": "USER 10001:10001" in docker,
@@ -87,7 +87,11 @@ def inspect(root: Path) -> dict:
         "dependency_count": len(distributions),
         "lock_sha256": hashlib.sha256(lock).hexdigest(),
         "docker_base": BASE,
-        "hash_locked_wheels": False,
+        "hash_locked_wheels": all(
+            " --hash=sha256:" in line and len(line.split(" --hash=sha256:")[-1]) == 64
+            for line in lock.decode("utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ),
         "supply_chain_vulnerability_scan_passed": False,
         "real_cloudflare_verified": False,
         "production_deployed": False,
