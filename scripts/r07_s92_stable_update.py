@@ -42,6 +42,10 @@ def _blocking_cves(scan: dict) -> set[str]:
     result = inspect_os_scan(scan)
     if result["scanner"] != "grype" or result["os_scope_present"] is not True:
         raise ValueError("AUDIT_COVERAGE_MISSING")
+    if len(result["os_blocking_details"]) != result["os_blocking_findings"]:
+        # Existing OS report retains at most 80 finding details: never treat
+        # a truncated report as a complete set for improvement comparisons.
+        raise ValueError("AUDIT_BLOCKING_FINDINGS_TRUNCATED")
     return {str(x["id"]) for x in result["os_blocking_details"]}
 
 
