@@ -343,6 +343,20 @@ jobs:
           python -m unittest discover -s tests -p 'test_r07_s8_review_integrity.py' -v
           python -m unittest discover -s tests -p 'test_r07_s8_snapshot_contract.py' -v
 
+  r07_s9_hash_bootstrap:
+    name: R07 S9 wheel hash acquisition (public PyPI, temporary runner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download pinned public linux-amd64 wheels, generate/check hash manifest
+        run: python scripts/r07_s9_wheel_lock.py --bootstrap
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
