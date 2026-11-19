@@ -1,4 +1,4 @@
-"""S9: OS package CycloneDX manifest and fail-closed Trivy JSON result checker.
+"""S9: OS package CycloneDX manifest and fail-closed Grype JSON result checker.
 
 Only Linux/Debian installed system package names and versions. No Docker
 socket, network access, secrets, user content or snapshot writes by this script.
@@ -67,35 +67,47 @@ def build_os_sbom(text: str) -> dict:
 
 
 def inspect_os_scan(scan: dict) -> dict:
+    """Fail closed if Grype reports are absent/invalid/contain blocking OS CVEs."""
     if not isinstance(scan, dict):
         raise ValueError("OS_SCAN_MISSING")
-    if scan.get("ArtifactType") != "container_image":
-        raise ValueError("OS_SCAN_WRONG_ARTIFACT")
-    results = scan.get("Results")
-    if not isinstance(results, list):
+    descriptor = scan.get("descriptor")
+    distro = scan.get("distro")
+    source = scan.get("source")
+    if (not isinstance(descriptor, dict) or descriptor.get("name") != "grype"
+            or not isinstance(distro, dict) or distro.get("name") != "debian"
+            or not isinstance(source, dict) or source.get("type") != "image"):
+        raise ValueError("OS_SCAN_WRONG_ARTIFACT_OR_SCANNER")
+    matches = scan.get("matches")
+    if not isinstance(matches, list):
         raise ValueError("OS_SCAN_INCOMPLETE")
-    os_results = [r for r in results if isinstance(r, dict)
-                  and r.get("Class") == "os-pkgs"]
-    if not os_results:
-        raise ValueError("OS_SCAN_NO_OS_COVERAGE")
     findings = []
-    for result in os_results:
-        for vuln in result.get("Vulnerabilities") or []:
-            if not isinstance(vuln, dict) or not isinstance(vuln.get("VulnerabilityID"), str):
-                raise ValueError("OS_SCAN_INVALID_VULNERABILITY")
-            severity = vuln.get("Severity", "UNKNOWN")
-            if severity in {"HIGH", "CRITICAL", "UNKNOWN"}:
-                findings.append({
-                    "id": vuln["VulnerabilityID"], "severity": severity,
-                    "package": vuln.get("PkgName", "unknown"),
-                    "installed_version": vuln.get("InstalledVersion", ""),
-                    "fixed_version": vuln.get("FixedVersion", ""),
-                })
+    counts: dict[str, int] = {}
+    for match in matches:
+        if not isinstance(match, dict):
+            raise ValueError("OS_SCAN_INVALID_MATCH")
+        artifact, vuln = match.get("artifact"), match.get("vulnerability")
+        if not isinstance(artifact, dict) or not isinstance(vuln, dict):
+            raise ValueError("OS_SCAN_INVALID_MATCH")
+        if artifact.get("type") not in {"deb", "deb-pkg"}:
+            continue
+        severity = str(vuln.get("severity", "UNKNOWN")).upper()
+        ident = vuln.get("id")
+        if not isinstance(ident, str) or not ident:
+            raise ValueError("OS_SCAN_INVALID_VULNERABILITY")
+        counts[severity] = counts.get(severity, 0) + 1
+        if severity in {"HIGH", "CRITICAL", "UNKNOWN"}:
+            findings.append({
+                "id": ident, "severity": severity,
+                "package": artifact.get("name", "unknown"),
+                "installed_version": artifact.get("version", ""),
+            })
     return {
         "os_scope_present": True,
-        "os_critical_high_unknown_findings": findings,
+        "os_severity_counts": counts,
         "os_blocking_findings": len(findings),
+        "os_blocking_details": findings[:80],
         "ready_for_supply_chain_gate": len(findings) == 0,
+        "scanner": "grype",
         "runtime_deployed": False,
         "production_homologated": False,
     }
@@ -105,7 +117,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dpkg-list", default="")
     ap.add_argument("--sbom-out", default="")
-    ap.add_argument("--scan-json", default="")
+    ap.add_argument("--grype-json", default="")
     args = ap.parse_args()
     report = {}
     if args.dpkg_list:
@@ -116,8 +128,8 @@ def main() -> int:
             Path(args.sbom_out).write_text(
                 json.dumps(bom, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8")
-    if args.scan_json:
-        scan = json.loads(Path(args.scan_json).read_text(encoding="utf-8"))
+    if args.grype_json:
+        scan = json.loads(Path(args.grype_json).read_text(encoding="utf-8"))
         report.update(inspect_os_scan(scan))
     if not report:
         raise ValueError("NO_OS_INPUT")
