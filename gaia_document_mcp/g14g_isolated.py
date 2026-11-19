@@ -91,8 +91,11 @@ def verify_disposable_page_sequence(pages: tuple[dict, ...]) -> dict:
                 or page.get("offset") != expected_offset):
             raise ContractViolation("PAGE_COVERAGE_INCOMPLETE")
         items = page.get("items")
-        if (not isinstance(items, list)
-                or len(items) > page.get("limit", -1)
+        limit = page.get("limit")
+        if (isinstance(limit, bool) or not isinstance(limit, int)
+                or not 1 <= limit <= 25
+                or not isinstance(items, list)
+                or len(items) > limit
                 or (not items and total > 0)):
             raise ContractViolation("PAGE_COVERAGE_INCOMPLETE")
         for item in items:
@@ -266,6 +269,15 @@ class G14GDisposableGate(DisposableGate):
         with self._conn() as db:
             db.execute("BEGIN")
             try:
+                if process is not None:
+                    binding = db.execute(
+                        "SELECT process_id FROM process_registry WHERE process_key=?",
+                        (process.process_key,),
+                    ).fetchone()
+                    if binding is None:
+                        raise ContractViolation("PROCESS_BINDING_NOT_REGISTERED")
+                    if binding["process_id"] != process.process_id:
+                        raise ContractViolation("PROCESS_ID_COLLISION")
                 row = db.execute(
                     "SELECT generation FROM g14g_pending_generation WHERE id=1"
                 ).fetchone()
@@ -319,18 +331,71 @@ class G14GDisposableGate(DisposableGate):
         self, *, claimed_owner: str, pages: tuple[dict, ...],
         process: AdministrativeProcess | None = None,
     ) -> dict:
+        """Readback *each displayed item* inside one SQLite read snapshot.
+
+        The pagination generation guards mutations but does NOT prove the
+        caller returned the actual unmodified page payload. Compare every
+        bounded LIMIT/OFFSET read with the supplied pages before claiming
+        synthetic coverage. No remote authenticity or memory approval.
+        """
         self._owner.require(claimed_owner)
         validated = verify_disposable_page_sequence(pages)
         scope = None if process is None else process.process_key
         if validated["process_key"] != scope:
             raise ContractViolation("PAGE_SCOPE_MISMATCH")
-        current = self.page_pending(
-            claimed_owner=claimed_owner, page_size=1, process=process,
-        )
-        if current["snapshot"] != validated["snapshot"]:
-            raise ContractViolation("PAGE_SNAPSHOT_STALE")
+        with self._conn() as db:
+            db.execute("BEGIN")
+            try:
+                if process is not None:
+                    binding = db.execute(
+                        "SELECT process_id FROM process_registry WHERE process_key=?",
+                        (scope,),
+                    ).fetchone()
+                    if binding is None:
+                        raise ContractViolation("PROCESS_BINDING_NOT_REGISTERED")
+                    if binding["process_id"] != process.process_id:
+                        raise ContractViolation("PROCESS_ID_COLLISION")
+                generation = db.execute(
+                    "SELECT generation FROM g14g_pending_generation WHERE id=1"
+                ).fetchone()
+                if generation is None:
+                    raise ContractViolation("PAGINATION_GENERATION_MISSING")
+                where = " WHERE review_status='PENDING_HUMAN_REVIEW'"
+                params: tuple[str, ...] = ()
+                if scope is not None:
+                    where += " AND process_key=?"
+                    params = (scope,)
+                count = db.execute(
+                    "SELECT COUNT(*) AS n FROM candidates" + where, params,
+                ).fetchone()["n"]
+                if _snapshot(generation["generation"], count, scope) != validated["snapshot"]:
+                    raise ContractViolation("PAGE_SNAPSHOT_STALE")
+                for page in pages:
+                    rows = db.execute(
+                        "SELECT candidate_id,process_key,process_id,"
+                        "candidate_revision,summary,source_refs_json "
+                        "FROM candidates" + where +
+                        " ORDER BY process_key,candidate_id LIMIT ? OFFSET ?",
+                        (*params, page["limit"], page["offset"]),
+                    ).fetchall()
+                    expected = [{
+                        "candidate_id": row["candidate_id"],
+                        "process_key": row["process_key"],
+                        "process_id": row["process_id"],
+                        "candidate_revision": row["candidate_revision"],
+                        "summary_digest": sha256(row["summary"].encode()).hexdigest(),
+                        "source_count": len(json.loads(row["source_refs_json"])),
+                        "memory_approved": False,
+                    } for row in rows]
+                    if page["items"] != expected:
+                        raise ContractViolation("PAGE_CONTENT_MISMATCH")
+                db.execute("COMMIT")
+            except BaseException:
+                db.execute("ROLLBACK")
+                raise
         return {
             **validated, "currently_matches_disposable_sqlite": True,
+            "page_content_readback_verified": True,
             "real_qdrant_or_r06_readback": False,
             "requires_human_review": True,
         }
