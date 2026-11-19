@@ -1,6 +1,6 @@
 # Gate G14-I — OCR R02, fila/lease sintéticos e captura provisória de conhecimento
 
-**Versão:** 1.0.0 — relatório de execução técnica **sintética**, sem homologação de serviço.  
+**Versão:** 1.0.1 — relatório de execução técnica **sintética**, sem homologação de serviço.  
 **Emissão aferida:** `2026-11-19T00:27:07-03:00` (`America/Sao_Paulo`), origem: ferramenta de tempo local do ChatGPT.  
 **Disparo aferido:** `2026-11-19T00:18:03-03:00`, mesma origem.  
 **Último gate anterior, G14-H:** commit documental `fc3b6ed9403f11525b52493fb096c5bc94fce15e` publicado `2026-11-19T02:56:35Z` = **18/11/2026 às 23:56:35 BRT**, relógio/metadados GitHub; o horário do disparo do G14-H foi `2026-11-18T23:44:11-03:00` aferido no relatório 21.  
@@ -126,11 +126,11 @@ O **operador é único**; processo/número oficial/órgão/jurisdição são ide
 | I2 — claim/lease, retry e falha | 9/9 testes de concorrência/transições, sem provedor | **PASSOU sintético** |
 | I3 — recuperação UNKNOWN, captura provisória e lote | 13/13 testes de finalização e revisão | **PASSOU sintético** |
 | I4 — regressões v2 e suites anteriores | 353/353 em CI isolada | **PASSOU** |
-| I5 — relatório Markdown, índice e readback | Conferir após publicação documental | **PENDENTE nesta versão inicial** |
+| I5 — relatório Markdown, índice e readback | Relatório 22 e índice confirmados no commit documental inicial; novo checkpoint requer readback | **PASSOU — documental** |
 | I6 — CI herdada/supply chain R07 | [run 44451308299](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451308299): S7/S8 sucesso, **S9 falhou** | **FALHOU — NO-GO supply chain** |
 | I7 — OCR real/R06/Qdrant/implantação | Não executado ou autorizado | **NO-GO** |
 
-**Contagem de gates nesta fotografia:** 5/8 = **62,5%** concluídos no escopo medido; o valor evolui após relatório e readback. **Prontidão operacional global não tem denominador homologado**. Não confundir 100% dos testes sintéticos com sistema pronto.
+**Contagem de gates após publicação e readback inicial:** 6/8 = **75%** dos critérios (I0–I5) concluídos no escopo medido; I6 CI herdada pendente de aceite e I7 integração bloqueada. **Prontidão operacional global não tem denominador homologado**. Não confundir 100% dos testes sintéticos com sistema pronto.
 
 ## 6. Rollback, próxima ação e preservação institucional
 
@@ -139,3 +139,16 @@ O **operador é único**; processo/número oficial/órgão/jurisdição são ide
 **Próximo gate recomendado G14-J (não iniciado):** revisar de forma independente a corrida entre `FINALIZING_UNKNOWN_SYNTHETIC` e a gravação candidata; preparar reconciliação com readback somente sintético e teste de idempotência durável após crash, sem integração OCR real. Documentar matriz de responsabilidades OCR R02 ↔ Document MCP ↔ revisão humana R06, paginador escalável e evidência de origem confiável, respeitando os contratos v2.
 
 **Decisão final pretendida após readback:** **GO para G14-I técnico/sintético, NO-GO para integração operacional, deploy, migração, memória institucional e dados reais.** Publicação do relatório e CI devem ser verificadas no SHA efetivo do GitHub, não presumidas por esta minuta.
+
+## 7. Checkpoint pós-publicação documental — v1.0.1
+
+**Aferição:** `2026-11-19T00:30:00-03:00`, fuso `America/Sao_Paulo`, relógio local da ferramenta de horário do ChatGPT.  
+**Publicação inicial do relatório 22:** commit `3451b919b305efd946c14676a289a98910599d64` em `2026-11-19T03:29:36Z` (19/11/2026 às 00:29:36 BRT); horário de publicação originado nos metadados GitHub.
+
+**Readback verificado:** PR #7 continua Draft e sem merge, base `feat/r07-office-knowledge-assimilation`, branch HEAD `3451b919b305efd946c14676a289a98910599d64`; arquivo `docs/document-mcp/22_G14I_FILA_LEASE_EVENTOS_OCR_R02_REVISAO_SINTETICA.md` com blob SHA `4f6583b7661d551190013d36fa9c911d0566785b`, campos `353/353`, `33/33`, relatório e matriz S9 presentes; README com item 22. Comparação `fc3b6ed9403f11525b52493fb096c5bc94fce15e` → `3451b919b305efd946c14676a289a98910599d64`: **3 commits, cinco arquivos**, todos exclusivos do Document MCP (módulo G14-I, testes, workflow isolado, relatório 22 e README). Nenhum contrato v2, pacote R07, branch OCR ou infraestrutura modificado.
+
+**CI específica após publicação no commit documental inicial:** [PR run 44451819987](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451819987), **success** no mesmo SHA. [Push run 44451812055](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451812055) estava queued; estado a revalidar. Resultados sintéticos tecnicamente comprovados também pelos [runs 44451300069](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451300069) e [44451308545](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451308545), ambos success no commit técnico com **353/353**.
+
+**CI herdada após publicação:** [run 44451819990](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451819990) queued no momento aferido; o último run herdado do commit técnico [44451308299](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44451308299) **failure em S9**, apesar de S7/S8 passarem. **NO-GO de supply chain global** sem triagem/aceite do responsável R07.
+
+**Parecer:** **GO técnico G14-I restrito a testes e documentação sintética; NO-GO para OCR real, integração R06/R07, Qdrant, homologação, merge, deploy e migração.** O commit que incorpora este checkpoint terá SHA diferente: efetuar readback e verificar os workflows associados separadamente. Não afirmar que o readback do commit anterior comprova automaticamente o commit novo.
