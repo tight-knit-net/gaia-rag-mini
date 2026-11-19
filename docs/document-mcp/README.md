@@ -19,6 +19,7 @@
 14. [14 — Plano do próximo gate: autenticação, concorrência e persistência](14_PLANO_GATE_AUTENTICACAO_CONCORRENCIA_PERSISTENCIA.md)
 15. [15 — Gate G14-B revisado: operador único, contexto processual e aprendizagem híbrida](15_G14B_OPERADOR_UNICO_APRENDIZAGEM_HIBRIDA.md)
 16. [16 — G14-C: persistência descartável, concorrência transacional e revisão por lote](16_GATE_G14C_TRANSACOES_APRENDIZAGEM_REVISAO_AGRUPADA.md)
+17. [17 — G14-D: auditoria de contratos e plano autenticado Salvar memória R06/R07](17_G14D_AUDITORIA_CONTRATOS_FLUXO_SALVAR_MEMORIA.md)
 
 **Precedência:** decisões documentais R06/R07, política de memória e fontes canônicas do Google Drive > interfaces propostas aqui. Documentação oficial de fornecedores para capabilities; documentação do GitHub para estado do código; observações operacionais devem citar ambiente e instante. Não considerar documentação futura como funcionalidade publicada.
 
