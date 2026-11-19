@@ -194,6 +194,10 @@ class DisposableGate:
                 (request.process_key, request.idempotency_key),
             ).fetchone()
             if row:
+                # A retry is the *same* conditional mutation, not merely
+                # the same request key/payload with a different CAS version.
+                if row["expected_revision"] != request.expected_revision:
+                    raise ContractViolation("IDEMPOTENCY_REVISION_CONFLICT")
                 if row["fingerprint"] != request.request_fingerprint:
                     raise ContractViolation("IDEMPOTENCY_CONFLICT")
                 return self._receipt(dict(row), replayed=True)
@@ -247,6 +251,7 @@ class DisposableGate:
             "source_ref": event.source.source_ref,
             "source_version": event.source.source_version,
             "document_sha256": event.source.sha256_original,
+            "expected_revision": expected_revision,
             "operation": event.operation, "provider": event.provider,
             "summary": _canonical_summary(event.summary),
             "rule_id": event.rule_id, "proposed_filename": event.proposed_filename,
@@ -340,6 +345,7 @@ class DisposableGate:
             "process_key": rec["process_key"],
             "run_id": rec["run_id"],
             "request_fingerprint": rec["fingerprint"],
+            "expected_revision": rec["expected_revision"],
             "state": rec["state"],
             "new_revision": rec["new_revision"],
             "replayed": replayed,
