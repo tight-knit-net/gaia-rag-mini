@@ -24,6 +24,7 @@
 19. [19 — G14-F: revisão independente, oscilação lock/SBOM e contratos de integração sintética](19_G14F_REVISAO_INDEPENDENTE_EVENTOS_LOTES_READBACK.md)
 20. [20 — G14-G: replay versionado, evidência DEMO observada e paginação SQLite](20_G14G_REPLAY_EVIDENCIA_PAGINACAO_SINTETICA.md)
 21. [21 — G14-H: auditoria independente da paginação e compatibilidade contratual OCR R02](21_G14H_AUDITORIA_PAGINACAO_EVENTOS_OCR_R02.md)
+22. [22 — G14-I: interoperabilidade OCR R02, fila e lease sintéticos e revisão agrupada](22_G14I_FILA_LEASE_EVENTOS_OCR_R02_REVISAO_SINTETICA.md)
 
 **Precedência:** decisões documentais R06/R07, política de memória e fontes canônicas do Google Drive > interfaces propostas aqui. Documentação oficial de fornecedores para capabilities; documentação do GitHub para estado do código; observações operacionais devem citar ambiente e instante. Não considerar documentação futura como funcionalidade publicada.
 
