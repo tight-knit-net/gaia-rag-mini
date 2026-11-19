@@ -438,6 +438,74 @@ def main():
                           "limit":100,"with_payload":True,
                           "with_vector":False})["result"]["points"])==source_digest)
 
+                # S9 native Qdrant snapshot is performed ONLY on temporary
+                # Qdrant with 3 approved DEMO points and ephemeral tmpfs.
+                import urllib.parse
+                snap_response=q("POST",f"/collections/{server.COLLECTION}/snapshots")
+                snap_obj=snap_response.get("result") or {}
+                snap_name=snap_obj.get("name")
+                check("R07-S9-NATIVE-SNAPSHOT-CREATED",
+                      snap_response.get("status")=="ok"
+                      and isinstance(snap_name,str)
+                      and snap_name.endswith(".snapshot")
+                      and "/" not in snap_name and "\\" not in snap_name)
+                snapshot_endpoint = (Q_URL+f"/collections/{server.COLLECTION}/snapshots/"
+                                     +urllib.parse.quote(snap_name,safe=""))
+                with request.urlopen(snapshot_endpoint,timeout=25) as response:
+                    snapshot_bytes=response.read(32*1024*1024+1)
+                snap_sha=hashlib.sha256(snapshot_bytes).hexdigest()
+                check("R07-S9-NATIVE-SNAPSHOT-BYTE-SHA256",
+                      len(snapshot_bytes)>256
+                      and len(snapshot_bytes)<32*1024*1024
+                      and len(snap_sha)==64)
+                native_target="gaia_r07_s9_native_restored_demo"
+                collections=q("GET","/collections")["result"]["collections"]
+                check("R07-S9-RESTORE-TARGET-ABSENT",
+                      native_target not in {x["name"] for x in collections}
+                      and native_target!=server.COLLECTION)
+                boundary="----GAIA-R07-S9-EPHEMERAL-SNAPSHOT"
+                multipart=(
+                    f"--{boundary}\r\n"
+                    f"Content-Disposition: form-data; name=\"snapshot\"; filename=\"{snap_name}\"\r\n"
+                    "Content-Type: application/octet-stream\r\n\r\n"
+                ).encode()+snapshot_bytes+f"\r\n--{boundary}--\r\n".encode()
+                restore_req=request.Request(
+                    Q_URL+f"/collections/{native_target}/snapshots/upload?priority=snapshot&wait=true",
+                    data=multipart,method="POST",
+                    headers={"Content-Type":f"multipart/form-data; boundary={boundary}"})
+                with request.urlopen(restore_req,timeout=90) as response:
+                    restored_response=json.load(response)
+                check("R07-S9-NATIVE-SNAPSHOT-RESTORE-STATUS",
+                      restored_response.get("status")=="ok")
+                native_result=q("POST",f"/collections/{native_target}/points/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                native_points=native_result["points"]
+                source_native=q("POST",POINTS+"/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                check("R07-S9-NATIVE-SNAPSHOT-RESTORE-COUNT",
+                      len(native_points)==len(source_native["points"])==3
+                      and native_result.get("next_page_offset") is None)
+                def full_digest(points):
+                    data=[{"id":str(p["id"]),"payload":p["payload"],
+                           "vector":p["vector"]} for p in points]
+                    return hashlib.sha256(json.dumps(
+                        sorted(data,key=lambda p:p["id"]),
+                        ensure_ascii=False,sort_keys=True,
+                        separators=(",",":")).encode()).hexdigest()
+                check("R07-S9-NATIVE-SNAPSHOT-FULL-PARITY",
+                      full_digest(native_points)==full_digest(source_native["points"])
+                      and all(p["payload"].get("approved") is True
+                              for p in native_points))
+                q("DELETE",f"/collections/{native_target}")
+                source_post=q("POST",POINTS+"/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                check("R07-S9-NATIVE-ROLLBACK-SOURCE-PRESERVED",
+                      full_digest(source_post["points"])==
+                      full_digest(source_native["points"])
+                      and count()==3)
+                check("R07-S9-NATIVE-SNAPSHOT-TEST-EPHEMERAL",
+                      Q_URL=="http://gaia-rag-r06-demo-qdrant:6333"
+                      and os.environ.get("CF_ACCESS_TEAM_DOMAIN")==ISS)
                 print("GAIA_R06_TESTS="+str(checks),flush=True)
         finally:
             server._qrequest=old
