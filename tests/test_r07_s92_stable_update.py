@@ -81,6 +81,11 @@ class StableUpgradeContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "INCOMPLETE_OS_PACKAGE"):
             compare(grype(), grype(), "pkg\t1\tamd64\n", inventory())
 
+    def test_truncated_security_report_is_rejected(self):
+        scan = grype([finding(f"DEMO-ISSUE-{i}") for i in range(81)])
+        with self.assertRaisesRegex(ValueError, "AUDIT_BLOCKING_FINDINGS_TRUNCATED"):
+            compare(scan, grype(), inventory(), inventory())
+
     def test_unknown_or_critical_finding_is_not_ignored(self):
         a = grype()
         b = grype([finding("DEMO-UNKNOWN","Unknown"),
