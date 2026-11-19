@@ -47,6 +47,7 @@ REQUIRED_TESTS = (
     "tests/test_r07_skill_router.py",
     "tests/test_r07_host_contract.py",
     "tests/test_r07_s6_security.py",
+    "tests/test_r07_s7_recovery.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -145,6 +146,8 @@ def evaluate(root: Path) -> dict:
             "  r07_skill_router_synthetic:",
             "  r07_host_contract_synthetic:",
             "  r07_s6_security:",
+            "  r07_s7_package:",
+            "  r07_s7_sqlite_recovery:",
         )
     )
     checks["no_image_publication"] = (
@@ -174,6 +177,13 @@ def evaluate(root: Path) -> dict:
         and "SKILL_CONTENT_DRIFT" in router
         and "memory_write_permitted" in router
         and "_require(namespace, process_id)" in app
+    )
+    from scripts.r07_s7_package_preflight import inspect as package_inspect
+    package_result = package_inspect(root)
+    checks["s7_pinned_package_preflight_passed"] = package_result["pass"]
+    checks["s7_recovery_test_and_preflight_present"] = (
+        (root / "tests/test_r07_s7_recovery.py").is_file()
+        and (root / "scripts/r07_s7_package_preflight.py").is_file()
     )
     checks["test_files_present"] = all((root / path).is_file() for path in REQUIRED_TESTS)
     checks["governance_docs_present"] = all((root / path).is_file() for path in REQUIRED_DOCS)
