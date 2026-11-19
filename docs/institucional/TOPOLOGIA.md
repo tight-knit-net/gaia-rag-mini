@@ -116,3 +116,12 @@ A documentação original de R07 e os relatórios G4 não devem ser reescritos r
 - `docs/institucional/R07_S93_MATRIZ_DEPENDENCIAS_RUNTIME_2026-11-19.md`: inventário das 87 versões Debian e 8 bibliotecas ligadas aos módulos Python testados; 79 outras não observadas **não devem ser removidas sem prova**.
 - `docs/institucional/R07_S93_RELATORIO_MINIMIZACAO_RUNTIME_2026-11-19.md`: relatório S9.3 v1.0.0; 87→87 pacotes, 0 removidos, 23 CVEs HIGH/77 ocorrências, CI 16 PASS/1 FAIL/1 SKIPPED, NO-GO.
 - **Não houve alteração no Dockerfile principal ou `requirements.lock`.** Sem merge, deploy, publicação, migração ou corte do legado. Próximo gate S9.4 documental/CI para estudar empacotamento multi-stage suportado, sem waiver de CVEs.
+
+## S9.4 — diagnóstico de CI sem etapas (19/11/2026)
+
+- **Baseline** S9.3 v1.1.0 + matriz de 87 pacotes; PR #5 draft R07, base R06 em leitura.
+- `docs/institucional/R07_S94_AUDITORIA_CI_PREEXECUCAO_MULTISTAGE_NO_GO_2026-11-19.md`: relatório S9.4 v1.0.0, disparo 01:07:33 America/Sao_Paulo, CI anterior 16/18 executados com sucesso/1 Grype failure/1 skipped; HEAD subsequente com 17 `failure` e 1 `skipped` **sem etapas/logs**.
+- Inspeção de `compare_commits`: desde o HEAD com CI operacional `c522c599` até o HEAD documental `1bf442fc`, apenas três arquivos Markdown alterados; workflow `.github/workflows/r05-skill-static.yml` e `Dockerfile` mantiveram **os mesmos blob SHA**.
+- Um **único retry dirigido** ao job `validate` teve retorno de solicitação `success=true`, mas novo job falhou sem steps/logs. A causa do executor permanece **não determinada**, sem presumir consumo de cota ou indisponibilidade GitHub.
+- **Subgate CI: BLOQUEADO**. **Multi-stage: NÃO EXECUTADO** por pré-condição. Não houve mudança em Dockerfile, requirements.lock, MCP, Skilldrum, memória, Qdrant, infraestrutura ou legado.
+- **NO-GO** para publicação, merge, homologação, migração e corte. Próximo S9.5: recuperar evidência de execução dos runners, depois avaliar multistage estritamente em CI sintética, sem waivers de CVEs.
