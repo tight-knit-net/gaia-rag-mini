@@ -49,6 +49,15 @@ def inspect(root: Path) -> dict:
         encoding="utf-8")
     checks = {
         "base_image_digest_pinned": f"FROM {BASE}" in docker,
+        "s9_hashed_binary_wheels": (
+            "--require-hashes --only-binary=:all:" in docker
+            and all(
+                " --hash=sha256:" in line
+                and len(line.split(" --hash=sha256:")[-1]) == 64
+                for line in lock.decode("utf-8").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            )
+        ),
         "dependency_install_version_locked": (
             "pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.lock" in docker
             and "python -m pip check" in docker
