@@ -24,7 +24,7 @@ def parse_lock(text: str) -> dict[str, str]:
         if not item or item.startswith("#"):
             continue
         match = re.fullmatch(
-            r"([A-Za-z0-9_.-]+)(?:\[crypto\])?==([0-9][A-Za-z0-9_.+!-]*)",
+            r"([A-Za-z0-9_.-]+)(?:\[crypto\])?==([0-9][A-Za-z0-9_.+!-]*)(?:\s+--hash=sha256:[a-f0-9]{64})?",
             item,
         )
         if not match:
