@@ -109,12 +109,21 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--lock", default="requirements.lock")
     parser.add_argument("--bootstrap", action="store_true")
+    parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
     if args.bootstrap:
         result = bootstrap(Path(args.lock))
         # Public package names/hashes ONLY. No secrets or customer data.
         print("R07_S9_LOCK_SHA256=" + hashlib.sha256(result.encode()).hexdigest())
         print("R07_S9_LOCK_B64=" + base64.b64encode(result.encode()).decode())
+    elif args.verify:
+        contents = Path(args.lock).read_text(encoding="utf-8")
+        read_hash_lock(contents)
+        regenerate = bootstrap(Path(args.lock))
+        if regenerate != contents:
+            raise ValueError("WHEEL_SHA256_MANIFEST_DRIFT")
+        print("R07_S9_HASHED_PACKAGES_VERIFIED=29")
+        print("R07_S9_LOCK_SHA256=" + hashlib.sha256(contents.encode()).hexdigest())
     else:
         contents = Path(args.lock).read_text(encoding="utf-8")
         print("R07_S9_HASHED_PACKAGES=" + str(len(read_hash_lock(contents))))
