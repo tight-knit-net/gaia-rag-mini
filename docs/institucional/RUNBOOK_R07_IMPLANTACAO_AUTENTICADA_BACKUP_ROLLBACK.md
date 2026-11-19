@@ -94,3 +94,13 @@
 - **Fontes API**: https://api.qdrant.tech/api-reference/snapshots/create-snapshot e https://api.qdrant.tech/api-reference/snapshots/recover-from-uploaded-snapshot . As URLs são fonte de especificação, não ações executadas.
 
 **S8 foi um gate de CI/auditoria sem snapshot Qdrant nativo executado.** A futura decisão de host, backup real, migração e corte não está autorizada.
+
+## Adendo S9 — NO-GO de segurança da imagem Debian
+
+**Gate S9 (18/11/2026): NÃO autorizar implantação ou promoção da R07.** Grype no GitHub Actions encontrou 24 CVEs HIGH distintas, refletidas em 78 ocorrências CVE×pacote no SO da imagem Python/Debian; nenhuma vulnerabilidade Python conhecida foi detectada na auditoria PyPI de 29 distribuições.
+
+- Os hashes das 29 wheels estão no `requirements.lock` e a instalação exige `--require-hashes --only-binary=:all:`. Lock válido **somente para CPython 3.12/Linux AMD64**.
+- Snapshot Qdrant **nativo** foi criado e recuperado em coleção nova com `priority=snapshot` somente em Qdrant sintético descartável; 3/3 pontos fictícios preservados após rollback.
+- SBOM de 87 pacotes Debian foi gerado apenas em runner GitHub efêmero; não equivale a homologação operacional.
+- Scanner Grype foi fixado por digest e verificou CVEs públicas. Ver relatório `R07_S9_INTEGRIDADE_WHEELS_SNAPSHOT_NATIVO_OS_SCAN_2026-11-18.md` e GitHub Actions `44436559758`.
+- **GATE DE BLOQUEIO:** NÃO usar CI verde de outra execução anterior para liberar deploy. O gate agregado S9 ficou com 12 jobs PASS, 1 segurança FAIL, 1 aceite SKIPPED. Corrigir CVEs no S9.1, sem ignorar a gravidade.
