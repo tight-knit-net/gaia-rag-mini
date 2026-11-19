@@ -1,6 +1,6 @@
 # G14-H — Revisão independente de evidência, replay, paginação SQLite e contrato OCR R02
 
-**Versão:** 1.0.0 — execução de testes e relatório de auditoria de laboratório; NÃO é homologação operacional.  
+**Versão:** 1.0.1 — execução de testes e relatório de auditoria de laboratório; NÃO é homologação operacional.  
 **Disparo aferido:** `2026-11-18T23:44:11-03:00`, fuso `America/Sao_Paulo`, relógio local do ChatGPT.  
 **Emissão aferida:** `2026-11-18T23:51:30-03:00`, fuso `America/Sao_Paulo`, mesma origem de relógio. A publicação posterior tem instante próprio, registrado pelo GitHub.  
 **Último gate G14-G:** commit `c9c5bab32756659dce688497b389029230da19d7` em `2026-11-19T02:28:25Z`, equivalente a **18/11/2026 às 23:28:25 BRT** (metadados GitHub).  
@@ -98,11 +98,11 @@ Arquivo novo `gaia_document_mcp/g14h_ocr_r02_contract.py`: função pura `previe
 | H2 | Correção sintética da integridade de paginação | PASSOU; oito negativos/positivos |
 | H3 | Contrato OCR R02 de metadados sem OCR real | PASSOU; 25 testes |
 | H4 | Regressões completas, 320/320, v2 preservado | PASSOU |
-| H5 | Relatório MD, índice e readback no HEAD final | PENDENTE até publicação |
+| H5 | Relatório MD, índice e readback no HEAD final | PASSOU para publicação documental inicial; confirmação posterior independente |
 | H6 | CI herdada da R07 / cadeia de suprimentos | PENDENTE no commit técnico; baseline falhou em S9 |
 | H7 | Homologação E2E com OCR e R06/R07/Qdrant | NO-GO e fora de escopo |
 
-**Percentuais:** **100% dos testes sintéticos executados (320/320)**. Os gates H0–H4 representam **5/8 = 62,5%** dos oito critérios nesta fotografia, com H5 ainda não publicado, H6 pendente e H7 bloqueado. O percentual global de prontidão operacional **não tem denominador homologado** e não deve ser inferido dos testes.
+**Percentuais:** **100% dos testes sintéticos executados (320/320)**. Os gates H0–H5 representam **6/8 = 75%** dos oito critérios nesta fotografia, com H6 pendente e H7 bloqueado. Isso não mede prontidão de implantação. O percentual global de prontidão operacional **não tem denominador homologado** e não deve ser inferido dos testes.
 
 **Riscos:** integridade de fonte só DEMO; origem real sem autenticação; qualidade OCR por página não medida; paginação OFFSET sem TTL ou cursor assinado; provider e fila OCR não integrados; retentativa/lease reais não homologados; aprovação humana em lote R06 e readback Qdrant não demonstrados; S9 herdado com bloqueios. Proibir uso de cliente D009 como fixture, incluindo dados disfarçados como DEMO.
 
@@ -111,3 +111,15 @@ Arquivo novo `gaia_document_mcp/g14h_ocr_r02_contract.py`: função pura `previe
 **Próximo gate recomendado: G14-I, sem execução automática.** Auditoria dos envelopes OCR R02 e de proveniência verificada em um TestLab sintético de eventos com fila mock; exercitar deduplicação de job/lease sem provedor externo; preparar contrato de consumo Document MCP e revisão humana agregada para homologação futura. Manter limite de branch e autorização separada para qualquer E2E real/serviço.
 
 **Evidências pinadas:** [módulo OCR contratual](https://github.com/tight-knit-net/gaia-rag-mini/blob/b7b3216ef5de43bd0677bf64153a07cc39b6c27f/gaia_document_mcp/g14h_ocr_r02_contract.py), [readback paginado](https://github.com/tight-knit-net/gaia-rag-mini/blob/b7b3216ef5de43bd0677bf64153a07cc39b6c27f/gaia_document_mcp/g14g_isolated.py), [33 testes](https://github.com/tight-knit-net/gaia-rag-mini/blob/b7b3216ef5de43bd0677bf64153a07cc39b6c27f/tests/test_g14h_audit.py), [CI própria](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44447239231), [PR #7](https://github.com/tight-knit-net/gaia-rag-mini/pull/7).
+
+## 7. Checkpoint após publicação — aditivo v1.0.1
+
+**Aferição do checkpoint:** `2026-11-18T23:55:49-03:00`, `America/Sao_Paulo`, ferramenta de horário local do ChatGPT. **Publicação inicial:** `fc1c05396134cb0eb9b7adf8f21f8e501b378202` em `2026-11-19T02:54:17Z`, equivalente a 18/11/2026 23:54:17 BRT (GitHub).
+
+**Readback confirmado no GitHub:** a PR #7 permaneceu Draft e sem merge, base R07 inalterada; HEAD inicial documental `fc1c05396134cb0eb9b7adf8f21f8e501b378202` confirmado por branch e PR; relatório 21 e índice 21 encontrados, com `320/320`, `33 G14-H` e matriz de 18 casos OCR R02. Comparação G14-G `c9c5bab32756659dce688497b389029230da19d7` → `fc1c05396134cb0eb9b7adf8f21f8e501b378202`: **3 commits, 6 arquivos da frente Document MCP**, sem alteração de contratos v2, outras branches ou provedores.
+
+**CI própria no HEAD documental:** [push run 44447653667](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44447653667) e [pull request run 44447658939](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44447658939), ambos `success` no mesmo SHA. Os 320 testes medem somente o runner sintético.
+
+**CI herdada no HEAD documental:** [run 44447658962](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44447658962), `in_progress` na leitura deste checkpoint; não lançar GO de supply chain por inferência. No commit técnico [run 44447244970](https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44447244970) `failure` no job R07 S9 Debian OS SBOM/Grype. Conclusão e triagem pertencem ao responsável da R07, sem reparos nesta branch.
+
+**Fechamento:** **GO documental e de testes sintéticos G14-H**; **NO-GO de integração, dados reais, memória institucional, publicação, merge/deploy ou migração**. A publicação do aditivo gerará novo SHA que requer readback adicional; o estado de CI desse SHA deve ser registrado de modo independente, sem atribuir automaticamente a ele os runs anteriores.
