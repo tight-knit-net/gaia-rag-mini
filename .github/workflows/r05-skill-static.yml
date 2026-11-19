@@ -557,6 +557,87 @@ jobs:
           echo 'S9.2 comparison ONLY; original R07 OS Grype blocking gate remains mandatory.' \
             >> "$GITHUB_STEP_SUMMARY"
 
+  r07_s93_minimization:
+    name: R07 S9.3 Debian APT autoremove runtime proof and Grype (CI only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify minimization controls, runtime safety and fail-closed findings
+        run: python -m unittest discover -s tests -p 'test_r07_s93_minimization.py' -v
+      - name: Build original and temporary APT-auto-removable candidate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s93_minimization.py \
+            --source-dockerfile Dockerfile \
+            --trial-dockerfile "$RUNNER_TEMP/Dockerfile.s93"
+          test "$(head -n 1 Dockerfile)" = "$(head -n 1 "$RUNNER_TEMP/Dockerfile.s93")"
+          docker build -t gaia-rag-mini:r07-s93-baseline .
+          docker build -f "$RUNNER_TEMP/Dockerfile.s93" \
+            -t gaia-rag-mini:r07-s93-trial .
+          mkdir -p "$RUNNER_TEMP/r07-s93-db" "$RUNNER_TEMP/r07-s93-work"
+          chmod 1777 "$RUNNER_TEMP/r07-s93-db" "$RUNNER_TEMP/r07-s93-work"
+          for tag in baseline trial; do
+            image="gaia-rag-mini:r07-s93-$tag"
+            docker image inspect --format '{{.Os}}/{{.Architecture}}' "$image" \
+              | grep -Fx linux/amd64
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --security-opt no-new-privileges:true \
+              --entrypoint dpkg-query "$image" \
+              -W '-f=${Package}\t${Version}\t${Architecture}\n' \
+              > "$RUNNER_TEMP/r07-s93-$tag-dpkg.tsv"
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --security-opt no-new-privileges:true \
+              --tmpfs /tmp:rw,nosuid,size=64m \
+              --volume "$PWD/scripts:/app/audit-scripts:ro" \
+              --entrypoint python "$image" \
+              /app/audit-scripts/r07_s93_minimization.py --probe \
+              | tee "$RUNNER_TEMP/r07-s93-$tag-probe.log"
+            sed -n 's/^R07_S93_RUNTIME_PROBE=//p' \
+              "$RUNNER_TEMP/r07-s93-$tag-probe.log" \
+              > "$RUNNER_TEMP/r07-s93-$tag-probe.json"
+            test -s "$RUNNER_TEMP/r07-s93-$tag-probe.json"
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --entrypoint python "$image" -m pip check
+            docker save -o "$RUNNER_TEMP/r07-s93-$tag.tar" "$image"
+            chmod a+r "$RUNNER_TEMP/r07-s93-$tag.tar"
+          done
+      - name: Scan FULL original and minimized image without waiver or package filtering
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          for tag in baseline trial; do
+            docker run --rm --network bridge --read-only \
+              --tmpfs /tmp:rw,mode=1777,size=128m \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+              --env TMPDIR=/tmp/grype-work \
+              --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+              --volume "$RUNNER_TEMP/r07-s93-db:/tmp/grype-db:rw" \
+              --volume "$RUNNER_TEMP/r07-s93-work:/tmp/grype-work:rw" \
+              --volume "$RUNNER_TEMP/r07-s93-$tag.tar:/scan/image.tar:ro" \
+              anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+              docker-archive:/scan/image.tar --output json \
+              > "$RUNNER_TEMP/r07-s93-$tag-grype.json"
+            test -s "$RUNNER_TEMP/r07-s93-$tag-grype.json"
+          done
+          python scripts/r07_s93_minimization.py \
+            --baseline-dpkg "$RUNNER_TEMP/r07-s93-baseline-dpkg.tsv" \
+            --trial-dpkg "$RUNNER_TEMP/r07-s93-trial-dpkg.tsv" \
+            --baseline-scan "$RUNNER_TEMP/r07-s93-baseline-grype.json" \
+            --trial-scan "$RUNNER_TEMP/r07-s93-trial-grype.json" \
+            --baseline-probe "$RUNNER_TEMP/r07-s93-baseline-probe.json" \
+            --trial-probe "$RUNNER_TEMP/r07-s93-trial-probe.json"
+          echo 'S9.3 is RESEARCH ONLY: baseline OS scanner still blocks HIGH/CRITICAL/UNKNOWN.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
   r07_candidate_acceptance:
     name: R07 code-candidate acceptance (CI only, no deploy)
     needs:
@@ -575,6 +656,7 @@ jobs:
       - r07_s9_os_scan
       - r07_s9_1_base_comparison
       - r07_s9_2_stable_upgrade
+      - r07_s93_minimization
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
