@@ -110,7 +110,24 @@ def compare(
     )
     if missing_critical:
         raise ValueError("REMOVED_OBSERVED_RUNTIME_PACKAGE:"+",".join(missing_critical))
+    observed_names=set(baseline_probe.get("observed_os_packages",[]))
+    matrix=[
+        {
+            "package":name,
+            "arch":arch,
+            "baseline_version":version,
+            "trial_version":after.get((name,arch)),
+            "evidence":"OBSERVED_IN_ELF_LINKAGE" if name in observed_names
+                       else "NOT_OBSERVED_DOES_NOT_MEAN_UNUSED",
+        }
+        for (name,arch),version in sorted(before.items())
+    ]
     return {
+        "dependency_matrix":matrix,
+        "runtime_observed_debian_package_count":sum(
+            1 for x in matrix if x["evidence"]=="OBSERVED_IN_ELF_LINKAGE"),
+        "other_debian_package_count":sum(
+            1 for x in matrix if x["evidence"]=="NOT_OBSERVED_DOES_NOT_MEAN_UNUSED"),
         "scope":"CI_ONLY_NO_PROMOTION",
         "baseline_os_packages":len(before),
         "trial_os_packages":len(after),
