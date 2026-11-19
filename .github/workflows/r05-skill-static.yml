@@ -171,3 +171,519 @@ jobs:
             -v "$PWD/tests/r06_live_review_e2e.py:/app/r06_test.py:ro" \
             --entrypoint python gaia-rag-mini:r06-ci /app/r06_test.py
           echo "R06 real synthetic MCP review -> Qdrant -> readback PASS"
+
+
+  r07_operational_isolated:
+    name: R07 isolated operational smoke (ephemeral runner, no cloud secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify candidate Docker runtime with no network, secrets or public ports
+        run: bash tests/r07_isolated_runtime_smoke.sh
+
+
+  r07_skill_router_synthetic:
+    name: R07 Skilldrum route simulation (offline, no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test fixed route taxonomy, digest binding and progressive loads
+        run: python -m unittest discover -s tests -p 'test_r07_skill_router.py' -v
+
+  r07_host_contract_synthetic:
+    name: R07 host-driven skill loading contract (CI simulation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate explicit host selection, complete chunks, hashes and denial
+        run: python -m unittest discover -s tests -p 'test_r07_host_contract.py' -v
+
+  r07_s6_security:
+    name: R07 S6 security boundaries and legacy ledger compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify owner access, CSRF, discard state and migration fail-closed
+        run: python -m unittest discover -s tests -p 'test_r07_s6_security.py' -v
+
+
+  r07_s7_package:
+    name: R07 S7 pinned package and runtime attestation (no publish)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinning, state mounts, identity and disabled deploy
+        run: python scripts/r07_s7_package_preflight.py
+      - name: Build only on ephemeral GitHub-hosted runner
+        run: docker build --tag gaia-rag-mini:r07-s7-pinned .
+      - name: Verify installed packages and non-root container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(docker image inspect --format '{{.Config.User}}' gaia-rag-mini:r07-s7-pinned)" = "10001:10001"
+          docker run --rm --network none --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cpus 1 --memory 768m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --mount "type=bind,src=$PWD/scripts/r07_s7_package_preflight.py,dst=/tmp/r07_s7_package_preflight.py,readonly" \
+            --entrypoint python gaia-rag-mini:r07-s7-pinned \
+            /tmp/r07_s7_package_preflight.py --inside-runtime --root /app
+          printf 'R07_S7_PINNED_RUNTIME_PASS\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'requirements.lock SHA256: %s\n' "$(sha256sum requirements.lock | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s7_sqlite_recovery:
+    name: R07 S7 SQLite WAL backup and isolated restore (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test SQLite online backup integrity and no-overwrite rollback
+        run: python -m unittest discover -s tests -p 'test_r07_s7_recovery.py' -v
+
+  r07_s8_supplychain:
+    name: R07 S8 CycloneDX SBOM and public Python advisory audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit-test deterministic BOM and fail-closed advisory coverage
+        run: python -m unittest discover -s tests -p 'test_r07_s8_supplychain.py' -v
+      - name: Generate CycloneDX SBOM from pinned Python dependency lock
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --sbom-out "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --verify-sbom "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          python scripts/r07_s8_supplychain.py \
+            --lock requirements.lock \
+            --verify-sbom docs/institucional/R07_SBOM_PYTHON_LOCK_S8.cdx.json
+          test -s "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json"
+          printf 'S8 lock-based CycloneDX SBOM SHA256: %s\n' \
+            "$(sha256sum "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json" | cut -d' ' -f1)" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Audit ONLY public pinned package names and versions via PyPI advisories
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m pip install --disable-pip-version-check 'pip-audit==2.10.1'
+          audit_status=0
+          pip-audit --requirement requirements.lock --no-deps --disable-pip \
+            --format json --output "$RUNNER_TEMP/gaia-r07-advisories.json" \
+            || audit_status=$?
+          if test -s "$RUNNER_TEMP/gaia-r07-advisories.json"; then
+            python scripts/r07_s8_supplychain.py \
+              --lock requirements.lock \
+              --verify-sbom "$RUNNER_TEMP/gaia-r07-python-lock.cdx.json" \
+              --audit-report "$RUNNER_TEMP/gaia-r07-advisories.json" \
+              || audit_status=1
+          else
+            echo 'NO-GO: PyPI advisory report unavailable; cannot claim clean scan.'
+            audit_status=1
+          fi
+          if test "$audit_status" -ne 0; then
+            echo 'NO-GO: known vulnerability, incomplete advisory coverage, or scan failure.'
+            exit 1
+          fi
+          printf 'S8 public PyPI advisory scan: 29/29 pinned dependencies, zero findings.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s8_review_and_snapshot:
+    name: R07 S8 replay readback and native snapshot decision (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Simulate review replay and fail-closed Qdrant native snapshot plans
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m unittest discover -s tests -p 'test_r07_s8_review_integrity.py' -v
+          python -m unittest discover -s tests -p 'test_r07_s8_snapshot_contract.py' -v
+
+  r07_s9_hash_bootstrap:
+    name: R07 S9 wheel hash verification (public PyPI, temporary runner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download pinned public linux-amd64 wheels, generate/check hash manifest
+        run: python scripts/r07_s9_wheel_lock.py --verify
+
+  r07_s9_os_scan:
+    name: R07 S9 Debian OS SBOM and Grype public vulnerability audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test Debian package BOM and scanner result fail-closed handling
+        run: python -m unittest discover -s tests -p 'test_r07_s9_os_audit.py' -v
+      - name: Build the candidate Docker image only on an ephemeral runner
+        run: docker build --tag gaia-rag-mini:r07-s9-os .
+      - name: Generate CycloneDX OS manifest from actual installed packages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --entrypoint dpkg-query gaia-rag-mini:r07-s9-os \
+            -W '-f=${Package}\t${Version}\t${Architecture}\n' > "$RUNNER_TEMP/r07-dpkg.tsv"
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --entrypoint dpkg-query gaia-rag-mini:r07-s9-os \
+            -W '-f=${Version}\n' zlib1g | \
+            grep -Fx '1:1.3.dfsg+really1.3.1-1+deb13u1'
+          echo 'S9.1 security-patched zlib1g version verified in ephemeral image.' >> "$GITHUB_STEP_SUMMARY"
+          python scripts/r07_s9_os_audit.py --dpkg-list "$RUNNER_TEMP/r07-dpkg.tsv" \
+            --sbom-out "$RUNNER_TEMP/r07-os-packages.cdx.json"
+          test -s "$RUNNER_TEMP/r07-os-packages.cdx.json"
+          printf 'S9 OS SBOM SHA256: %s\n' \
+            "$(sha256sum "$RUNNER_TEMP/r07-os-packages.cdx.json" | cut -d' ' -f1)" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Audit Debian OS CVEs using isolated Grype version v0.122.0
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker save -o "$RUNNER_TEMP/r07-s9-image.tar" gaia-rag-mini:r07-s9-os
+          chmod a+r "$RUNNER_TEMP/r07-s9-image.tar"
+          mkdir -p "$RUNNER_TEMP/r07-grype-db" "$RUNNER_TEMP/r07-grype-work"
+          chmod 1777 "$RUNNER_TEMP/r07-grype-db" "$RUNNER_TEMP/r07-grype-work"
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          docker run --rm --network bridge --read-only \
+            --tmpfs /tmp:rw,mode=1777,size=128m \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+            --env TMPDIR=/tmp/grype-work \
+            --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+            --volume "$RUNNER_TEMP/r07-grype-db:/tmp/grype-db:rw" \
+            --volume "$RUNNER_TEMP/r07-grype-work:/tmp/grype-work:rw" \
+            --volume "$RUNNER_TEMP/r07-s9-image.tar:/scan/r07-s9-image.tar:ro" \
+            anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+            docker-archive:/scan/r07-s9-image.tar --output json \
+            > "$RUNNER_TEMP/r07-grype-os.json"
+          test -s "$RUNNER_TEMP/r07-grype-os.json"
+          python scripts/r07_s9_os_audit.py \
+            --dpkg-list "$RUNNER_TEMP/r07-dpkg.tsv" \
+            --grype-json "$RUNNER_TEMP/r07-grype-os.json"
+          printf 'S9 Debian package Grype scan: no HIGH/CRITICAL/UNKNOWN OS findings.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s9_1_base_comparison:
+    name: R07 S9.1 supported Python 3.12 base comparison (${{ matrix.variant }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [slim-bookworm, slim-trixie]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test fail-closed CVE comparison without live services
+        run: python -m unittest discover -s tests -p 'test_r07_s9_1_compare_os.py' -v
+      - name: Resolve official supported Python image tag to immutable digest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull "python:3.12-${{ matrix.variant }}"
+          immutable="$(docker image inspect --format '{{ index .RepoDigests 0 }}' "python:3.12-${{ matrix.variant }}")"
+          [[ "$immutable" =~ ^python@sha256:[a-f0-9]{64}$ ]] || { echo 'INVALID_BASE_DIGEST'; exit 1; }
+          echo "IMAGE_REF=$immutable" >> "$GITHUB_ENV"
+          echo "S9.1 base reference: $immutable" >> "$GITHUB_STEP_SUMMARY"
+          { printf 'FROM %s\n' "$immutable"; tail -n +2 Dockerfile; } \
+            > "$RUNNER_TEMP/Dockerfile.s91"
+          # Bookworm cannot install the Debian-13-specific zlib security version.
+          # Remove the variant-specific install ONLY from this temporary comparison
+          # Dockerfile; never edit the tracked R07 Dockerfile or hide scan findings.
+          if [[ "${{ matrix.variant }}" == "slim-bookworm" ]]; then
+            grep -Fq 'zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1' "$RUNNER_TEMP/Dockerfile.s91"
+            sed -i '/^# S9\.1: Debian official trixie-security fix/,/^    rm -rf \/var\/lib\/apt\/lists\/\*/d' "$RUNNER_TEMP/Dockerfile.s91"
+            ! grep -q 'zlib1g=' "$RUNNER_TEMP/Dockerfile.s91"
+          fi
+      - name: Build complete R07 candidate only on disposable GitHub runner
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker build -f "$RUNNER_TEMP/Dockerfile.s91" \
+            -t "gaia-rag-mini:s91-${{ matrix.variant }}" .
+          docker image inspect --format '{{.Os}}/{{.Architecture}}' \
+            "gaia-rag-mini:s91-${{ matrix.variant }}" | grep -Fx linux/amd64
+          docker save -o "$RUNNER_TEMP/s91-image.tar" \
+            "gaia-rag-mini:s91-${{ matrix.variant }}"
+          chmod a+r "$RUNNER_TEMP/s91-image.tar"
+          mkdir -p "$RUNNER_TEMP/s91-db" "$RUNNER_TEMP/s91-work"
+          chmod 1777 "$RUNNER_TEMP/s91-db" "$RUNNER_TEMP/s91-work"
+      - name: Full public Debian CVE comparison using pinned Grype
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          docker run --rm --network bridge --read-only \
+            --tmpfs /tmp:rw,mode=1777,size=128m \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+            --env TMPDIR=/tmp/grype-work \
+            --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+            --volume "$RUNNER_TEMP/s91-db:/tmp/grype-db:rw" \
+            --volume "$RUNNER_TEMP/s91-work:/tmp/grype-work:rw" \
+            --volume "$RUNNER_TEMP/s91-image.tar:/scan/s91-image.tar:ro" \
+            anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+            docker-archive:/scan/s91-image.tar --output json \
+            > "$RUNNER_TEMP/s91-grype.json"
+          test -s "$RUNNER_TEMP/s91-grype.json"
+          python scripts/r07_s9_1_compare_os.py --report "$RUNNER_TEMP/s91-grype.json" \
+            --image "$IMAGE_REF" --variant "${{ matrix.variant }}"
+          echo "Comparison only: HIGH/CRITICAL/UNKNOWN findings still block original S9 OS job." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s9_2_stable_upgrade:
+    name: R07 S9.2 official Debian stable/security update trial (no promotion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify stable-only trial policy and fail-closed comparison tests
+        run: python -m unittest discover -s tests -p 'test_r07_s92_stable_update.py' -v
+      - name: Create disposable upgrade trial without modifying tracked Dockerfile
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s92_stable_update.py --dockerfile Dockerfile \
+            --write-trial "$RUNNER_TEMP/Dockerfile.r07-s92"
+          grep -Fq 'apt-get upgrade -y --no-install-recommends' \
+            "$RUNNER_TEMP/Dockerfile.r07-s92"
+          grep -Fq -- '--require-hashes --only-binary=:all:' \
+            "$RUNNER_TEMP/Dockerfile.r07-s92"
+          docker build -t gaia-rag-mini:r07-s92-original .
+          docker build -f "$RUNNER_TEMP/Dockerfile.r07-s92" \
+            -t gaia-rag-mini:r07-s92-trial .
+          for tag in original trial; do
+            image="gaia-rag-mini:r07-s92-$tag"
+            docker image inspect --format '{{.Os}}/{{.Architecture}}' "$image" \
+              | grep -Fx linux/amd64
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --entrypoint dpkg-query "$image" \
+              -W '-f=${Package}\t${Version}\t${Architecture}\n' \
+              > "$RUNNER_TEMP/r07-s92-$tag-dpkg.tsv"
+            docker save -o "$RUNNER_TEMP/r07-s92-$tag.tar" "$image"
+            chmod a+r "$RUNNER_TEMP/r07-s92-$tag.tar"
+          done
+          mkdir -p "$RUNNER_TEMP/r07-s92-db" "$RUNNER_TEMP/r07-s92-work"
+          chmod 1777 "$RUNNER_TEMP/r07-s92-db" "$RUNNER_TEMP/r07-s92-work"
+      - name: Run original and stable-only trial Grype scans using public advisory DB
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          for tag in original trial; do
+            docker run --rm --network bridge --read-only \
+              --tmpfs /tmp:rw,mode=1777,size=128m \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+              --env TMPDIR=/tmp/grype-work \
+              --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+              --volume "$RUNNER_TEMP/r07-s92-db:/tmp/grype-db:rw" \
+              --volume "$RUNNER_TEMP/r07-s92-work:/tmp/grype-work:rw" \
+              --volume "$RUNNER_TEMP/r07-s92-$tag.tar:/scan/image.tar:ro" \
+              anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+              docker-archive:/scan/image.tar --output json \
+              > "$RUNNER_TEMP/r07-s92-$tag-grype.json"
+            test -s "$RUNNER_TEMP/r07-s92-$tag-grype.json"
+          done
+          python scripts/r07_s92_stable_update.py \
+            --before-scan "$RUNNER_TEMP/r07-s92-original-grype.json" \
+            --after-scan "$RUNNER_TEMP/r07-s92-trial-grype.json" \
+            --before-dpkg "$RUNNER_TEMP/r07-s92-original-dpkg.tsv" \
+            --after-dpkg "$RUNNER_TEMP/r07-s92-trial-dpkg.tsv"
+          echo 'S9.2 comparison ONLY; original R07 OS Grype blocking gate remains mandatory.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_s93_minimization:
+    name: R07 S9.3 Debian APT autoremove runtime proof and Grype (CI only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify minimization controls, runtime safety and fail-closed findings
+        run: python -m unittest discover -s tests -p 'test_r07_s93_minimization.py' -v
+      - name: Build original and temporary APT-auto-removable candidate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python scripts/r07_s93_minimization.py \
+            --source-dockerfile Dockerfile \
+            --trial-dockerfile "$RUNNER_TEMP/Dockerfile.s93"
+          test "$(head -n 1 Dockerfile)" = "$(head -n 1 "$RUNNER_TEMP/Dockerfile.s93")"
+          docker build -t gaia-rag-mini:r07-s93-baseline .
+          docker build -f "$RUNNER_TEMP/Dockerfile.s93" \
+            -t gaia-rag-mini:r07-s93-trial .
+          mkdir -p "$RUNNER_TEMP/r07-s93-db" "$RUNNER_TEMP/r07-s93-work"
+          chmod 1777 "$RUNNER_TEMP/r07-s93-db" "$RUNNER_TEMP/r07-s93-work"
+          for tag in baseline trial; do
+            image="gaia-rag-mini:r07-s93-$tag"
+            docker image inspect --format '{{.Os}}/{{.Architecture}}' "$image" \
+              | grep -Fx linux/amd64
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --security-opt no-new-privileges:true \
+              --entrypoint dpkg-query "$image" \
+              -W '-f=${Package}\t${Version}\t${Architecture}\n' \
+              > "$RUNNER_TEMP/r07-s93-$tag-dpkg.tsv"
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --security-opt no-new-privileges:true \
+              --tmpfs /tmp:rw,nosuid,size=64m \
+              --volume "$PWD/scripts:/app/audit-scripts:ro" \
+              --entrypoint python "$image" \
+              /app/audit-scripts/r07_s93_minimization.py --probe \
+              | tee "$RUNNER_TEMP/r07-s93-$tag-probe.log"
+            sed -n 's/^R07_S93_RUNTIME_PROBE=//p' \
+              "$RUNNER_TEMP/r07-s93-$tag-probe.log" \
+              > "$RUNNER_TEMP/r07-s93-$tag-probe.json"
+            test -s "$RUNNER_TEMP/r07-s93-$tag-probe.json"
+            docker run --rm --network none --read-only --cap-drop ALL \
+              --entrypoint python "$image" -m pip check
+            docker save -o "$RUNNER_TEMP/r07-s93-$tag.tar" "$image"
+            chmod a+r "$RUNNER_TEMP/r07-s93-$tag.tar"
+          done
+      - name: Run isolated trial HTTP authorization smoke (no external network)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          name="gaia-r07-s93-http-$GITHUB_RUN_ID"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          docker run -d --name "$name" \
+            --network none --read-only \
+            --tmpfs /tmp:rw,nosuid,noexec,size=64m \
+            --cpus 1 --memory 768m --pids-limit 128 \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env GAIA_RAG_ENABLE_REVIEW=0 \
+            --volume "$PWD/tests:/app/audit-tests:ro" \
+            gaia-rag-mini:r07-s93-trial > /dev/null
+          docker exec "$name" python /app/audit-tests/r07_s93_http_smoke.py
+          test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$name")" = none
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$name")" = true
+          test -z "$(docker port "$name" 2>/dev/null || true)"
+          echo 'S9.3 trial HTTP: health + four anonymous-deny checks PASS (5/5).' \
+            >> "$GITHUB_STEP_SUMMARY"
+          docker rm -f "$name" > /dev/null
+          trap - EXIT
+      - name: Scan FULL original and minimized image without waiver or package filtering
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker pull anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f
+          for tag in baseline trial; do
+            docker run --rm --network bridge --read-only \
+              --tmpfs /tmp:rw,mode=1777,size=128m \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --env GRYPE_DB_CACHE_DIR=/tmp/grype-db \
+              --env TMPDIR=/tmp/grype-work \
+              --env GRYPE_CHECK_FOR_APP_UPDATE=false \
+              --volume "$RUNNER_TEMP/r07-s93-db:/tmp/grype-db:rw" \
+              --volume "$RUNNER_TEMP/r07-s93-work:/tmp/grype-work:rw" \
+              --volume "$RUNNER_TEMP/r07-s93-$tag.tar:/scan/image.tar:ro" \
+              anchore/grype@sha256:013e16ae96bd64108973e3e9fecec63f7ff276358d34c46c25d33e2aac96539f \
+              docker-archive:/scan/image.tar --output json \
+              > "$RUNNER_TEMP/r07-s93-$tag-grype.json"
+            test -s "$RUNNER_TEMP/r07-s93-$tag-grype.json"
+          done
+          python scripts/r07_s93_minimization.py \
+            --baseline-dpkg "$RUNNER_TEMP/r07-s93-baseline-dpkg.tsv" \
+            --trial-dpkg "$RUNNER_TEMP/r07-s93-trial-dpkg.tsv" \
+            --baseline-scan "$RUNNER_TEMP/r07-s93-baseline-grype.json" \
+            --trial-scan "$RUNNER_TEMP/r07-s93-trial-grype.json" \
+            --baseline-probe "$RUNNER_TEMP/r07-s93-baseline-probe.json" \
+            --trial-probe "$RUNNER_TEMP/r07-s93-trial-probe.json"
+          echo 'S9.3 is RESEARCH ONLY: baseline OS scanner still blocks HIGH/CRITICAL/UNKNOWN.' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  r07_candidate_acceptance:
+    name: R07 code-candidate acceptance (CI only, no deploy)
+    needs:
+      - validate
+      - staging_image_smoke
+      - r06_lifecycle_synthetic
+      - r07_operational_isolated
+      - r07_skill_router_synthetic
+      - r07_host_contract_synthetic
+      - r07_s6_security
+      - r07_s7_package
+      - r07_s7_sqlite_recovery
+      - r07_s8_supplychain
+      - r07_s8_review_and_snapshot
+      - r07_s9_hash_bootstrap
+      - r07_s9_os_scan
+      - r07_s9_1_base_comparison
+      - r07_s9_2_stable_upgrade
+      - r07_s93_minimization
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify candidate contracts and blocked production gates
+        run: python scripts/r07_candidate_acceptance.py --summary-path "$GITHUB_STEP_SUMMARY"

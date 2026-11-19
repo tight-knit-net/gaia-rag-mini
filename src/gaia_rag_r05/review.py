@@ -16,9 +16,11 @@ import secrets
 import sqlite3
 import time
 import uuid
+from contextlib import closing
 from pathlib import Path
 
 from .authz import AccessDenied, AuthorizedScope, require_issued_scope
+from . import lifecycle_read
 
 _REF = re.compile(r"^[a-zA-Z0-9_.:/-]{1,200}$")
 _MAX_SUMMARY = 4000
@@ -87,7 +89,7 @@ def _connect():
             created_by TEXT NOT NULL, title TEXT NOT NULL, summary TEXT NOT NULL,
             source_ref TEXT NOT NULL, document_approval_ref TEXT NOT NULL,
             document_sha256 TEXT NOT NULL, point_id TEXT NOT NULL UNIQUE,
-            status TEXT NOT NULL CHECK(status IN ('pending','approving','approved')),
+            status TEXT NOT NULL CHECK(status IN ('pending','approving','approved','discarded')),
             created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,
             approved_by TEXT, approved_at INTEGER);
         CREATE TABLE IF NOT EXISTS audit (
@@ -123,7 +125,7 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
     identity_key = _digest(s.namespace, tenant_id, s.process_id, source_ref,
                            document_sha256, title.strip(), summary.strip())
     point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "gaia-r06:" + identity_key))
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         row = conn.execute("SELECT * FROM proposals WHERE identity_key=?", (identity_key,)).fetchone()
         if row is None:
@@ -146,7 +148,7 @@ def prepare(capability: AuthorizedScope, *, created_by: str, title: str, summary
 
 def get_proposal(identifier: str, capability: AuthorizedScope) -> dict:
     s = require_issued_scope(capability)
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         row = conn.execute("SELECT * FROM proposals WHERE id=?", (str(uuid.UUID(identifier)),)).fetchone()
         if row is None or row["namespace"] != s.namespace or row["process_id"] != s.process_id:
             raise AccessDenied("PROPOSAL_NOT_FOUND")
@@ -192,21 +194,44 @@ def verify_csrf(identifier: str, actor: str, token: str):
         raise AccessDenied("CSRF_DENIED") from None
 
 def review_view(identifier: str, actor: str, authorize) -> dict:
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         row = _checked_row(conn,identifier,actor,authorize)
         return {"id":row["id"],"title":row["title"],"summary":row["summary"],
                 "source_ref":row["source_ref"],"status":row["status"],
                 "expires_at":row["expires_at"],"process_id":row["process_id"],
                 "csrf":csrf_token(row["id"],actor) if row["status"]=="pending" and row["expires_at"]>=_now() else None}
 
+def _verify_approved_point(row, confirmed: dict) -> dict:
+    """Require fresh positive readback of the same approved point and provenance."""
+    if not isinstance(confirmed, dict) or confirmed.get("found") is not True:
+        raise RuntimeError("APPROVED_POINT_READBACK_UNCONFIRMED")
+    item = confirmed.get("item")
+    if not isinstance(item, dict) or any((
+        item.get("approved") is not True,
+        item.get("namespace") != row["namespace"],
+        item.get("process_id") != row["process_id"],
+        item.get("source_ref") != row["source_ref"],
+        item.get("document_approval_ref") != row["document_approval_ref"],
+        item.get("document_sha256") != row["document_sha256"],
+        item.get("text") != row["summary"],
+        item.get("id") != row["point_id"],
+    )):
+        raise RuntimeError("APPROVED_POINT_READBACK_UNCONFIRMED")
+    return item
+
+
 def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read_point) -> dict:
     # Browser-mediated: only caller that verified Access JWT and explicit CSRF POST can call.
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         row = _checked_row(conn,identifier,actor,authorize)
         verify_csrf(row["id"],actor,csrf)
         if row["status"]=="approved":
+            # An old SQLite approval is not proof that its point still exists.
+            # Release the transaction before the potentially slow Qdrant read.
+            cap = authorize(row["namespace"], row["tenant_id"], row["process_id"])
             conn.commit()
+            _verify_approved_point(row, read_point(cap, row["point_id"]))
             return {"stored":True,"point_id":row["point_id"],"replayed":True}
         if row["status"]!="pending" or row["expires_at"]<_now():
             raise AccessDenied("REVIEW_NOT_PENDING")
@@ -222,18 +247,27 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
 
     # Fail closed on ambiguous write/readback: do not automatically retry; operator
     # must reconcile using deterministic point ID.
+    # Index metadata is generated only AFTER the human approval step.
+    # It is advisory, not a legal conclusion or a new Qdrant payload index.
+    indexing = lifecycle_read.index_candidate_preview(
+        process_id=row["process_id"], title=row["title"],
+        summary=row["summary"], source_ref=row["source_ref"])
     payload={
         "namespace":row["namespace"],"tenant_id":row["tenant_id"],"process_id":row["process_id"],
         "approved":True,"title":row["title"],"text":row["summary"],
         "source_ref":row["source_ref"],"document_sha256":row["document_sha256"],
-        "document_approval_ref":row["document_approval_ref"],"approved_by":actor,"approved_at":_now()
+        "document_approval_ref":row["document_approval_ref"],"approved_by":actor,"approved_at":_now(),
+        "index_kind_suggested":indexing["suggested_kind"],
+        "index_keywords_suggested":indexing["suggested_tags"],
+        "index_method":"r07_deterministic_v1",
     }
     write_point(row["point_id"],payload)
     confirmed=read_point(cap,row["point_id"])
-    item=confirmed.get("item",{}) if isinstance(confirmed,dict) else {}
-    if confirmed.get("found") is not True or item.get("document_sha256")!=row["document_sha256"] or item.get("text")!=row["summary"]:
+    item=_verify_approved_point(row,confirmed)
+    if (item.get("index_method")!="r07_deterministic_v1"
+            or item.get("index_keywords_suggested")!=indexing["suggested_tags"]):
         raise RuntimeError("READBACK_UNCONFIRMED")
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         conn.execute("BEGIN IMMEDIATE")
         conn.execute("UPDATE proposals SET status='approved',approved_by=?,approved_at=? WHERE id=? AND status='approving'",
                      (actor,_now(),row["id"]))
@@ -242,11 +276,45 @@ def approve(identifier: str, actor: str, authorize, csrf: str, write_point, read
         conn.commit()
     return {"stored":True,"point_id":row["point_id"],"replayed":False}
 
+def _ledger_supports_discard(conn: sqlite3.Connection) -> bool:
+    """Old R06 SQLite CHECK constraints cannot be expanded by CREATE IF NOT EXISTS.
+
+    Fail closed and require a separately approved, backed-up schema migration.
+    Never attempt an automatic migration during a browser click.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='proposals'"
+    ).fetchone()
+    return (row is not None and isinstance(row["sql"], str)
+            and "'discarded'" in row["sql"].lower())
+
+
+def discard(identifier: str, actor: str, authorize, csrf: str) -> dict:
+    """Explicit human browser action, never an MCP direct mutation."""
+    with closing(_connect()) as conn, conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = _checked_row(conn, identifier, actor, authorize)
+        verify_csrf(row["id"], actor, csrf)
+        if row["status"] == "discarded":
+            conn.commit()
+            return {"discarded": True, "proposal_id": row["id"], "replayed": True}
+        if row["status"] != "pending" or row["expires_at"] < _now():
+            raise AccessDenied("DISCARD_NOT_PENDING")
+        if not _ledger_supports_discard(conn):
+            raise AccessDenied("DISCARD_SCHEMA_MIGRATION_REQUIRED")
+        conn.execute("UPDATE proposals SET status='discarded' WHERE id=? AND status='pending'",
+                     (row["id"],))
+        conn.execute("INSERT INTO audit(at,proposal_id,event,actor) VALUES (?,?,?,?)",
+                     (_now(), row["id"], "human_discarded", actor))
+        conn.commit()
+    return {"discarded": True, "proposal_id": row["id"], "replayed": False}
+
+
 def pending(capability: AuthorizedScope, limit: int = 20) -> dict:
     s=require_issued_scope(capability)
     if type(limit)!=int or not 1<=limit<=50:
         raise ValueError("INVALID_LIMIT")
-    with _connect() as conn:
+    with closing(_connect()) as conn, conn:
         rows=conn.execute("""SELECT id,title,status,expires_at FROM proposals
            WHERE namespace=? AND process_id=?
            ORDER BY created_at DESC LIMIT ?""",

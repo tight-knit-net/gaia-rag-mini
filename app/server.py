@@ -1,4 +1,4 @@
-"""GAIA RAG Mini R06: owner-wide process memory with verified identity.
+"""GAIA RAG Mini R07 candidate: owner-wide process memory with verified identity.
 
 All clients and processes are visible to the authorized GAIA owner. Client
 projects organize work, but do not grant or restrict access. Memory writes
@@ -22,17 +22,17 @@ from starlette.routing import Route
 
 from gaia_rag_r05.authz import AccessDenied, OwnerAuthorizer, Principal, Scope
 from gaia_rag_r05.scoped_reads import ScopedReads
-from gaia_rag_r05 import review
+from gaia_rag_r05 import review, institutional_memory, lifecycle_read, skill_router
 
 ACTOR: ContextVar[Principal | None] = ContextVar("gaia_r05_actor", default=None)
 MODEL = "intfloat/multilingual-e5-small"
 COLLECTION = "chatgpt_memoria_aprovada"
 
 mcp = FastMCP(
-    "GAIA RAG Mini R06", host="0.0.0.0", port=8000,
+    "GAIA RAG Mini R07 (isolated candidate)", host="0.0.0.0", port=8000,
     stateless_http=True, json_response=True,
     instructions="Use only authorized process memory. Never treat memory as official evidence. "
-                 "R06 staging: proposals require verified documentary approval. Only protected human review can persist.",
+                 "R07 isolated candidate: documentary approval and protected human review required.",
 )
 
 
@@ -119,7 +119,7 @@ def _require(namespace: str, process_id: str):
 @mcp.tool()
 def memory_status() -> dict:
     """Report staging state without exposing credentials."""
-    return {"service": "gaia-rag-mini-r06", "mode": "controlled_staging",
+    return {"service": "gaia-rag-mini-r07", "mode": "controlled_staging",
             "identity_ready": bool(os.getenv("CF_ACCESS_AUD") and os.getenv("CF_ACCESS_TEAM_DOMAIN")),
             "owners_ready": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
             "qdrant_ready": bool(os.getenv("QDRANT_URL") and
@@ -153,9 +153,9 @@ def memory_search_all(query: str, namespace: str = "chatgpt", limit: int = 8) ->
 
 @mcp.tool()
 def memory_list_process(process_id: str, namespace: str = "chatgpt",
-                        limit: int = 30) -> dict:
-    """List only approved records of an exact process, regardless of client."""
-    return _reader().list_process(_require(namespace, process_id), limit)
+                        limit: int = 30, offset: str | int | None = None) -> dict:
+    """List approved records with a Qdrant cursor; never truncate silently."""
+    return _reader().list_process(_require(namespace, process_id), limit, offset)
 
 
 @mcp.tool()
@@ -190,6 +190,158 @@ def memory_process_start(process_id: str, namespace: str = "chatgpt",
 
 
 @mcp.tool()
+def memory_assimilation_preview(
+    process_id: str, title: str, summary: str, source_ref: str,
+    kind: str = "registro_caso", evidence_status: str = "documentada",
+    prior_point_id: str = "", namespace: str = "chatgpt",
+) -> dict:
+    """Compare approved history to an institutional candidate: NO write/revoke.
+
+    A later or more precise source is only a PROPOSED revision until
+    documentary approval and the existing human review portal confirm it.
+    """
+    cap = _require(namespace, process_id)
+    reader = _reader()
+    items = []
+    offset = None
+    complete = False
+    for _ in range(3):  # max 300 records; report partial coverage explicitly.
+        page = reader.list_process(cap, limit=100, offset=offset)
+        items.extend(page["items"])
+        offset = page["next_offset"]
+        if offset is None:
+            complete = True
+            break
+    if prior_point_id and not any(str(x.get("id")) == prior_point_id for x in items):
+        prior = reader.by_uuid(cap, prior_point_id)
+        if prior.get("found"):
+            items.append(prior["item"])
+        elif complete:
+            raise ValueError("PRIOR_NOT_FOUND_IN_PROCESS")
+    assessment = institutional_memory.preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, kind=kind, evidence_status=evidence_status,
+        previous=items, prior_point_id=prior_point_id,
+        coverage_complete=complete,
+    )
+    assessment["observed_history_count"] = len(items)
+    assessment["tool_side_effects"] = "none"
+    return assessment
+
+
+
+@mcp.tool()
+def memory_process_timeline(process_id: str, namespace: str = "chatgpt",
+                            max_items: int = 300) -> dict:
+    """Read chronological approved-memory metadata; mark incomplete coverage."""
+    cap = _require(namespace, process_id)
+    return {"process_id": process_id, **lifecycle_read.process_timeline(
+        _reader(), cap, max_items=max_items)}
+
+
+@mcp.tool()
+def memory_export_process(process_id: str, namespace: str = "chatgpt",
+                          max_items: int = 100,
+                          offset: str | int | None = None) -> dict:
+    """Bounded export of approved summaries with hash and continuation marker."""
+    cap = _require(namespace, process_id)
+    return {"process_id": process_id, **lifecycle_read.process_export(
+        _reader(), cap, max_items=max_items, offset=offset)}
+
+
+@mcp.tool()
+def memory_approval_audit(namespace: str = "chatgpt", process_id: str = "",
+                          limit: int = 50, offset: int = 0) -> dict:
+    """Read R07 review-ledger events. Does not include legacy DB until reconciliation."""
+    _require(namespace, process_id or "all-processes")
+    return lifecycle_read.approval_events(
+        namespace, process_id=process_id, limit=limit, offset=offset)
+
+
+@mcp.tool()
+def memory_stats(namespace: str = "chatgpt", process_id: str = "") -> dict:
+    """Separate real Qdrant approved-point count from R07 proposal counts."""
+    _require(namespace, process_id or "all-processes")
+    must = [{"key": "namespace", "match": {"value": namespace}},
+            {"key": "approved", "match": {"value": True}}]
+    if process_id:
+        must.append({"key": "process_id", "match": {"value": process_id}})
+    response = _qrequest(
+        "POST", f"/collections/{COLLECTION}/points/count",
+        {"filter": {"must": must}, "exact": True})
+    result = response.get("result", {})
+    if response.get("status") != "ok" or type(result.get("count")) is not int:
+        raise RuntimeError("COUNT_UNCONFIRMED")
+    local = lifecycle_read.proposal_statistics(namespace, process_id=process_id)
+    return {"namespace": namespace, "process_id": process_id or None,
+            "qdrant_approved_points": result["count"],
+            "qdrant_count_exact": True, **local}
+
+
+@mcp.tool()
+def memory_index_preview(process_id: str, title: str, summary: str,
+                         source_ref: str, evidence_status: str = "documentada",
+                         namespace: str = "chatgpt") -> dict:
+    """Generate index keywords/classification locally; NEVER save or send externally."""
+    _require(namespace, process_id)
+    return lifecycle_read.index_candidate_preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, evidence_status=evidence_status)
+
+
+
+@mcp.tool()
+def memory_auto_prepare(
+    process_id: str, title: str, summary: str, source_ref: str,
+    document_approval_ref: str, document_sha256: str,
+    kind: str = "auto", evidence_status: str = "documentada",
+    prior_point_id: str = "", user_confirmed_proposal: bool = False,
+    namespace: str = "chatgpt",
+) -> dict:
+    """LLM-assisted editorial preparation, NEVER automatic Qdrant persistence.
+
+    In preview mode no changes occur. Explicitly confirmed preparation still
+    requires documentary registry approval and human browser click/readback.
+    """
+    _require(namespace, process_id)
+    indexed = lifecycle_read.index_candidate_preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, evidence_status=evidence_status)
+    chosen_kind = indexed["suggested_kind"] if kind == "auto" else kind
+    assessment = memory_assimilation_preview(
+        process_id=process_id, title=title, summary=summary,
+        source_ref=source_ref, kind=chosen_kind,
+        evidence_status=evidence_status, prior_point_id=prior_point_id,
+        namespace=namespace)
+    result = {
+        "candidate": indexed, "assessment": assessment,
+        "proposal_prepared": False, "persisted": False,
+        "human_save_required": True,
+        "external_llm_used": False,
+    }
+    if (assessment["blockers"] or assessment["disposition"] != "NOVA_CANDIDATA"
+            or not indexed["recommend_review"]):
+        result["status"] = "BLOCKED_FOR_EDITORIAL_REVIEW"
+        return result
+    if user_confirmed_proposal is not True:
+        result["status"] = "PREVIEW_ONLY_CONFIRM_TO_PREPARE"
+        return result
+    cap = _require(namespace, process_id)
+    proposed = review.prepare(
+        cap, created_by=ACTOR.get().subject, title=title,
+        summary=summary, source_ref=source_ref,
+        document_approval_ref=document_approval_ref,
+        document_sha256=document_sha256)
+    result["proposal_prepared"] = True
+    result["status"] = proposed["status"]
+    result["proposal_id"] = proposed["proposal_id"]
+    result["review_url"] = proposed["review_url"]
+    result["persisted"] = proposed.get("stored") is True
+    result["human_save_required"] = proposed.get("stored") is not True
+    return result
+
+
+@mcp.tool()
 def memory_prepare_after_approval(process_id: str, title: str, summary: str,
                                   source_ref: str, document_approval_ref: str,
                                   document_sha256: str, namespace: str = "chatgpt") -> dict:
@@ -209,10 +361,24 @@ def memory_proposal_preview(proposal_id: str, process_id: str,
 
 
 @mcp.tool()
+def memory_discard_proposal(proposal_id: str, process_id: str,
+                            namespace: str = "chatgpt") -> dict:
+    """Return the human-review link; NEVER discard via an LLM-triggered MCP call."""
+    cap = _require(namespace, process_id)
+    proposal = review.get_proposal(proposal_id, cap)
+    return {"proposal_id": proposal_id, "status": proposal["status"],
+            "human_confirmation_required": True,
+            "review_url": review._review_base() + "/review/" + proposal_id,
+            "discarded": proposal["status"] == "discarded",
+            "tool_side_effects": "none"}
+
+
+@mcp.tool()
 def memory_pending_reviews(process_id: str, namespace: str = "chatgpt",
-                           limit: int = 20) -> dict:
-    """List proposals for an exact process across clients."""
-    return review.pending(_require(namespace, process_id), limit)
+                           limit: int = 20, offset: int = 0) -> dict:
+    """Read only PENDING proposals from the current R07 ledger, not the legacy queue."""
+    _require(namespace, process_id)
+    return lifecycle_read.pending_reviews(namespace, process_id, limit=limit, offset=offset)
 
 
 def _review_authorize(namespace: str, tenant_id: str, process_id: str):
@@ -255,11 +421,21 @@ async def review_get(req: Request):
                 + html_escape(page["source_ref"]) + "</p><p>Processo: "
                 + html_escape(page["process_id"]) + "</p><p>Estado: "
                 + html_escape(page["status"]) + "</p>")
+        indexed = lifecycle_read.index_candidate_preview(
+            process_id=page["process_id"], title=page["title"],
+            summary=page["summary"], source_ref=page["source_ref"])
+        body += ("<p>Indexação sugerida (não oficial): "
+                 + html_escape(indexed["suggested_kind"]) + " / "
+                 + html_escape(", ".join(indexed["suggested_tags"]))
+                 + "</p><p>Somente o botão humano abaixo autoriza salvar.</p>")
         if not disabled:
             body += ('<form method="POST" action="/review/' + html_escape(page["id"]) + '/approve">'
                      '<input type="hidden" name="csrf" value="' + html_escape(page["csrf"]) + '">'
                      '<p>Confira a fonte documental e o conteúdo. A aprovação grava UMA memória.</p>'
-                     '<button type="submit" name="confirm" value="APROVAR">Aprovar e gravar</button></form>')
+                     '<button type="submit" name="confirm" value="APROVAR">Salvar memória — Aprovar e gravar</button></form>'
+                     '<form method="POST" action="/review/' + html_escape(page["id"]) + '/discard">'
+                     '<input type="hidden" name="csrf" value="' + html_escape(page["csrf"]) + '">'
+                     '<button type="submit" name="confirm" value="DESCARTAR">Descartar proposta</button></form>')
         return _safe_review_response("<!doctype html><html lang='pt-BR'><meta charset='utf-8'><title>Revisão GAIA</title><body>"+body+"</body></html>")
     except Exception:
         return JSONResponse({"error": "REVIEW_UNAVAILABLE"}, status_code=403)
@@ -285,6 +461,28 @@ async def review_post(req: Request):
         return JSONResponse({"error": "REVIEW_NOT_COMPLETED"}, status_code=403)
 
 
+async def review_discard_post(req: Request):
+    """Human CSRF-protected discard; no Qdrant deletion or content mutation."""
+    try:
+        origin = req.headers.get("origin", "")
+        if origin != review._review_base():
+            raise AccessDenied("ORIGIN_DENIED")
+        if req.headers.get("content-type", "").split(";")[0].strip().lower() != "application/x-www-form-urlencoded":
+            raise AccessDenied("CONTENT_TYPE_DENIED")
+        if int(req.headers.get("content-length", "0")) > 4096:
+            raise AccessDenied("BODY_TOO_LARGE")
+        form = await req.form()
+        if form.get("confirm") != "DESCARTAR" or not isinstance(form.get("csrf"), str):
+            raise AccessDenied("HUMAN_CLICK_REQUIRED")
+        result = review.discard(req.path_params["proposal_id"], ACTOR.get().subject,
+                                _review_authorize, form["csrf"])
+        return _safe_review_response(
+            "<h1>Proposta descartada após revisão humana</h1><p>ID: "
+            + html_escape(result["proposal_id"]) + "</p>")
+    except Exception:
+        return JSONResponse({"error": "DISCARD_NOT_COMPLETED"}, status_code=403)
+
+
 def _skill_root() -> Path:
     return Path("/app/skills/gaia-rag-processos-administrativos")
 
@@ -301,22 +499,63 @@ _SKILL_FILES = (
     "references/07-contratos-mcp-atual.md",
     "references/08-arquitetura-tecnica-nao-mutativa.md",
     "references/09-instalacao-e-portabilidade.md",
+    "references/10-assimilacao-institucional.md",
     "governanca/POLITICA_MEMORIA.md",
     "assets/templates/memoria.md",
 )
 
 
+def _safe_installed_skill_bytes(rel: str) -> bytes:
+    """Only registered, non-symlinked skill files inside the installed package."""
+    if not isinstance(rel, str) or rel not in _SKILL_FILES:
+        raise AccessDenied("SKILL_PATH_DENIED")
+    root = _skill_root()
+    if not root.is_dir() or root.is_symlink():
+        raise AccessDenied("SKILL_NOT_INSTALLED")
+    target = root
+    for part in Path(rel).parts:
+        target = target / part
+        if target.is_symlink():
+            raise AccessDenied("SKILL_PATH_NOT_TRUSTED")
+    if not target.is_file():
+        raise AccessDenied("SKILL_NOT_INSTALLED")
+    return target.read_bytes()
+
+
+@mcp.tool()
+def gaia_skill_route(mission: str, process_id: str,
+                     namespace: str = "chatgpt") -> dict:
+    """Select installed R07 skill modules by explicit mission. NO host activation."""
+    _require(namespace, process_id)
+    return skill_router.route(
+        _skill_root(), mission=mission, namespace=namespace,
+        process_id=process_id)
+
+
+@mcp.tool()
+def gaia_skill_route_read(mission: str, process_id: str, path: str,
+                          route_sha256: str, expected_sha256: str,
+                          namespace: str = "chatgpt",
+                          offset: int = 0, max_chars: int = 2400) -> dict:
+    """Read only a selected, hash-matched route module; never write memory."""
+    _require(namespace, process_id)
+    return skill_router.read_selected(
+        _skill_root(), mission=mission, namespace=namespace,
+        process_id=process_id, path=path,
+        route_sha256=route_sha256, expected_sha256=expected_sha256,
+        offset=offset, max_chars=max_chars)
+
+
 @mcp.tool()
 def gaia_skill_catalog() -> dict:
-    """Discover installed, versioned skill files; loading is still host-driven."""
+    """Discover installed skills only for the verified GAIA owner."""
     import hashlib
-    root = _skill_root()
-    result = []
-    for rel in _SKILL_FILES:
-        f = root / rel
-        if not f.is_file():
-            raise AccessDenied("SKILL_NOT_INSTALLED")
-        result.append({"path": rel, "sha256": hashlib.sha256(f.read_bytes()).hexdigest()})
+    _require("chatgpt", "all-processes")
+    result = [
+        {"path": rel, "sha256": hashlib.sha256(
+            _safe_installed_skill_bytes(rel)).hexdigest()}
+        for rel in _SKILL_FILES
+    ]
     return {"name": "gaia-rag-processos-administrativos",
             "activation": "host_must_explicitly_load",
             "files": result}
@@ -324,34 +563,53 @@ def gaia_skill_catalog() -> dict:
 
 @mcp.tool()
 def gaia_skill_read(path: str) -> dict:
-    """Read an allowlisted skill file progressively; no filesystem traversal."""
-    if path not in _SKILL_FILES:
-        raise AccessDenied("SKILL_PATH_DENIED")
-    target = _skill_root() / path
-    if not target.is_file() or target.is_symlink():
-        raise AccessDenied("SKILL_NOT_INSTALLED")
-    return {"path": path, "content": target.read_text(encoding="utf-8")}
+    """Owner-only read of one allowlisted installed skill file."""
+    _require("chatgpt", "all-processes")
+    return {"path": path, "content": _safe_installed_skill_bytes(path).decode("utf-8")}
+
+
+@mcp.tool()
+def gaia_skill_read_chunk(path: str, offset: int = 0, max_chars: int = 2400) -> dict:
+    """Owner-only bounded chunks, hash computed from the same byte snapshot."""
+    import hashlib
+    _require("chatgpt", "all-processes")
+    if type(offset) is not int or not 0 <= offset <= 1_000_000:
+        raise ValueError("INVALID_OFFSET")
+    if type(max_chars) is not int or not 100 <= max_chars <= 3000:
+        raise ValueError("INVALID_MAX_CHARS")
+    raw = _safe_installed_skill_bytes(path)
+    contents = raw.decode("utf-8")
+    if offset > len(contents):
+        raise ValueError("OFFSET_OUT_OF_RANGE")
+    chunk = contents[offset:offset + max_chars]
+    next_offset = offset + len(chunk)
+    return {"path": path, "offset": offset, "content": chunk,
+            "total_chars": len(contents), "sha256": hashlib.sha256(raw).hexdigest(),
+            "next_offset": next_offset if next_offset < len(contents) else None}
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/SKILL.md")
 def gaia_skill_resource_root() -> str:
-    """Fetch canonical skill entry when MCP resources are supported by the host."""
-    return (_skill_root() / "SKILL.md").read_text(encoding="utf-8")
+    """Owner-only MCP resource, not a public skill activation."""
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("SKILL.md").decode("utf-8")
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/references/02-recuperacao.md")
 def gaia_skill_resource_retrieval() -> str:
-    return (_skill_root() / "references/02-recuperacao.md").read_text(encoding="utf-8")
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("references/02-recuperacao.md").decode("utf-8")
 
 
 @mcp.resource("skill://gaia-rag-processos-administrativos/references/03-producao-e-proposta.md")
 def gaia_skill_resource_proposal() -> str:
-    return (_skill_root() / "references/03-producao-e-proposta.md").read_text(encoding="utf-8")
+    _require("chatgpt", "all-processes")
+    return _safe_installed_skill_bytes("references/03-producao-e-proposta.md").decode("utf-8")
 
 
 async def healthz(req: Request) -> JSONResponse:
     return JSONResponse({
-        "alive": True, "service": "gaia-rag-mini-r06", "mode": "staging-controlled",
+        "alive": True, "service": "gaia-rag-mini-r07", "mode": "staging-controlled",
         "jwt_configured": bool(os.getenv("CF_ACCESS_AUD")) and bool(os.getenv("CF_ACCESS_TEAM_DOMAIN")),
         "owners_configured": bool(os.getenv("GAIA_RAG_OWNER_SUBJECTS_FILE")),
         "qdrant_configured": bool(os.getenv("QDRANT_URL")) and
@@ -379,4 +637,5 @@ app = mcp.streamable_http_app()
 app.routes.insert(0, Route("/healthz", endpoint=healthz, methods=["GET"]))
 app.routes.insert(1, Route("/review/{proposal_id}", endpoint=review_get, methods=["GET"]))
 app.routes.insert(2, Route("/review/{proposal_id}/approve", endpoint=review_post, methods=["POST"]))
+app.routes.insert(3, Route("/review/{proposal_id}/discard", endpoint=review_discard_post, methods=["POST"]))
 app.add_middleware(BaseHTTPMiddleware, dispatch=auth_guard)

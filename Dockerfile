@@ -1,8 +1,15 @@
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app/src
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
+# S9.1: Debian official trixie-security fix for CVE-2026-85091.
+# APT package VERSION is pinned; this does not waive other HIGH findings.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends 'zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1'; \
+    rm -rf /var/lib/apt/lists/*
+COPY requirements.lock ./
+RUN pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.lock \
+    && python -m pip check \
     && useradd --uid 10001 --create-home --shell /usr/sbin/nologin gaia
 COPY src/ ./src/
 COPY app/ ./app/

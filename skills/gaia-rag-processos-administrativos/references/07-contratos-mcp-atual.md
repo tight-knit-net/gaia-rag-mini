@@ -108,3 +108,27 @@ Se `memory_prepare_after_approval` não retornar link válido, não fabricar URL
 ### Verificações negativas sugeridas para homologação com sandbox
 
 Dois principais distintos (`tenant_A` e `tenant_B`) e dois casos autorizados devem comprovar filtragem no backend. Testar omissão do filtro, UUID cruzado, `source_ref` cruzado e busca semântica/analogia, validando resposta sem divulgação. **Não executar esses testes em produção sem ambiente de prova e autorização explícita**.
+
+## Contrato adicional R07 (branch isolada; NÃO instalado no runtime atual)
+
+A branch `feat/r07-office-knowledge-assimilation` acrescenta, sobre a R06, **uma ferramenta de leitura**: `memory_assimilation_preview(process_id, title, summary, source_ref, kind="registro_caso", evidence_status="documentada", prior_point_id="", namespace="chatgpt")`. Saída: disposição editorial, eventuais duplicatas, revisões candidatas e relação pelo título, indicador de cobertura, necessidade de aprovação documental e humana, `persisted=false` e `old_points_unchanged=true`.
+
+A consulta exige identidade proprietária verificada e respeita o `process_id` exato, sem bloqueio de acesso por cliente. Memória semelhante em outro processo NÃO é candidato de alteração deste caso. Quando um registro anterior não é encontrado numa listagem incompleta, a saída declara incerteza em vez de ausência definitiva. A implementação examina até três páginas de 100 memórias e verifica UUID explicitamente indicado por consulta escopada.
+
+**R06 preservada:** `memory_prepare_after_approval`, proposta, portal de aprovação autenticada, CSRF, gravação e readback não foram substituídos. Nenhuma ferramenta aprova o conteúdo pelo ChatGPT; a R07 não contém update/revoke. Até merge, CI e deploy específicos, este contrato não pode ser presumido disponível no conector publicado.
+
+
+## Adendo R07 candidate — métodos novos somente em código isolado
+Este adendo **não altera o contrato publicado R06**, apenas registra a candidata:
+`memory_process_timeline`, `memory_export_process`, `memory_approval_audit`,
+`memory_stats`, `memory_index_preview`, `gaia_skill_read_chunk`, além dos
+argumentos de paginação `offset` em `memory_list_process` e
+`memory_pending_reviews`. O método R07 `memory_assimilation_preview` continua
+somente leitura. O fluxo `memory_prepare_after_approval` e o botão HTTPS humano
+continuam sendo as únicas portas de proposta e aprovação; nenhuma tool
+de escrita Qdrant arbitrária é autorizada.
+
+Os relatórios de auditoria, estatística e fila da candidata cobrem somente o
+SQLite R07, não o SQLite legado, até reconciliação. Um SQLite ausente deve
+ser informado como indisponível, nunca como zero propostas. Exportações
+truncadas exigem continuação pelo cursor.

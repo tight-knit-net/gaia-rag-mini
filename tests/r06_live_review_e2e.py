@@ -127,11 +127,124 @@ def main():
                 contents=call("resources/read",{"uri":uri})
                 resource_items=contents.json().get("result",{}).get("contents",[])
                 check("R06-03B_MCP_RESOURCES_READ",contents.status_code==200 and bool(resource_items) and "gaia-rag-processos-administrativos" in resource_items[0].get("text",""))
+                # S6: a valid Cloudflare JWT belonging to a NON-owner must not
+                # expose skill instructions, resources or catalog metadata.
+                for skill_tool, args in (
+                    ("gaia_skill_catalog", {}),
+                    ("gaia_skill_read", {"path": "SKILL.md"}),
+                    ("gaia_skill_read_chunk", {"path": "SKILL.md"}),
+                ):
+                    denied_content, skill_err, _ = tool(skill_tool, args, identity=B)
+                    check("S6_OWNER_ONLY_" + skill_tool, skill_err is True
+                          and not (isinstance(denied_content, dict)
+                                   and denied_content.get("content")))
+                denied_resource = call("resources/read", {"uri": uri}, identity=B)
+                response_json = denied_resource.json()
+                check("S6_OWNER_ONLY_MCP_RESOURCE",
+                      "error" in response_json or
+                      (response_json.get("result", {}).get("isError") is True))
+                # A symlinked parent directory must not be used to read a
+                # plausible allowlisted filename outside the installed skill.
+                fake_root = root / "symlinked-skills"
+                fake_root.mkdir()
+                outside = root / "outside-skill-package"
+                outside.mkdir()
+                (outside / "02-recuperacao.md").write_text(
+                    "S6-SYNTHETIC-UNTRUSTED-CONTENT", encoding="utf-8")
+                (fake_root / "references").symlink_to(outside, target_is_directory=True)
+                original_skill_root = server._skill_root
+                server._skill_root = lambda: fake_root
+                try:
+                    escaped, escape_err, _ = tool(
+                        "gaia_skill_read",
+                        {"path": "references/02-recuperacao.md"})
+                    check("S6_SYMLINK_PARENT_DENIED",
+                          escape_err is True
+                          and "S6-SYNTHETIC-UNTRUSTED-CONTENT" not in str(escaped))
+                finally:
+                    server._skill_root = original_skill_root
                 denied,err,_=tool("gaia_skill_read",{"path":"../../etc/passwd"})
                 check("R06-04_PATH_TRAVERSAL_DENIED",err is True,"file read rejected")
                 prepare={"title":"DEMO memoria de processo","summary":"DEMO: minuta interna aprovada; protocolo nao comprovado.",
                          "source_ref":SOURCE,"document_approval_ref":APPROVAL,
                          "document_sha256":SHA,**scope}
+                # R07 Skilldrum-style route tests use DEMO identity and installed modules.
+                skill_route_tools={"gaia_skill_route","gaia_skill_route_read"}
+                check("R07-SR01_TOOLS_EXPOSED",skill_route_tools<=tools)
+                route,err,_=tool("gaia_skill_route",{**scope,"mission":"memory_search"})
+                check("R07-SR02_EXACT_ROUTE",not err and route["status"]=="READY_FOR_HOST_LOAD"
+                      and route["modules"][1]["path"]=="references/02-recuperacao.md"
+                      and route["host_must_explicitly_load"] is True)
+                selected=route["modules"][1]
+                load_args={**scope,"mission":"memory_search","path":selected["path"],
+                           "route_sha256":route["route_sha256"],
+                           "expected_sha256":selected["sha256"],"max_chars":200}
+                loaded,err,_=tool("gaia_skill_route_read",load_args)
+                check("R07-SR03_PROGRESSIVE_MODULE_READ",
+                      not err and loaded["path"]==selected["path"]
+                      and len(loaded["content"])<=200
+                      and loaded["host_activation_confirmed"] is False)
+                # S5: simulate an MCP host explicitly loading the *entire*
+                # selected route (not just a single preview chunk).
+                host_loaded={}
+                catalog_by_path={x["path"]:x["sha256"] for x in catalog["files"]}
+                for module in route["modules"]:
+                    fragments=[]
+                    cursor=0
+                    for step in range(200):
+                        item,read_err,_=tool("gaia_skill_route_read",{
+                            **scope, "mission":route["mission"],
+                            "path":module["path"],
+                            "route_sha256":route["route_sha256"],
+                            "expected_sha256":module["sha256"],
+                            "offset":cursor,"max_chars":119})
+                        if read_err or not item or item.get("host_activation_confirmed") is not False:
+                            raise AssertionError("S5_HOST_READ_FAILED")
+                        fragments.append(item["content"])
+                        next_cursor=item["next_offset"]
+                        if next_cursor is None:
+                            break
+                        if not isinstance(next_cursor,int) or next_cursor<=cursor:
+                            raise AssertionError("S5_HOST_PAGE_STALLED")
+                        cursor=next_cursor
+                    else:
+                        raise AssertionError("S5_HOST_PAGE_LIMIT")
+                    full="".join(fragments)
+                    if (hashlib.sha256(full.encode("utf-8")).hexdigest()!=module["sha256"]
+                            or catalog_by_path.get(module["path"])!=module["sha256"]):
+                        raise AssertionError("S5_HOST_MANIFEST_SHA_MISMATCH")
+                    host_loaded[module["path"]]=full
+                check("R07-S5-01_HOST_FULL_ROUTE_LOAD",
+                      len(host_loaded)==3 and "SKILL.md" in host_loaded
+                      and "references/02-recuperacao.md" in host_loaded)
+                check("R07-S5-02_FULL_BYTE_HASHES_AND_CATALOG",
+                      all(hashlib.sha256(v.encode("utf-8")).hexdigest()
+                          ==catalog_by_path[k] for k,v in host_loaded.items()))
+                check("R07-S5-03_HOST_READ_DOES_NOT_SAVE",count()==0)
+                wrong_scope,err,_=tool("gaia_skill_route_read",
+                                      {**load_args,"process_id":PB})
+                check("R07-SR04_CROSS_PROCESS_ROUTE_MISMATCH",err is True)
+                wrong_hash,err,_=tool("gaia_skill_route_read",
+                                     {**load_args,"expected_sha256":"0"*64})
+                check("R07-SR05_STALE_FILE_HASH_DENIED",err is True)
+                other_module,err,_=tool("gaia_skill_route_read",
+                       {**load_args,"path":"references/03-producao-e-proposta.md"})
+                check("R07-SR06_UNSELECTED_MODULE_DENIED",err is True)
+                unknown_route,err,_=tool("gaia_skill_route",
+                                          {**scope,"mission":"delete_memories"})
+                check("R07-SR07_UNKNOWN_MISSION_FAIL_CLOSED",
+                      not err and unknown_route["status"]=="NO_ROUTE"
+                      and unknown_route["modules"]==[])
+                illicit_route,err,_=tool("gaia_skill_route",
+                                          {**scope,"mission":"memory_search"},
+                                          identity=B)
+                check("R07-SR08_NONOWNER_DENIED",err is True)
+                owner_other_process,err,_=tool("gaia_skill_route",
+                                      {**bscope,"mission":"memory_search"},identity=A)
+                check("R07-SR09_OWNER_CROSS_CLIENT_NOT_BLOCKED",
+                      not err and owner_other_process["status"]=="READY_FOR_HOST_LOAD"
+                      and owner_other_process["route_sha256"]!=route["route_sha256"])
+                check("R07-SR10_ROUTER_NEVER_PERSISTS",count()==0)
                 other,err,_=tool("memory_prepare_after_approval",{**prepare,"process_id":PB},identity=B)
                 check("R06-05_NONOWNER_CANNOT_PROPOSE",err is True)
                 docs.write_text('{"approved_documents":[]}')
@@ -177,6 +290,83 @@ def main():
                 check("R06-21_APPROVAL_STATUS_AUDIT",not err and preview["status"]=="approved")
                 newproposal,err,_=tool("memory_prepare_after_approval",prepare)
                 check("R06-22_PREPARE_AFTER_APPROVED_RETURNS_SAME",not err and newproposal["status"]=="approved" and count()==1)
+                # R07 candidate-only contract checks on disposable Qdrant and DEMO ledger.
+                new_tools={"memory_discard_proposal","memory_auto_prepare","memory_process_timeline","memory_export_process",
+                           "memory_approval_audit","memory_stats",
+                           "memory_index_preview","gaia_skill_read_chunk"}
+                check("R07-01_NEW_TOOLS",new_tools<=tools)
+                chunk,err,_=tool("gaia_skill_read_chunk",{"path":"SKILL.md","max_chars":300})
+                check("R07-02_SKILL_CHUNK",not err and chunk["content"].startswith("---")
+                      and len(chunk["content"])<=300 and chunk["sha256"])
+                index,err,_=tool("memory_index_preview",{
+                    **scope,"title":"DEMO memorando","summary":"Triagem de documento e contrato DEMO",
+                    "source_ref":SOURCE})
+                check("R07-03_INDEX_PREVIEW",not err and index["automatic_save"] is False
+                      and index["external_llm_used"] is False)
+                timeline,err,_=tool("memory_process_timeline",scope)
+                check("R07-04_TIMELINE",not err and len(timeline["items"])==1
+                      and timeline["truncated"] is False)
+                exported,err,_=tool("memory_export_process",{**scope,"max_items":1})
+                check("R07-05_EXPORT_HASH",not err and exported["count"]==1
+                      and len(exported["sha256"])==64)
+                stats,err,_=tool("memory_stats",scope)
+                check("R07-06_STATS",not err and stats["qdrant_approved_points"]==1
+                      and stats["proposal_counts"]["approved"]==1)
+                audits,err,_=tool("memory_approval_audit",scope)
+                check("R07-07_AUDIT",not err and audits["storage_available"]
+                      and any(e["event"]=="readback_confirmed" for e in audits["events"]))
+                pending_after,err,_=tool("memory_pending_reviews",scope)
+                check("R07-08_APPROVED_NOT_PENDING",not err
+                      and pending_after["proposals"]==[]
+                      and pending_after["storage_available"])
+                check("R07-09_INDEX_PERSISTED_POST_CLICK",
+                      obtained["items"][0].get("index_method")=="r07_deterministic_v1")
+                second_source = "DEMO-DOC-002"
+                second_approval = "DEMO-APPROVAL-002"
+                docs.write_text(json.dumps({"approved_documents":[{
+                   "namespace":NS,"tenant_id":TA,"process_id":PA,
+                   "source_ref":SOURCE,"approval_ref":APPROVAL,
+                   "document_sha256":SHA,"status":"approved"},{
+                   "namespace":NS,"tenant_id":TA,"process_id":PA,
+                   "source_ref":second_source,"approval_ref":second_approval,
+                   "document_sha256":SHA,"status":"approved"}]}))
+                assist={**scope,"title":"DEMO nova instrução",
+                        "summary":"Procedimento fictício novo a conferir antes de protocolo.",
+                        "source_ref":second_source,
+                        "document_approval_ref":second_approval,
+                        "document_sha256":SHA}
+                draft,err,_=tool("memory_auto_prepare",assist)
+                check("R07-10_AUTO_PREVIEW_NO_WRITE",
+                      not err and draft["status"]=="PREVIEW_ONLY_CONFIRM_TO_PREPARE"
+                      and draft["proposal_prepared"] is False and count()==1)
+                assisted,err,_=tool("memory_auto_prepare",
+                                    {**assist,"user_confirmed_proposal":True})
+                check("R07-11_PREPARE_NO_QDRANT_WRITE",
+                      not err and assisted["proposal_prepared"]
+                      and assisted["status"]=="pending"
+                      and assisted["human_save_required"] and count()==1)
+                discard_link,err,_=tool("memory_discard_proposal",{
+                    **scope,"proposal_id":assisted["proposal_id"]})
+                check("R07-12_DISCARD_TOOL_READ_ONLY",
+                      not err and discard_link["human_confirmation_required"]
+                      and discard_link["tool_side_effects"]=="none" and count()==1)
+                discard_page=client.get("/review/"+assisted["proposal_id"],headers=authhdr)
+                dcsrf=re.search(r'name="csrf" value="([^"]+)"',discard_page.text).group(1)
+                bad_discard=client.post("/review/"+assisted["proposal_id"]+"/discard",
+                                        data={"confirm":"DESCARTAR","csrf":"forged"},
+                                        headers={**authhdr,"origin":"https://gaia-demo.example.invalid"})
+                check("R07-13_DISCARD_BAD_CSRF",bad_discard.status_code==403 and count()==1)
+                done_discard=client.post("/review/"+assisted["proposal_id"]+"/discard",
+                                         data={"confirm":"DESCARTAR","csrf":dcsrf},
+                                         headers={**authhdr,"origin":"https://gaia-demo.example.invalid"})
+                check("R07-14_HUMAN_DISCARD_NO_QDRANT_CHANGE",
+                      done_discard.status_code==200 and count()==1)
+                after_discard,err,_=tool("memory_pending_reviews",scope)
+                check("R07-15_DISCARDED_NOT_PENDING",
+                      not err and after_discard["proposals"]==[])
+                after_stats,err,_=tool("memory_stats",scope)
+                check("R07-16_DISCARDED_IN_STATS",
+                      not err and after_stats["proposal_counts"]["discarded"]==1)
                 # Same GAIA owner must see approved memory from a different client.
                 id_b="22222222-2222-4222-8222-222222222222"
                 payload_b={"namespace":NS,"tenant_id":TB,"process_id":PB,
@@ -206,6 +396,116 @@ def main():
                 outsider,err,_=tool("memory_search_all",{"query":"DEMO","namespace":NS},identity=B)
                 check("R06-29_OUTSIDER_CANNOT_GLOBAL_SEARCH",err is True)
                 check("R06-30_RECORDS_STORED_BY_LAB_ONLY",count()==3,str(count()))
+                # S7: LOGICAL Qdrant export/restore on a disposable Qdrant,
+                # never a native snapshot or a production migration.
+                # Clone *only* DEMO records to a separate shadow collection.
+                shadow = "gaia_r07_s7_shadow_restore_demo"
+                original = q("POST", POINTS+"/scroll", {
+                    "limit": 100, "with_payload": True, "with_vector": True,
+                })["result"]
+                source_points = original["points"]
+                check("R07-S7-QDRANT-LOGICAL-BACKUP",
+                      len(source_points)==3 and
+                      original.get("next_page_offset") is None and
+                      all(isinstance(p.get("vector"), list)
+                          and len(p["vector"])==4 for p in source_points))
+                def records_digest(points):
+                    compact = [{"id": str(p["id"]), "payload": p["payload"]}
+                               for p in points]
+                    return hashlib.sha256(json.dumps(
+                        sorted(compact, key=lambda p:p["id"]),
+                        sort_keys=True, ensure_ascii=False,
+                        separators=(",", ":")).encode()).hexdigest()
+                source_digest = records_digest(source_points)
+                check("R07-S7-QDRANT-LOGICAL-EXPORT-NO-SCOPE-LOSS",
+                      all(x["payload"]["namespace"]==NS and
+                          x["payload"].get("approved") is True
+                          for x in source_points))
+                q("PUT",f"/collections/{shadow}",{
+                    "vectors":{"size":4,"distance":"Cosine"}})
+                q("PUT",f"/collections/{shadow}/points?wait=true",{
+                    "points":[{"id":p["id"],"vector":p["vector"],
+                               "payload":p["payload"]} for p in source_points]})
+                restored = q("POST",f"/collections/{shadow}/points/scroll",{
+                    "limit":100,"with_payload":True,"with_vector":False})["result"]
+                check("R07-S7-QDRANT-RESTORE-PARITY",
+                      len(restored["points"])==3 and
+                      records_digest(restored["points"])==source_digest)
+                q("DELETE",f"/collections/{shadow}")
+                check("R07-S7-QDRANT-ROLLBACK-SOURCE-UNCHANGED",
+                      count()==3 and
+                      records_digest(q("POST",POINTS+"/scroll",{
+                          "limit":100,"with_payload":True,
+                          "with_vector":False})["result"]["points"])==source_digest)
+
+                # S9 native Qdrant snapshot is performed ONLY on temporary
+                # Qdrant with 3 approved DEMO points and ephemeral tmpfs.
+                import urllib.parse
+                snap_response=q("POST",f"/collections/{server.COLLECTION}/snapshots")
+                snap_obj=snap_response.get("result") or {}
+                snap_name=snap_obj.get("name")
+                check("R07-S9-NATIVE-SNAPSHOT-CREATED",
+                      snap_response.get("status")=="ok"
+                      and isinstance(snap_name,str)
+                      and snap_name.endswith(".snapshot")
+                      and "/" not in snap_name and "\\" not in snap_name)
+                snapshot_endpoint = (Q_URL+f"/collections/{server.COLLECTION}/snapshots/"
+                                     +urllib.parse.quote(snap_name,safe=""))
+                with request.urlopen(snapshot_endpoint,timeout=25) as response:
+                    snapshot_bytes=response.read(32*1024*1024+1)
+                snap_sha=hashlib.sha256(snapshot_bytes).hexdigest()
+                check("R07-S9-NATIVE-SNAPSHOT-BYTE-SHA256",
+                      len(snapshot_bytes)>256
+                      and len(snapshot_bytes)<32*1024*1024
+                      and len(snap_sha)==64)
+                native_target="gaia_r07_s9_native_restored_demo"
+                collections=q("GET","/collections")["result"]["collections"]
+                check("R07-S9-RESTORE-TARGET-ABSENT",
+                      native_target not in {x["name"] for x in collections}
+                      and native_target!=server.COLLECTION)
+                boundary="----GAIA-R07-S9-EPHEMERAL-SNAPSHOT"
+                multipart=(
+                    f"--{boundary}\r\n"
+                    f"Content-Disposition: form-data; name=\"snapshot\"; filename=\"{snap_name}\"\r\n"
+                    "Content-Type: application/octet-stream\r\n\r\n"
+                ).encode()+snapshot_bytes+f"\r\n--{boundary}--\r\n".encode()
+                restore_req=request.Request(
+                    Q_URL+f"/collections/{native_target}/snapshots/upload?priority=snapshot&wait=true",
+                    data=multipart,method="POST",
+                    headers={"Content-Type":f"multipart/form-data; boundary={boundary}"})
+                with request.urlopen(restore_req,timeout=90) as response:
+                    restored_response=json.load(response)
+                check("R07-S9-NATIVE-SNAPSHOT-RESTORE-STATUS",
+                      restored_response.get("status")=="ok")
+                native_result=q("POST",f"/collections/{native_target}/points/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                native_points=native_result["points"]
+                source_native=q("POST",POINTS+"/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                check("R07-S9-NATIVE-SNAPSHOT-RESTORE-COUNT",
+                      len(native_points)==len(source_native["points"])==3
+                      and native_result.get("next_page_offset") is None)
+                def full_digest(points):
+                    data=[{"id":str(p["id"]),"payload":p["payload"],
+                           "vector":p["vector"]} for p in points]
+                    return hashlib.sha256(json.dumps(
+                        sorted(data,key=lambda p:p["id"]),
+                        ensure_ascii=False,sort_keys=True,
+                        separators=(",",":")).encode()).hexdigest()
+                check("R07-S9-NATIVE-SNAPSHOT-FULL-PARITY",
+                      full_digest(native_points)==full_digest(source_native["points"])
+                      and all(p["payload"].get("approved") is True
+                              for p in native_points))
+                q("DELETE",f"/collections/{native_target}")
+                source_post=q("POST",POINTS+"/scroll",
+                    {"limit":100,"with_payload":True,"with_vector":True})["result"]
+                check("R07-S9-NATIVE-ROLLBACK-SOURCE-PRESERVED",
+                      full_digest(source_post["points"])==
+                      full_digest(source_native["points"])
+                      and count()==3)
+                check("R07-S9-NATIVE-SNAPSHOT-TEST-EPHEMERAL",
+                      Q_URL=="http://gaia-rag-r06-demo-qdrant:6333"
+                      and os.environ.get("CF_ACCESS_TEAM_DOMAIN")==ISS)
                 print("GAIA_R06_TESTS="+str(checks),flush=True)
         finally:
             server._qrequest=old
