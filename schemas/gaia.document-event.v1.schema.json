@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gaia.local/contracts/gaia.document-event.v1.schema.json",
+  "title": "GAIA documentary operation event (metadata only)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "event_key", "source_ref", "source_version", "document_sha256", "client_id", "process_id", "operation", "status", "persisted", "drive_write_performed", "memory_write_performed"],
+  "properties": {
+    "schema": {"const": "gaia.document-event.v1"},
+    "event_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_ref": {"type": "string", "minLength": 1, "maxLength": 200},
+    "source_version": {"type": "string", "minLength": 1, "maxLength": 200},
+    "document_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "client_id": {"type": "string", "pattern": "^[0-9]{3}$"},
+    "process_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "operation": {"enum": ["ocr", "pdf_transform", "catalog", "nomenclature", "document_create", "signature", "workspace"]},
+    "status": {"enum": ["completed", "review_required", "blocked", "failed"]},
+    "persisted": {"const": false},
+    "drive_write_performed": {"const": false},
+    "memory_write_performed": {"const": false}
+  }
+}
+

@@ -1,0 +1,98 @@
+name: GAIA Document MCP - isolated contract CI
+on:
+  push:
+    branches:
+      - feat/gaia-document-mcp-isolado
+    paths:
+      - "gaia_document_mcp/**"
+      - "schemas/**"
+      - "config/document-mcp.env.example"
+      - "docs/document-mcp/**"
+      - "tests/test_document_mcp.py"
+      - "tests/test_hybrid_mcp.py"
+      - "tests/test_correlation_gate.py"
+      - "tests/test_owner_process_learning.py"
+      - "tests/test_g14c_disposable.py"
+      - "tests/test_g14e_safety.py"
+      - "tests/test_g14f_contracts.py"
+      - "tests/test_g14g_isolated.py"
+      - "tests/test_g14h_audit.py"
+      - "tests/test_g14i_event_lab.py"
+      - "tests/test_g14j_reconciliation.py"
+      - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
+  pull_request:
+    paths:
+      - "gaia_document_mcp/**"
+      - "schemas/**"
+      - "config/document-mcp.env.example"
+      - "docs/document-mcp/**"
+      - "tests/test_document_mcp.py"
+      - "tests/test_hybrid_mcp.py"
+      - "tests/test_correlation_gate.py"
+      - "tests/test_owner_process_learning.py"
+      - "tests/test_g14c_disposable.py"
+      - "tests/test_g14e_safety.py"
+      - "tests/test_g14f_contracts.py"
+      - "tests/test_g14g_isolated.py"
+      - "tests/test_g14h_audit.py"
+      - "tests/test_g14i_event_lab.py"
+      - "tests/test_g14j_reconciliation.py"
+      - ".github/workflows/gaia-document-mcp-isolated-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Contract syntax and JSON schemas
+        run: |
+          python -m compileall -q gaia_document_mcp tests/test_document_mcp.py tests/test_hybrid_mcp.py tests/test_correlation_gate.py tests/test_owner_process_learning.py tests/test_g14c_disposable.py tests/test_g14e_safety.py tests/test_g14f_contracts.py tests/test_g14g_isolated.py tests/test_g14h_audit.py tests/test_g14i_event_lab.py tests/test_g14j_reconciliation.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for file in Path("schemas").glob("gaia.document-*.schema.json"):
+              data=json.loads(file.read_text())
+              assert data["$schema"].endswith("2020-12/schema")
+              assert data["additionalProperties"] is False
+          print("Versioned schemas well-formed")
+          PY
+      - name: Contract regressions - synthetic only
+        run: |
+          python -m unittest discover -s tests -p test_document_mcp.py -v
+          python -m unittest discover -s tests -p test_hybrid_mcp.py -v
+          python -m unittest discover -s tests -p test_correlation_gate.py -v
+          python -m unittest discover -s tests -p test_owner_process_learning.py -v
+          python -m unittest discover -s tests -p test_g14c_disposable.py -v
+          python -m unittest discover -s tests -p test_g14e_safety.py -v
+          python -m unittest discover -s tests -p test_g14f_contracts.py -v
+          python -m unittest discover -s tests -p test_g14g_isolated.py -v
+          python -m unittest discover -s tests -p test_g14h_audit.py -v
+          python -m unittest discover -s tests -p test_g14i_event_lab.py -v
+          python -m unittest discover -s tests -p test_g14j_reconciliation.py -v
+      - name: Validate single disabled jobs in inherited publication workflows
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          disabled=re.escape("$"+"{{ false }}")
+          for path, expected in [
+              ('.github/workflows/rag-ghcr-image.yml', 'build'),
+              ('.github/workflows/rag-linode-staging.yml', 'staging'),
+          ]:
+              txt=Path(path).read_text()
+              assert re.search(r'(?m)^jobs:[ \t]*$', txt), path
+              jobs=re.findall(r'(?m)^  ([A-Za-z][\w-]*):[ \t]*$', txt.split('jobs:',1)[1])
+              assert jobs==[expected], f"UNEXPECTED_JOBS {path}: {jobs}"
+              pattern=r'(?m)^  '+expected+r':[ \t]*\n    if:[ \t]*(?:false|'+disabled+r')(?:[ \t]+#.*)?$'
+              assert re.search(pattern,txt),f"DEPLOY_FREEZE_NOT_AT_JOB_LEVEL {path}"
+          print('Single job per release workflow, job-level disabled')
+          PY
+
