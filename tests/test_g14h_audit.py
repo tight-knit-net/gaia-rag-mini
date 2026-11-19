@@ -30,7 +30,7 @@ def source_event(proc, summary="DEMO: requerimento municipal de funcionamento"):
     return DocumentEvent(
         source=DocumentSource(
             drive_id="DRIVE_DEMO_001", file_id="FILE_DEMO_001",
-            client_id="DEMO_CLIENT_001", process_id=proc.process_id,
+            client_id="009", process_id=proc.process_id,
             source_version="DEMO_SOURCE_01", sha256_original=HASH,
         ),
         operation="ocr", status="completed", provider="tesseract",
