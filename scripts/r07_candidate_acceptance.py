@@ -178,7 +178,7 @@ def evaluate(root: Path) -> dict:
         and "memory_write_permitted" in router
         and "_require(namespace, process_id)" in app
     )
-    from scripts.r07_s7_package_preflight import inspect as package_inspect
+    from r07_s7_package_preflight import inspect as package_inspect
     package_result = package_inspect(root)
     checks["s7_pinned_package_preflight_passed"] = package_result["pass"]
     checks["s7_recovery_test_and_preflight_present"] = (
