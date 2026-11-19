@@ -52,6 +52,8 @@ REQUIRED_TESTS = (
     "tests/test_r07_s8_supplychain.py",
     "tests/test_r07_s8_snapshot_contract.py",
     "tests/test_r07_s8_review_integrity.py",
+    "tests/test_r07_s9_hashlock.py",
+    "tests/test_r07_s9_os_audit.py",
 )
 REQUIRED_DOCS = (
     "docs/institucional/PLANO_VALIDACAO_R07.md",
@@ -155,6 +157,8 @@ def evaluate(root: Path) -> dict:
             "  r07_s7_sqlite_recovery:",
             "  r07_s8_supplychain:",
             "  r07_s8_review_and_snapshot:",
+            "  r07_s9_hash_bootstrap:",
+            "  r07_s9_os_scan:",
         )
     )
     checks["no_image_publication"] = (
@@ -206,6 +210,23 @@ def evaluate(root: Path) -> dict:
         and "read_point(cap, row[\"point_id\"])" in review
         and "APPROVED_POINT_READBACK_UNCONFIRMED" in review
     )
+    checks["s9_native_snapshot_isolated_test_present"] = all(
+        marker in (root / "tests/r06_live_review_e2e.py").read_text(encoding="utf-8")
+        for marker in (
+            "R07-S9-NATIVE-SNAPSHOT-CREATED",
+            "R07-S9-NATIVE-SNAPSHOT-FULL-PARITY",
+            "R07-S9-NATIVE-ROLLBACK-SOURCE-PRESERVED",
+            "snapshots/upload?priority=snapshot",
+        )
+    )
+    checks["s9_wheel_hashes_and_os_audit_required"] = all((
+        package_result["hash_locked_wheels"],
+        package_result["checks"].get("s9_hashed_binary_wheels", False),
+        (root / "scripts/r07_s9_wheel_lock.py").is_file(),
+        (root / "scripts/r07_s9_os_audit.py").is_file(),
+        "python scripts/r07_s9_wheel_lock.py --verify" in workflow,
+        "r07_s9_os_scan" in workflow,
+    ))
     checks["s8_public_advisory_and_snapshot_gate_present"] = all(
         (root / path).is_file() for path in (
             "src/gaia_rag_r05/native_snapshot_plan.py",
