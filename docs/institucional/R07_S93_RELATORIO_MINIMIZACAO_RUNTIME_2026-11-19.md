@@ -1,6 +1,6 @@
 # GAIA RAG & Knowledge R07 — Gate S9.3 | Minimização segura do runtime Debian
 
-**Versão:** 1.0.0 — relatório de execução, não homologação operacional.
+**Versão:** 1.1.0 — relatório de execução com adendo de anomalia de CI, não homologação operacional.
 **Disparo exato aferido:** **19/11/2026, 00:17:45**, America/Sao_Paulo (UTC−03:00). Fonte: ferramenta de hora local ChatGPT, resposta ISO `2026-11-19T00:17:45-03:00`, consultada antes da primeira análise.
 **Última execução técnica do gate anterior S9.2:** **18/11/2026, 23:59:59**, America/Sao_Paulo. Fonte: último log do ensaio GitHub Actions `44448066628`, job `135304968780`, UTC `2026-11-19T02:59:59.6226872Z`. Não confundir com a emissão do relatório S9.2 às 23:55:50.
 **Última execução técnica S9.3 aferida até esta emissão:** **19/11/2026, 00:33:41**, America/Sao_Paulo. Fonte: último log GitHub Actions do job `135317490755` na execução `44451858328`, UTC `2026-11-19T03:33:41.1114601Z`.
@@ -94,3 +94,16 @@ A **matriz individual dos 87 pacotes com versões, estado de preservação e cla
 **Critérios de GO técnico:** runtime efetivamente funcional, integridade das 29 wheels, paridade de dados/identidade, nenhum HIGH/CRITICAL/UNKNOWN na candidata, scanner sem falhas de cobertura e CI no HEAD final. Caso persistam CVEs, manter **NO-GO** e documentar dependências de upstream; nenhum risco é automaticamente aceito.
 
 **Exclusões S9.4:** sem merge, deploy, publicação GHCR, Cloudflare, DNS, TestLab, GitLab, Linear, Qdrant real, migração, dados de clientes ou desligamento do legado. O botão no chat é apenas uma nova solicitação, não autoriza operação externa.
+
+## 8. Adendo v1.1.0 — evidência de CI do HEAD documental e limitação de executor
+
+**Data/hora da revisão:** 19/11/2026, **00:40:05**, America/Sao_Paulo. **Origem do relógio:** serviço de hora local do ChatGPT, ISO `2026-11-19T00:40:05-03:00`. A emissão v1.0.0 original ocorreu às 00:35:30 e continua registrada acima.
+
+**HEAD documental examinado:** `1ea322d6eae57b74a2908607c288ca0a944c50bc`, PR #5 draft, base R06.
+**Execução GitHub Actions do HEAD:** https://github.com/tight-knit-net/gaia-rag-mini/actions/runs/44452754417.
+
+- O GitHub marcou **17 jobs como FAILURE e 1 como SKIPPED**, mas **todos os 18 registros de job apresentaram `steps=null` e `logs_url=null`**. Não houve logs de comandos nem execução de testes comprovada nessa tentativa. Esses rótulos não demonstram 17 regressões de código.
+- Uma **única reexecução controlada dos jobs falhos** foi solicitada via GitHub Actions e a operação retornou `success=true`; o readback posterior continuou em **17 FAILURE / 1 SKIPPED**, com todos os jobs sem etapas e sem logs. A causa da indisponibilidade do executor **não pôde ser determinada** pela interface disponível; não especular sobre cota, faturamento ou disponibilidade.
+- **Evidência positiva de código pré-documentação permanece:** run `44451858328`, commit `c522c599cd4927574e6409a498d9c2e2aa2de31f`, 16/18 SUCCESS, 1 FAILURE intencional de Grype e 1 SKIPPED pelo aceite dependente. Nela o trabalho S9.3 executou 165 testes, 79 E2E, 29 hashes, 5 HTTP trial e auditoria Debian integral, com 23 CVEs HIGH / 77 ocorrências.
+- **Decisão sobre o HEAD documental:** CI final **NÃO VALIDADA** devido a jobs sem execução/logs. Preservar NO-GO técnico e operacional. A documentação foi confirmada por leitura de blobs GitHub no próprio ramo. Antes de qualquer gate de arquitetura, verificar a disponibilidade efetiva de runners e a execução de steps com logs válidos.
+- **Nenhuma mudança em produção ou relaxamento de segurança foi aplicada para contornar a anomalia**. Não repetir disparos ilimitadamente nem declarar GO com base em um run que não executou etapas.
