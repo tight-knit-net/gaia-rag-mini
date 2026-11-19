@@ -2,7 +2,7 @@
   "$schema": "https://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:097fe1b8-37c6-5cde-aeec-c105b08c9c2a",
+  "serialNumber": "urn:uuid:81921ef9-7048-516a-813b-9e2c617d85eb",
   "version": 1,
   "metadata": {
     "component": {
@@ -13,7 +13,7 @@
       "properties": [
         {
           "name": "gaia:requirements-lock-sha256",
-          "value": "f5c6b0757685093c77c2f994cb7b104e900b81077f0f0c43d196f1a857f8df82"
+          "value": "bb2aacbc1249159b1625222731a443e86b73e65fca32b056d6c4f4188efe3903"
         },
         {
           "name": "gaia:scope",
