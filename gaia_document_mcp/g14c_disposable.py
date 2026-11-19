@@ -13,13 +13,20 @@ import sqlite3
 from tempfile import TemporaryDirectory
 
 from .contracts import ContractViolation, DocumentEvent
-from .process_learning import AdministrativeProcess, SyntheticOwnerOnly, _tokens
+from .process_learning import AdministrativeProcess, SyntheticOwnerOnly, _tokens, _canonical_summary
 from .owner_concurrency import SyntheticRequest
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS process_heads (
     process_key TEXT PRIMARY KEY,
     revision TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS process_registry (
+    process_key TEXT PRIMARY KEY,
+    process_id TEXT NOT NULL,
+    agency_code TEXT NOT NULL,
+    jurisdiction TEXT NOT NULL,
+    official_number TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS requests (
     process_key TEXT NOT NULL,
@@ -41,6 +48,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     event_keys_json TEXT NOT NULL,
     review_status TEXT NOT NULL,
     batch_id TEXT,
+    candidate_revision INTEGER NOT NULL DEFAULT 1,
     UNIQUE (process_key, topic_digest)
 );
 CREATE TABLE IF NOT EXISTS batch_receipts (
@@ -49,6 +57,23 @@ CREATE TABLE IF NOT EXISTS batch_receipts (
     decision TEXT NOT NULL,
     candidate_count INTEGER NOT NULL,
     operator_ref TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS batch_review_items (
+    batch_id TEXT NOT NULL,
+    candidate_id TEXT NOT NULL,
+    candidate_revision INTEGER NOT NULL,
+    decision TEXT NOT NULL,
+    status TEXT NOT NULL,
+    PRIMARY KEY (batch_id, candidate_id)
+);
+CREATE TABLE IF NOT EXISTS candidate_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id TEXT NOT NULL,
+    candidate_revision INTEGER NOT NULL,
+    event_name TEXT NOT NULL,
+    event_key TEXT NOT NULL,
+    previous_status TEXT,
+    new_status TEXT NOT NULL
 );
 """
 
@@ -59,9 +84,31 @@ def _batch_id(process_key: str, snapshots: list[str]) -> str:
     return _sha(json.dumps([process_key, *sorted(snapshots)], separators=(",", ":")))
 
 def _candidate_snapshot(row) -> str:
+    """Canonical hash of every displayed/effective candidate field."""
     return _sha(json.dumps([
-        row["candidate_id"], row["source_refs_json"], row["event_keys_json"]
-    ], separators=(",", ":")))
+        row["candidate_id"], row["process_key"], row["process_id"],
+        row["topic_digest"], row["summary"], row["review_status"],
+        row["candidate_revision"],
+        sorted(json.loads(row["source_refs_json"])),
+        sorted(json.loads(row["event_keys_json"])),
+        "g14e-synthetic-policy.v1",
+    ], ensure_ascii=False, separators=(",", ":")))
+
+
+def _register_process(db, process: AdministrativeProcess) -> None:
+    """Bind official process identity; not a client ACL."""
+    row = db.execute(
+        "SELECT * FROM process_registry WHERE process_key=?", (process.process_key,)
+    ).fetchone()
+    values = (process.process_key, process.process_id, process.agency_code,
+              process.jurisdiction, process.official_number)
+    if row is None:
+        db.execute("INSERT INTO process_registry VALUES (?,?,?,?,?)", values)
+    elif any(row[field] != actual for field, actual in zip(
+            ("process_key", "process_id", "agency_code", "jurisdiction", "official_number"),
+            values)):
+        raise ContractViolation("PROCESS_ID_COLLISION")
+
 
 class DisposableGate:
     """SQLite transactions with real file reopen, constrained to a temp workspace.
@@ -112,6 +159,7 @@ class DisposableGate:
         if not isinstance(process, AdministrativeProcess) or not isinstance(revision, str) or not revision:
             raise ContractViolation("INVALID_PROCESS_OR_REVISION")
         with self._tx() as db:
+            _register_process(db, process)
             if db.execute("SELECT 1 FROM process_heads WHERE process_key=?",
                           (process.process_key,)).fetchone():
                 raise ContractViolation("PROCESS_ALREADY_SEEDED")
@@ -156,6 +204,48 @@ class DisposableGate:
                 "fingerprint": request.request_fingerprint, "expected_revision": request.expected_revision,
                 "run_id": run_id, "state": "RESERVED_SYNTHETIC", "new_revision": None,
             }, replayed=False)
+
+    def reserve_from_event(self, *, claimed_owner: str, process: AdministrativeProcess,
+                           event: DocumentEvent, original_bytes: bytes,
+                           idempotency_key: str, expected_revision: str) -> dict:
+        """Generate a synthetic fingerprint from observed bytes and event fields.
+
+        Caller-supplied request_fingerprint is NOT trusted in this path.
+        Still no authenticated provider origin or external write.
+        """
+        self._owner.require(claimed_owner)
+        if (not isinstance(process, AdministrativeProcess)
+                or not isinstance(event, DocumentEvent)
+                or event.source.process_id != process.process_id):
+            raise ContractViolation("PROCESS_CONTEXT_MISMATCH")
+        if (not isinstance(original_bytes, bytes)
+                or not event.source.matches_original(original_bytes)):
+            raise ContractViolation("SOURCE_HASH_MISMATCH")
+        if (not event.source.file_id.startswith("FILE_DEMO_")
+                or not event.summary.startswith("DEMO: ")):
+            raise ContractViolation("SYNTHETIC_DATA_REQUIRED")
+        with self._conn() as db:
+            observed = db.execute(
+                "SELECT * FROM process_registry WHERE process_key=?",
+                (process.process_key,),
+            ).fetchone()
+            if observed is None or observed["process_id"] != process.process_id:
+                raise ContractViolation("PROCESS_BINDING_NOT_REGISTERED")
+        fingerprint = _sha(json.dumps({
+            "process_key": process.process_key, "process_id": process.process_id,
+            "source_ref": event.source.source_ref,
+            "source_version": event.source.source_version,
+            "document_sha256": event.source.sha256_original,
+            "operation": event.operation, "provider": event.provider,
+            "summary": _canonical_summary(event.summary),
+            "rule_id": event.rule_id, "proposed_filename": event.proposed_filename,
+        }, sort_keys=True, ensure_ascii=False, separators=(",", ":")))
+        return self.reserve(claimed_owner=claimed_owner, request=SyntheticRequest(
+            process_key=process.process_key,
+            idempotency_key=idempotency_key,
+            expected_revision=expected_revision,
+            request_fingerprint=fingerprint,
+        ))
 
     def commit_revision(self, *, claimed_owner: str, process_key: str,
                         request_key: str, new_revision: str) -> dict:
@@ -266,43 +356,74 @@ class DisposableGate:
         summary = event.summary.strip()
         if not summary.startswith("DEMO: ") or len(summary) > 240 or not _tokens(summary):
             raise ContractViolation("SYNTHETIC_SUMMARY_REQUIRED")
-        topic_digest = _sha(" ".join(sorted(_tokens(summary))))
+        topic_digest = _sha(_canonical_summary(summary))
         candidate_id = _sha(process.process_key + ":" + topic_digest)
         with self._tx() as db:
+            _register_process(db, process)
             found = db.execute(
                 "SELECT * FROM candidates WHERE process_key=? AND topic_digest=?",
                 (process.process_key, topic_digest),
             ).fetchone()
             if found is None:
                 db.execute(
-                    "INSERT INTO candidates VALUES (?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO candidates "
+                    "(candidate_id,process_key,process_id,topic_digest,summary,"
+                    "source_refs_json,event_keys_json,review_status,batch_id) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
                     (candidate_id, process.process_key, process.process_id,
                      topic_digest, summary, json.dumps([event.source.source_ref]),
                      json.dumps([event.fingerprint()]), "PENDING_HUMAN_REVIEW", None),
                 )
+                db.execute(
+                    "INSERT INTO candidate_history "
+                    "(candidate_id,candidate_revision,event_name,event_key,"
+                    "previous_status,new_status) VALUES (?,?,?,?,?,?)",
+                    (candidate_id, 1, "CAPTURED_SYNTHETIC", event.fingerprint(),
+                     None, "PENDING_HUMAN_REVIEW"),
+                )
                 count = 1
+                revision = 1
             else:
                 if found["process_id"] != process.process_id:
                     raise ContractViolation("PROCESS_ID_COLLISION")
-                if found["review_status"] != "PENDING_HUMAN_REVIEW":
-                    # New evidence after review needs a fresh review event,
-                    # not implicit mutation of a sealed batch.
+                old_status = found["review_status"]
+                if old_status not in (
+                    "PENDING_HUMAN_REVIEW", "MORE_EVIDENCE_NEEDED_SYNTHETIC"
+                ):
+                    # A prepared proposal cannot be silently changed.
                     raise ContractViolation("REVIEWED_CANDIDATE_CANNOT_CHANGE")
                 srcs = json.loads(found["source_refs_json"])
                 keys = json.loads(found["event_keys_json"])
+                event_key = event.fingerprint()
+                new_evidence = (event.source.source_ref not in srcs
+                                or event_key not in keys)
+                if old_status == "MORE_EVIDENCE_NEEDED_SYNTHETIC" and not new_evidence:
+                    raise ContractViolation("NEW_EVIDENCE_REQUIRED")
                 if event.source.source_ref not in srcs:
                     srcs.append(event.source.source_ref)
-                if event.fingerprint() not in keys:
-                    keys.append(event.fingerprint())
+                if event_key not in keys:
+                    keys.append(event_key)
+                revision = found["candidate_revision"] + (1 if new_evidence else 0)
                 db.execute(
-                    "UPDATE candidates SET source_refs_json=?, event_keys_json=? "
-                    "WHERE candidate_id=?",
-                    (json.dumps(srcs), json.dumps(keys), candidate_id),
+                    "UPDATE candidates SET source_refs_json=?, event_keys_json=?,"
+                    "review_status='PENDING_HUMAN_REVIEW',batch_id=NULL,"
+                    "candidate_revision=? WHERE candidate_id=?",
+                    (json.dumps(srcs), json.dumps(keys), revision, candidate_id),
                 )
+                if new_evidence:
+                    db.execute(
+                        "INSERT INTO candidate_history "
+                        "(candidate_id,candidate_revision,event_name,event_key,"
+                        "previous_status,new_status) VALUES (?,?,?,?,?,?)",
+                        (candidate_id, revision,
+                         "EVIDENCE_ADDED_SYNTHETIC", event_key,
+                         old_status, "PENDING_HUMAN_REVIEW"),
+                    )
                 count = len(srcs)
         return {
             "status": "PENDING_HUMAN_REVIEW", "candidate_id": candidate_id,
             "process_key": process.process_key, "source_count": count,
+            "candidate_revision": revision,
             "qdrant_write_performed": False, "production_durable": False,
         }
 
@@ -329,7 +450,7 @@ class DisposableGate:
         self._owner.require(claimed_owner)
         with self._conn() as db:
             rows = db.execute(
-                "SELECT candidate_id,process_key,summary,source_refs_json,event_keys_json FROM candidates "
+                "SELECT * FROM candidates "
                 "WHERE review_status='PENDING_HUMAN_REVIEW' ORDER BY process_key,candidate_id"
             ).fetchall()
         groups: dict[str, list[dict]] = {}
@@ -339,6 +460,7 @@ class DisposableGate:
             groups.setdefault(row["process_key"], []).append({
                 "candidate_id": row["candidate_id"],
                 "summary": row["summary"],
+                "candidate_revision": row["candidate_revision"],
                 "source_count": len(json.loads(row["source_refs_json"])),
             })
         return [{
@@ -353,41 +475,114 @@ class DisposableGate:
     def review_batch(self, *, claimed_owner: str, process_key: str,
                      batch_id: str, candidate_ids: tuple[str, ...],
                      decision: str) -> dict:
-        self._owner.require(claimed_owner)
+        """Legacy all-pending batch action; preserved for G14-C callers."""
         if decision not in ("prepare_proposals", "needs_more_evidence"):
             raise ContractViolation("INVALID_REVIEW_DECISION")
-        if not isinstance(candidate_ids, tuple) or not candidate_ids or len(set(candidate_ids)) != len(candidate_ids):
+        if (not isinstance(candidate_ids, tuple) or not candidate_ids
+                or len(set(candidate_ids)) != len(candidate_ids)):
             raise ContractViolation("INVALID_REVIEW_MEMBERS")
+        return self.review_batch_items(
+            claimed_owner=claimed_owner, process_key=process_key,
+            batch_id=batch_id, decisions={cid: decision for cid in candidate_ids},
+            require_all=True,
+        )
+
+    def review_batch_items(self, *, claimed_owner: str, process_key: str,
+                           batch_id: str, decisions: dict[str, str],
+                           require_all: bool = False) -> dict:
+        """Review selected synthetic items; never authorizes R06/Qdrant.
+
+        The batch digest always covers *all* pending candidates, even when
+        only a subset is selected, so any new evidence invalidates it.
+        """
+        self._owner.require(claimed_owner)
+        if (not isinstance(decisions, dict) or not decisions
+                or any(not isinstance(cid, str) or not cid for cid in decisions)):
+            raise ContractViolation("INVALID_REVIEW_MEMBERS")
+        if any(decision not in ("prepare_proposals", "needs_more_evidence")
+               for decision in decisions.values()):
+            raise ContractViolation("INVALID_REVIEW_DECISION")
         if not isinstance(batch_id, str) or len(batch_id) != 64:
             raise ContractViolation("INVALID_BATCH_ID")
+        if not isinstance(process_key, str) or not process_key:
+            raise ContractViolation("PROCESS_KEY_INVALID")
         with self._tx() as db:
             rows = db.execute(
-                "SELECT candidate_id,source_refs_json,event_keys_json FROM candidates "
+                "SELECT * FROM candidates "
                 "WHERE process_key=? AND review_status='PENDING_HUMAN_REVIEW'",
                 (process_key,),
             ).fetchall()
-            actual = sorted(row["candidate_id"] for row in rows)
-            if actual != sorted(candidate_ids) or not actual or _batch_id(
-                    process_key, [_candidate_snapshot(row) for row in rows]
-            ) != batch_id:
+            pending = {row["candidate_id"]: row for row in rows}
+            if (not pending or not set(decisions).issubset(pending)
+                    or (require_all and set(decisions) != set(pending))
+                    or _batch_id(process_key, [
+                        _candidate_snapshot(row) for row in rows
+                    ]) != batch_id):
                 raise ContractViolation("BATCH_STALE_OR_PROCESS_MISMATCH")
-            status = ("REVIEWED_FOR_PROPOSAL_SYNTHETIC"
-                      if decision == "prepare_proposals" else "MORE_EVIDENCE_NEEDED_SYNTHETIC")
-            db.executemany(
-                "UPDATE candidates SET review_status=?,batch_id=? WHERE candidate_id=?",
-                [(status, batch_id, candidate_id) for candidate_id in actual],
-            )
+            items = []
+            for cid in sorted(decisions):
+                decision = decisions[cid]
+                status = ("REVIEWED_FOR_PROPOSAL_SYNTHETIC"
+                          if decision == "prepare_proposals"
+                          else "MORE_EVIDENCE_NEEDED_SYNTHETIC")
+                db.execute(
+                    "UPDATE candidates SET review_status=?,batch_id=? "
+                    "WHERE candidate_id=? AND review_status='PENDING_HUMAN_REVIEW'",
+                    (status, batch_id, cid),
+                )
+                db.execute(
+                    "INSERT INTO batch_review_items "
+                    "(batch_id,candidate_id,candidate_revision,decision,status) "
+                    "VALUES (?,?,?,?,?)",
+                    (batch_id, cid, pending[cid]["candidate_revision"], decision, status),
+                )
+                db.execute(
+                    "INSERT INTO candidate_history "
+                    "(candidate_id,candidate_revision,event_name,event_key,"
+                    "previous_status,new_status) VALUES (?,?,?,?,?,?)",
+                    (cid, pending[cid]["candidate_revision"],
+                     "BATCH_REVIEW_SYNTHETIC", "batch:" + batch_id,
+                     "PENDING_HUMAN_REVIEW", status),
+                )
+                items.append({
+                    "candidate_id": cid,
+                    "candidate_revision": pending[cid]["candidate_revision"],
+                    "decision": decision,
+                    "status": status,
+                    "memory_approved": False,
+                    "qdrant_written": False,
+                })
+            choices = set(decisions.values())
+            group_decision = next(iter(choices)) if len(choices) == 1 else "mixed"
             db.execute(
                 "INSERT INTO batch_receipts VALUES (?,?,?,?,?)",
-                (batch_id, process_key, decision, len(actual), claimed_owner),
+                (batch_id, process_key, group_decision, len(items), claimed_owner),
             )
+        status_values = {item["status"] for item in items}
         return {
-            "batch_id": batch_id, "process_key": process_key,
-            "candidate_count": len(actual), "review_status": status,
-            "document_approval": False, "memory_approved": False,
-            "qdrant_written": False, "real_human_review_verified": False,
+            "batch_id": batch_id,
+            "process_key": process_key,
+            "candidate_count": len(items),
+            "review_status": next(iter(status_values)) if len(status_values) == 1
+                             else "MIXED_SYNTHETIC",
+            "items": items,
+            "document_approval": False,
+            "memory_approved": False,
+            "qdrant_written": False,
+            "real_human_review_verified": False,
             "requires_authenticated_r06_batch_review": True,
         }
+
+    def candidate_history_readback(self, *, claimed_owner: str,
+                                   candidate_id: str) -> list[dict]:
+        self._owner.require(claimed_owner)
+        with self._conn() as db:
+            rows = db.execute(
+                "SELECT candidate_revision,event_name,event_key,previous_status,"
+                "new_status FROM candidate_history WHERE candidate_id=? ORDER BY id",
+                (candidate_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def batch_readback(self, *, claimed_owner: str, batch_id: str) -> dict:
         self._owner.require(claimed_owner)
@@ -396,8 +591,15 @@ class DisposableGate:
                              (batch_id,)).fetchone()
         if not row:
             raise ContractViolation("BATCH_NOT_FOUND")
+        with self._conn() as db:
+            details = db.execute(
+                "SELECT candidate_id,candidate_revision,decision,status "
+                "FROM batch_review_items WHERE batch_id=? ORDER BY candidate_id",
+                (batch_id,),
+            ).fetchall()
         return {
             "batch_id": row["batch_id"], "process_key": row["process_key"],
             "candidate_count": row["candidate_count"], "decision": row["decision"],
+            "items": [dict(item) for item in details],
             "memory_approved": False, "qdrant_written": False,
         }

@@ -34,6 +34,13 @@ def _tokens(value: str) -> set[str]:
     return set(_WORDS.findall(normalized)) - _NOISE
 
 
+def _canonical_summary(value: str) -> str:
+    """Keep word order, negation and frequency for exact deduplication."""
+    if not isinstance(value, str):
+        raise ContractViolation("INVALID_SUMMARY")
+    return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
 def _similarity(a: str, b: str) -> float:
     left, right = _tokens(a), _tokens(b)
     if not left or not right:
@@ -123,7 +130,7 @@ class HybridLearningPreview:
         # Staged text is untrusted and must be minimized/redacted by a future
         # trusted ingest service before durable storage or external AI.
         summary = event.summary.strip()[:500]
-        signature = sha256((" ".join(sorted(_tokens(summary)))).encode()).hexdigest()
+        signature = sha256(_canonical_summary(summary).encode("utf-8")).hexdigest()
         key = (process.process_key, signature)
         existing = self._pending.get(key)
         if existing is None:
